@@ -10,13 +10,21 @@
     Loaded="Page_Loaded">
 
     <StackPanel Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Orientation="Vertical" HorizontalAlignment="Center">
-        <StackPanel Orientation="Horizontal">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Click="PickFile_Click">Pick File</Button>
             <Button Click="Play_Click">Play</Button>
+            <Button Click="Play2_Click">Play 2</Button>
             <Button Click="Frames_Click">Frames</Button>
         </StackPanel>
-        <MediaPlayerElement x:Name="videoPlayer" AreTransportControlsEnabled="True" HorizontalAlignment="Stretch"/>
+        <MediaPlayerElement 
+            x:Name="videoPlayer" 
+            AreTransportControlsEnabled="True" 
+            Height="300"
+            HorizontalAlignment="Stretch"/>
         <Image x:Name="FrameServerImage" Width="200" Height="400"/>
-        <ListView ItemsSource="{x:Bind Frames}" x:Name="frameImageList" HorizontalAlignment="Center" VerticalAlignment="Center"
+        <ListView ItemsSource="{x:Bind Frames}" x:Name="frameImageList" 
+                  Width="500"
+                  HorizontalAlignment="Center" VerticalAlignment="Center"
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
                   ScrollViewer.HorizontalScrollMode="Enabled"
                   ScrollViewer.IsHorizontalRailEnabled="True"

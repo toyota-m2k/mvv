@@ -11,7 +11,7 @@
     <AssemblyName>wvv</AssemblyName>
     <DefaultLanguage>ja-JP</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion>10.0.15063.0</TargetPlatformVersion>
+    <TargetPlatformVersion>10.0.16299.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.15063.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
@@ -96,6 +96,12 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WvvMovieControlPanel.xaml.cs">
+      <DependentUpon>WvvMovieControlPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WvvMoviePlayer.xaml.cs">
+      <DependentUpon>WvvMoviePlayer.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -104,6 +110,8 @@
     <None Include="wvv_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\current_bar.png" />
+    <Content Include="Assets\current_bar_fullscreen.png" />
     <Content Include="Assets\sample5.mp4" />
     <Content Include="Assets\sample3.mp4" />
     <Content Include="Assets\sample2.mp4" />
@@ -125,6 +133,14 @@
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WvvMovieControlPanel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WvvMoviePlayer.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
