@@ -175,7 +175,7 @@ namespace wvv
 
         ObservableCollection<ImageSource> Frames = new ObservableCollection<ImageSource>();
 
-        private Size ThumbnailSize = new Size(100, 100);        // サムネイルのサイズ
+        private Size mThumbnailSize = new Size(45, 45);        // サムネイルのサイズ
         private const int FrameCount = 20;                      // 取得するフレーム数（動画全体をこの数で分割して、それぞれの位置のフレームを取り出す）
         private double mOffset = 0;
         private double mSpan = 0;                               // 分割された動画の１区間のスパン
@@ -213,7 +213,7 @@ namespace wvv
         //{
         //    Debug.WriteLine(string.Format("Frame Available: Position: {0}", sender.PlaybackSession.Position));
         //}
-
+        private Size mVideoSize = new Size(0, 0);
         private void MediaPlayer_MediaOpened(MediaPlayer mediaPlayer, object args)
         {
             Debug.WriteLine(string.Format("MediaOpened"));
@@ -222,6 +222,9 @@ namespace wvv
             mSpan = total / (FrameCount + 1);
             mOffset = mSpan / 2;
             mFrame = 0;
+            mVideoSize.Width = mediaPlayer.PlaybackSession.NaturalVideoWidth;
+            mVideoSize.Height = mediaPlayer.PlaybackSession.NaturalVideoHeight;
+            mThumbnailSize.Width = mVideoSize.Width * mThumbnailSize.Height / mVideoSize.Height;
             Debug.WriteLine(string.Format("Extracting Frames ... Span={0} / Total={1}", mSpan, total));
             mediaPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(mOffset);
             // PlaybackSession_SeekCompleted(mediaPlayer.PlaybackSession, null);
@@ -267,8 +270,8 @@ namespace wvv
         private void extractFrame(MediaPlayer mediaPlayer)
         {
             CanvasDevice canvasDevice = CanvasDevice.GetSharedDevice();
-            var canvasImageSrc = new CanvasImageSource(canvasDevice, (int)ThumbnailSize.Width, (int)ThumbnailSize.Height, DisplayInformation.GetForCurrentView().LogicalDpi);//96); 
-            using (SoftwareBitmap softwareBitmap = new SoftwareBitmap(BitmapPixelFormat.Rgba8, (int)ThumbnailSize.Width, (int)ThumbnailSize.Height, BitmapAlphaMode.Ignore))
+            var canvasImageSrc = new CanvasImageSource(canvasDevice, (int)mThumbnailSize.Width, (int)mThumbnailSize.Height, DisplayInformation.GetForCurrentView().LogicalDpi);//96); 
+            using (SoftwareBitmap softwareBitmap = new SoftwareBitmap(BitmapPixelFormat.Rgba8, (int)mThumbnailSize.Width, (int)mThumbnailSize.Height, BitmapAlphaMode.Ignore))
             using (CanvasBitmap inputBitmap = CanvasBitmap.CreateFromSoftwareBitmap(canvasDevice, softwareBitmap))
             using (CanvasDrawingSession ds = canvasImageSrc.CreateDrawingSession(Windows.UI.Colors.Black))
             {

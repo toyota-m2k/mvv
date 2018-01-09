@@ -22,29 +22,191 @@
             Height="300"
             HorizontalAlignment="Stretch"/>
         <Image x:Name="FrameServerImage" Width="200" Height="400"/>
-        <ListView ItemsSource="{x:Bind Frames}" x:Name="frameImageList" 
-                  Width="500"
-                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                  ScrollViewer.HorizontalScrollMode="Enabled"
-                  ScrollViewer.IsHorizontalRailEnabled="True"
-                  ScrollViewer.VerticalScrollMode="Disabled">
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Setter Property="Padding" Value="0"/>
-                    <Setter Property="BorderThickness" Value="0"/>
+        <Grid Width="500">
+            <Grid.Resources>
+                <Style x:Key="UpperSlider" TargetType="Slider">
+                    <!-- Slider Bar の色 -->
+                    <Setter Property="Background" Value="Gray"/>
+                    <Setter Property="BorderBrush" Value="Red"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="Foreground" Value="Blue"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Slider">
+                                <Grid Margin="{TemplateBinding Padding}">
+                                    <Grid.Resources>
+                                        <Style x:Key="SliderThumbStyle" TargetType="Thumb">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <!-- Thumb の形状 -->
+                                                    <ControlTemplate TargetType="Thumb">
+                                                        <Image Source="Assets/current_bar.png"
+                                                               Margin="0,0,0,0"
+                                                               Stretch="Uniform" 
+                                                               HorizontalAlignment="Center"/>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Grid.Resources>
+                                    <Grid x:Name="SliderContainer" 
+                                          Background="Transparent">
+                                        <Grid x:Name="HorizontalTemplate">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <!-- Thumb の右側-->
+                                            <Rectangle x:Name="HorizontalTrackRect" 
+                                                       Grid.ColumnSpan="3"
+                                                       Grid.Row="1" Height="3" 
+                                                       />
+                                            <!-- Thumb の左側-->
+                                            <Rectangle x:Name="HorizontalDecreaseRect" 
+                                                       Grid.Row="1" Height="3"
+                                                       />
+                                            <!-- Slider Bar 全体の外枠　-->
+                                            <Rectangle x:Name="HorizontalBorder" 
+                                                       Grid.ColumnSpan="3"
+                                                       Grid.Row="1" 
+                                                       Height="3"/>
+                                            <!-- Thumb -->
+                                            <Thumb x:Name="HorizontalThumb" 
+                                                   AutomationProperties.AccessibilityView="Raw" 
+                                                   Grid.Column="1" 
+                                                   DataContext="{TemplateBinding Value}" 
+                                                   Grid.Row="1" 
+                                                   Style="{StaticResource SliderThumbStyle}" 
+                                                   Height="56" Width="20"/>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
-            </ListView.ItemContainerStyle>
-            <ListView.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal" />
-                </ItemsPanelTemplate>
-            </ListView.ItemsPanel>
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="ImageSource">
-                    <Image Source="{x:Bind }" Width="100" Height="100"/>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+                <Style x:Key="LowerSlider" TargetType="Slider">
+                    <!-- Slider Bar の色 -->
+                    <Setter Property="Background" Value="Gray"/>
+                    <Setter Property="BorderBrush" Value="Red"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="Foreground" Value="Blue"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Slider">
+                                <Grid Margin="{TemplateBinding Padding}">
+                                    <Grid.Resources>
+                                        <Style x:Key="SliderThumbStyle" TargetType="Thumb">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <!-- Thumb の形状 -->
+                                                    <ControlTemplate TargetType="Thumb">
+                                                        <Image Source="Assets/current_bar.png"
+                                                               Margin="0,0,0,0"
+                                                               Stretch="Uniform" 
+                                                               HorizontalAlignment="Center"/>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Grid.Resources>
+                                    <Grid x:Name="SliderContainer" 
+                                          Background="Transparent">
+                                        <Grid x:Name="HorizontalTemplate">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <!-- Thumb の右側-->
+                                            <Rectangle x:Name="HorizontalTrackRect" 
+                                                       Grid.ColumnSpan="3"
+                                                       Grid.Row="1" Height="3" 
+                                                       Fill="WhiteSmoke"
+                                                       />
+                                            <!-- Thumb の左側-->
+                                            <Rectangle x:Name="HorizontalDecreaseRect" 
+                                                       Grid.Row="1" Height="3"
+                                                       Fill="DarkGray"
+                                                       />
+                                            <!-- Slider Bar 全体の外枠　-->
+                                            <Rectangle x:Name="HorizontalBorder" 
+                                                       Grid.ColumnSpan="3"
+                                                       Grid.Row="1" 
+                                                       Height="3"/>
+                                            <!-- Thumb -->
+                                            <Thumb x:Name="HorizontalThumb" 
+                                                   AutomationProperties.AccessibilityView="Raw" 
+                                                   Grid.Column="1" 
+                                                   DataContext="{TemplateBinding Value}" 
+                                                   Grid.Row="1" 
+                                                   Style="{StaticResource SliderThumbStyle}" 
+                                                   Height="18" Width="0"/>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Grid.Resources>
+            <Border BorderThickness="1" BorderBrush="Black" Background="Black">
+                <Grid>
+                    <ListView 
+                        Margin="10,10,10,0"
+                        ItemsSource="{x:Bind Frames}" x:Name="frameImageList" 
+                        HorizontalAlignment="Stretch" VerticalAlignment="Bottom"
+                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                        ScrollViewer.HorizontalScrollMode="Disabled"
+                        ScrollViewer.IsHorizontalRailEnabled="True"
+                        ScrollViewer.VerticalScrollMode="Disabled">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Padding" Value="0,0,1,0"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="MinWidth" Value="0"/>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="ImageSource">
+                                <Image Source="{x:Bind }" Height="45"/>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <Slider HorizontalAlignment="Stretch" 
+                        VerticalAlignment="Top" 
+                        TickPlacement="None"
+                            IsThumbToolTipEnabled="False"
+                        Minimum="0" Maximum="100"
+                            Value="{Binding Value, ElementName=UpperSlider}"
+                            Padding="10,0"
+                        Style="{StaticResource LowerSlider}"/>
+                    <Slider x:Name="UpperSlider" HorizontalAlignment="Stretch" 
+                            IsThumbToolTipEnabled="False"
+                        VerticalAlignment="Top" 
+                        TickPlacement="None" 
+                        Minimum="0" Maximum="100" Value="50"
+                        Style="{StaticResource UpperSlider}"/>
+                    
+                </Grid>
+            </Border>
+
+        </Grid>
     </StackPanel>
 </Page>
