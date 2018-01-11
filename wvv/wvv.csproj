@@ -96,6 +96,7 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WvvConverter.cs" />
     <Compile Include="WvvMovieControlPanel.xaml.cs">
       <DependentUpon>WvvMovieControlPanel.xaml</DependentUpon>
     </Compile>
@@ -110,12 +111,25 @@
     <None Include="wvv_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\add_marker.png" />
+    <Content Include="Assets\back.png" />
     <Content Include="Assets\current_bar.png" />
     <Content Include="Assets\current_bar_fullscreen.png" />
+    <Content Include="Assets\current_bar_min.png" />
+    <Content Include="Assets\fullscreen.png" />
+    <Content Include="Assets\fullscreen_close.png" />
+    <Content Include="Assets\forward.png" />
+    <Content Include="Assets\marker.png" />
+    <Content Include="Assets\play.png" />
+    <Content Include="Assets\play_button.png" />
+    <Content Include="Assets\pinp.png" />
     <Content Include="Assets\sample5.mp4" />
     <Content Include="Assets\sample3.mp4" />
     <Content Include="Assets\sample2.mp4" />
     <Content Include="Assets\sample.mp4" />
+    <Content Include="Assets\stop.png" />
+    <Content Include="Assets\thumbnail_on.png" />
+    <Content Include="Assets\thumbnail.png" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -146,6 +160,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>5.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Uwp.Managed">
+      <Version>2.0.0</Version>
     </PackageReference>
     <PackageReference Include="Win2D.uwp">
       <Version>1.21.0</Version>

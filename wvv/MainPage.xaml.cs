@@ -320,7 +320,17 @@ namespace wvv
         }
 #endif
 
-#endregion
+        #endregion
 
+        private void Play3_Click(object sender, RoutedEventArgs e)
+        {
+            if (null == mVideoFile)
+            {
+                var v = pickAndPlay(Play3_Click);
+                return;
+            }
+           mPlayer.SetSource(MediaSource.CreateFromStorageFile(mVideoFile));
+
+        }
     }
 }
