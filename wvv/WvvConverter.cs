@@ -50,4 +50,27 @@ namespace wvv
             return DependencyProperty.UnsetValue;
         }
     }
+
+    /**
+     * bool --> Visibility
+     */
+    public class NegBoolVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (!(bool)value)
+            {
+                return Visibility.Visible;
+            }
+            else
+            {
+                return Visibility.Collapsed;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            return DependencyProperty.UnsetValue;
+        }
+    }
 }
