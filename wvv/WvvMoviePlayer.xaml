@@ -21,6 +21,7 @@
         <Grid.Resources>
             <wvv:NegBoolConverter x:Key="NegBoolConverter"/>
             <wvv:BoolVisibilityConverter x:Key="BoolVisibilityConverter"/>
+            <wvv:NegBoolVisibilityConverter x:Key="NegBoolVisibilityConverter"/>
             <BitmapImage x:Key="PlayIcon" UriSource="Assets/play.png"/>
             <BitmapImage x:Key="StopIcon" UriSource="Assets/stop.png"/>
             <BitmapImage x:Key="BackIcon" UriSource="Assets/back.png"/>
@@ -118,16 +119,22 @@
                 Height="40"
                 IsActive="{Binding MoviePrepared, Converter={StaticResource NegBoolConverter}}"/>
         </Grid>
-        <MediaPlayerElement 
-            x:Name="mMoviePlayer" 
-            AreTransportControlsEnabled="False"
-            Grid.Row="0"
-            HorizontalAlignment="Left"
-            Width="{Binding PlayerSize.Width}"
-            Height="{Binding PlayerSize.Height}"
-            Visibility="{Binding MoviePrepared, Converter={StaticResource BoolVisibilityConverter}}"
-            SizeChanged="OnPlayerSizeChanged"
-            />
+        <Grid Grid.Row="0"
+            Visibility="{Binding MoviePrepared, Converter={StaticResource BoolVisibilityConverter}}">
+            <Image x:Name="mFrameImage" 
+                Width="{Binding PlayerSize.Width}"
+                Height="{Binding PlayerSize.Height}"
+                Visibility="{Binding CustomDrawing, Converter={StaticResource BoolVisibilityConverter}}"/>
+            <MediaPlayerElement 
+                x:Name="mMoviePlayer" 
+                AreTransportControlsEnabled="False"
+                HorizontalAlignment="Left"
+                Width="{Binding PlayerSize.Width}"
+                Height="{Binding PlayerSize.Height}"
+                Visibility="{Binding CustomDrawing, Converter={StaticResource NegBoolVisibilityConverter}}"
+                SizeChanged="OnPlayerSizeChanged"
+                />
+        </Grid>
 
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>

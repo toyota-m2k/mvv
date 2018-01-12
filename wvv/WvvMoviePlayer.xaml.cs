@@ -121,12 +121,21 @@ namespace wvv
             {
                 get { return mTotalRange / 20; }
             }
-        }
 
-        public WvvMoviePlayer()
-        {
-            this.InitializeComponent();
-            this.DataContext = new PlayerContext();
+            private bool mCustomDrawing = true;
+            public bool CustomDrawing
+            {
+                get { return mCustomDrawing; }
+                set
+                {
+                    if (value != mCustomDrawing)
+                    {
+                        mCustomDrawing = value;
+                        notify("CustomDrawing");
+                    }
+                }
+            }
+            
         }
 
         private MediaPlayer MediaPlayer
@@ -138,24 +147,108 @@ namespace wvv
             get { return mMoviePlayer.MediaPlayer.PlaybackSession; }
         }
 
+
+
+        public bool CustomDrawing { get { return CTX.CustomDrawing; } }
+
+        public delegate bool CustomDrawHandler(WvvMoviePlayer sender, CanvasDrawingSession ds, ICanvasImage frame);
+        public event CustomDrawHandler CustomDraw;
+
+        public WvvMoviePlayer()
+        {
+            this.InitializeComponent();
+            this.DataContext = new PlayerContext();
+        }
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             mMoviePlayer.SetMediaPlayer(new MediaPlayer());
-            PlaybackSession.SeekCompleted += PBS_SeekCompleted;
-            PlaybackSession.PositionChanged += PBS_PositionChanged;
-            PlaybackSession.PlaybackStateChanged+= PBS_PlaybackStateChanged;
-            MediaPlayer.MediaOpened += MP_MediaOpened;
+            init();
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            MediaPlayer.PlaybackSession.SeekCompleted -= PBS_SeekCompleted;
-            PlaybackSession.PositionChanged -= PBS_PositionChanged;
-            PlaybackSession.PlaybackStateChanged -= PBS_PlaybackStateChanged;
-            MediaPlayer.MediaOpened -= MP_MediaOpened;
+            term();
             MediaPlayer.Dispose();
         }
 
+        private void init()
+        {
+            MediaPlayer.MediaOpened += MP_MediaOpened;
+            PlaybackSession.SeekCompleted += PBS_SeekCompletedForExtractFrames;
+            PlaybackSession.PlaybackStateChanged += PBS_PlaybackStateChanged;
+            MediaPlayer.IsVideoFrameServerEnabled = CustomDrawing;
+            if (CustomDrawing)
+            {
+                MediaPlayer.VideoFrameAvailable += MP_FrameAvailable;
+            }
+            else
+            {
+                PlaybackSession.PositionChanged += PBS_PositionChanged;
+            }
+        }
+
+        private void term()
+        {
+            MediaPlayer.MediaOpened -= MP_MediaOpened;
+            PlaybackSession.SeekCompleted -= PBS_SeekCompletedForExtractFrames;
+            PlaybackSession.PlaybackStateChanged -= PBS_PlaybackStateChanged;
+
+            if (CustomDrawing)
+            {
+                MediaPlayer.VideoFrameAvailable -= MP_FrameAvailable;
+            }
+            else
+            {
+                PlaybackSession.PositionChanged -= PBS_PositionChanged;
+            }
+        }
+
+        SoftwareBitmap mFrameServerDest = null;
+        CanvasImageSource mCanvasImageSource = null;
+
+        private async void MP_FrameAvailable(MediaPlayer mediaPlayer, object args)
+        {
+            if(mGettingFrame)
+            {
+                return;
+            }
+
+            CanvasDevice canvasDevice = CanvasDevice.GetSharedDevice();
+
+            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            {
+                if (mFrameServerDest == null)
+                {
+                    // FrameServerImage in this example is a XAML image control
+                    mFrameServerDest = new SoftwareBitmap(BitmapPixelFormat.Rgba8, (int)PlayerWidth, (int)PlayerHeight, BitmapAlphaMode.Ignore);
+                }
+                if (mCanvasImageSource == null)
+                {
+                    mCanvasImageSource = new CanvasImageSource(canvasDevice, (int)PlayerWidth, (int)PlayerHeight, DisplayInformation.GetForCurrentView().LogicalDpi);//96); 
+                    mFrameImage.Source = mCanvasImageSource;
+                }
+                Debug.WriteLine("Frame: {0}", mediaPlayer.PlaybackSession.Position);
+                updateSliderPosition(mediaPlayer.PlaybackSession.Position.TotalMilliseconds);
+
+                using (CanvasBitmap inputBitmap = CanvasBitmap.CreateFromSoftwareBitmap(canvasDevice, mFrameServerDest))
+                using (CanvasDrawingSession ds = mCanvasImageSource.CreateDrawingSession(Windows.UI.Colors.Black))
+                {
+
+                    MediaPlayer.CopyFrameToVideoSurface(inputBitmap);
+                    if (null != CustomDraw)
+                    {
+                        CustomDraw(this, ds, inputBitmap);
+                    }
+                    else
+                    {
+                        ds.DrawImage(inputBitmap);
+                    }
+
+                }
+            });
+        }
+
+        bool mGettingFrame = false;
         int mFrameCount = 20;
         double mReqPosition = 0;
         double mSpan;
@@ -174,6 +267,12 @@ namespace wvv
             mVideoSize.Height = mediaPlayer.PlaybackSession.NaturalVideoHeight;
             mThumbnailSize.Width = mVideoSize.Width * mThumbnailSize.Height / mVideoSize.Height;
             mediaPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(mOffset);
+            if (null != mFrameServerDest)
+            {
+                mFrameServerDest.Dispose();
+                mFrameServerDest = null;
+                mCanvasImageSource = null;
+            }
         }
 
         private void extractFrame(MediaPlayer mediaPlayer)
@@ -197,9 +296,21 @@ namespace wvv
             }
         }
 
-        private async void PBS_SeekCompleted(MediaPlaybackSession session, object args)
+        double PlayerHeight
         {
-            if (mSpan == 0 || !session.MediaPlayer.IsVideoFrameServerEnabled)
+            get;
+        } = 300;
+        double PlayerWidth
+        {
+            get
+            {
+                return mVideoSize.Width* PlayerHeight / mVideoSize.Height;
+            }
+        }
+
+        private async void PBS_SeekCompletedForExtractFrames(MediaPlaybackSession session, object args)
+        {
+            if (mSpan == 0 || !mGettingFrame)
             {
                     return;
             }
@@ -207,15 +318,6 @@ namespace wvv
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
                 var mediaPlayer = session.MediaPlayer;
-                //if (mFrame==0)
-                //{
-                //    mediaPlayer.StepForwardOneFrame();
-                //}
-                //else if(mFrame==FrameCount)
-                //{
-                //    mediaPlayer.StepBackwardOneFrame();
-                //}
-
                 extractFrame(mediaPlayer);
 
                 if (mFrame < mFrameCount)
@@ -226,10 +328,10 @@ namespace wvv
                 else
                 {
                     // OK, Movie is ready now!
+                    mGettingFrame = false;
                     PlaybackSession.Position = TimeSpan.FromMilliseconds(0);
-                    MediaPlayer.IsVideoFrameServerEnabled = false;
-                    mMoviePlayer.Height = 300;
-                    mMoviePlayer.Width = mVideoSize.Width * mMoviePlayer.Height / mVideoSize.Height;
+                    MediaPlayer.IsVideoFrameServerEnabled = CustomDrawing;
+                    CTX.PlayerSize = new Size(PlayerWidth, PlayerHeight);
                     mSlider.Value = 0;
                     CTX.TotalRange = session.NaturalDuration.TotalMilliseconds;
                     CTX.MoviePrepared = true;
@@ -239,11 +341,10 @@ namespace wvv
 
         private async void PBS_PlaybackStateChanged(MediaPlaybackSession session, object args)
         {
-            if (session.MediaPlayer.IsVideoFrameServerEnabled)
+            if(mGettingFrame)
             {
                 return;
             }
-
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
                 switch (session.PlaybackState)
@@ -265,24 +366,29 @@ namespace wvv
             });
         }
 
+        private void updateSliderPosition(double pos)
+        {
+            mReqPosition = pos;
+            mSlider.Value = pos;
+            var border = VisualTreeHelper.GetChild(mFrameListView, 0) as Border;
+            if (null != border)
+            {
+                var scrollViewer = border.Child as ScrollViewer;
+                double offset = (scrollViewer.ExtentWidth - scrollViewer.ViewportWidth) * pos / CTX.TotalRange;
+                Debug.WriteLine("Scroll from {0} to {1}", scrollViewer.HorizontalOffset, offset);
+                scrollViewer.ChangeView(offset, null, null);
+            }
+        }
+
         private async void PBS_PositionChanged(MediaPlaybackSession session, object args)
         {
-            if (session.MediaPlayer.IsVideoFrameServerEnabled)
+            if (mGettingFrame)
             {
                 return;
             }
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
-                mReqPosition = session.Position.TotalMilliseconds;
-                mSlider.Value = mReqPosition;
-                var border = VisualTreeHelper.GetChild(mFrameListView, 0) as Border;
-                if (null != border)
-                {
-                    var scrollViewer = border.Child as ScrollViewer;
-                    double offset = (scrollViewer.ExtentWidth - scrollViewer.ViewportWidth) * mReqPosition / CTX.TotalRange;
-                    Debug.WriteLine("Scroll from {0} to {1}", scrollViewer.HorizontalOffset, offset);
-                    scrollViewer.ChangeView(offset, null, null);
-                }
+                updateSliderPosition(session.Position.TotalMilliseconds);
             });
         }
 
@@ -319,13 +425,16 @@ namespace wvv
             CTX.IsPlaying = false;
             CTX.MoviePrepared = false;
 
+            mGettingFrame = true;
             mMoviePlayer.MediaPlayer.IsVideoFrameServerEnabled = true;
             mMoviePlayer.MediaPlayer.Source = source;       // MediaPlayerが動画ファイルを読み込んだら MP_MediaOpened が呼ばれる。
         }
 
         private void OnFullScreen(object sender, RoutedEventArgs e)
         {
+            mMoviePlayer.MediaPlayer.IsVideoFrameServerEnabled = false;
             mMoviePlayer.AreTransportControlsEnabled = true;
+            CTX.CustomDrawing = false;
             mMoviePlayer.IsFullWindow = true;
 
         }
