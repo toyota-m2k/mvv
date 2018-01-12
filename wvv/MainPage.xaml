@@ -216,7 +216,11 @@
             </Grid>
         </StackPanel>
         <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Center">
-            <mvv:WvvMoviePlayer x:Name="mPlayer" Width="600" Height="400">
+            <mvv:WvvMoviePlayer x:Name="mPlayer" Width="600" Height="400" 
+                                CustomDrawing="true"
+                                LayoutSize="400,200"
+                                PlayerLayout="Width"
+                                >
                 
             </mvv:WvvMoviePlayer>
         </StackPanel>

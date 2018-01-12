@@ -132,7 +132,6 @@
                 Width="{Binding PlayerSize.Width}"
                 Height="{Binding PlayerSize.Height}"
                 Visibility="{Binding CustomDrawing, Converter={StaticResource NegBoolVisibilityConverter}}"
-                SizeChanged="OnPlayerSizeChanged"
                 />
         </Grid>
 

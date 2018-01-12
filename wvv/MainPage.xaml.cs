@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using Windows.ApplicationModel;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Graphics.Display;
@@ -39,16 +40,23 @@ namespace wvv
             this.InitializeComponent();
         }
 
+        private void OnSuspending(object sender, SuspendingEventArgs e)
+        {
+            mPlayer.Stop();
+        }
+
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             mMediaPlayer = new MediaPlayer();
             videoPlayer.SetMediaPlayer(mMediaPlayer);
+            App.Current.Suspending += OnSuspending;
             DataContext = this;
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)
         {
-            if(null!=mMediaPlayer)
+            App.Current.Suspending -= OnSuspending;
+            if (null!=mMediaPlayer)
             {
                 mMediaPlayer.Dispose();
                 mMediaPlayer = null;
