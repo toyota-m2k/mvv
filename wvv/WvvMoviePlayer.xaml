@@ -122,11 +122,13 @@
         <Grid Grid.Row="0"
             Visibility="{Binding MoviePrepared, Converter={StaticResource BoolVisibilityConverter}}">
             <Image x:Name="mFrameImage" 
+                HorizontalAlignment="Left"
                 Width="{Binding PlayerSize.Width}"
                 Height="{Binding PlayerSize.Height}"
                 Visibility="{Binding CustomDrawing, Converter={StaticResource BoolVisibilityConverter}}"/>
             <MediaPlayerElement 
                 x:Name="mMoviePlayer" 
+                Stretch="Fill"
                 AreTransportControlsEnabled="False"
                 HorizontalAlignment="Left"
                 Width="{Binding PlayerSize.Width}"
@@ -149,7 +151,8 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <Button Style="{StaticResource CtrlButtonStyle}" Click="OnButtoPlayStop">
+                    <Button Style="{StaticResource CtrlButtonStyle}" Click="OnButtoPlayStop"
+                            IsEnabled="{Binding MoviePrepared}">
                         <Image x:Name="playButtonImage" Source="{StaticResource PlayIcon}" Width="40" Height="40">
                             <Interactivity:Interaction.Behaviors>
                                 <Core:DataTriggerBehavior Binding="{Binding IsPlaying}" Value="True">

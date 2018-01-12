@@ -146,6 +146,38 @@ namespace wvv
         private Size mVideoSize = new Size(0, 0);
 
         /**
+         * カスタム描画モード
+         *  true: 自前で描画
+         *  false: MediaPlayerに任せる
+         */
+        public bool CustomDrawing
+        {
+            get { return mCustomDrawing; }
+            set
+            {
+                if (value != mCustomDrawing)
+                {
+                    mCustomDrawing = value;
+                    if (null != mMoviePlayer && null != mMoviePlayer.MediaPlayer)
+                    {
+                        mMoviePlayer.MediaPlayer.IsVideoFrameServerEnabled = value;
+                    }
+                    if (!value && IsPlaying)
+                    {
+                        TruckingTimer.Start();
+                    }
+                    else if(null!= mTruckingTimer)
+                    {
+                        mTruckingTimer.Stop();
+                    }
+                    notify("CustomDrawing");
+                }
+            }
+        }
+        private bool mCustomDrawing = true;
+
+
+        /**
          * 再生中:true / 停止中(or初期化中）:false
          */
         public bool IsPlaying
@@ -157,10 +189,38 @@ namespace wvv
                 {
                     mPlaying = value;
                     notify("IsPlaying");
+                    if(!CustomDrawing)
+                    {
+                        if(value)
+                        {
+                            TruckingTimer.Start();
+                        }
+                        else 
+                        {
+                            TruckingTimer.Stop();
+                        }
+                    }
                 }
             }
         }
         private bool mPlaying = false;
+        private DispatcherTimer mTruckingTimer = null;
+        private DispatcherTimer TruckingTimer
+        {
+            get
+            {
+                if(null==mTruckingTimer)
+                {
+                    mTruckingTimer = new DispatcherTimer();
+                    mTruckingTimer.Interval = TimeSpan.FromMilliseconds(10);
+                    mTruckingTimer.Tick += (sender, e) =>
+                    {
+                        updateSliderPosition(PlaybackSession.Position.TotalMilliseconds);
+                    };
+                }
+                return mTruckingTimer;
+            }
+        }
 
         /**
          * フレーム一覧の表示状態
@@ -208,29 +268,6 @@ namespace wvv
         private double mTotalRange = 100;
 
         /**
-         * カスタム描画モード
-         *  true: 自前で描画
-         *  false: MediaPlayerに任せる
-         */
-        public bool CustomDrawing
-        {
-            get { return mCustomDrawing; }
-            set
-            {
-                if (value != mCustomDrawing)
-                {
-                    mCustomDrawing = value;
-                    if (null != mMoviePlayer && null!=mMoviePlayer.MediaPlayer)
-                    {
-                        mMoviePlayer.MediaPlayer.IsVideoFrameServerEnabled = value;
-                    }
-                    notify("CustomDrawing");
-                }
-            }
-        }
-        private bool mCustomDrawing = true;
-
-        /**
          * 矢印キーによるスライダーの移動量
          */
         public double SmallChange
@@ -245,17 +282,37 @@ namespace wvv
             get { return mTotalRange / 20; }
         }
 
+        public IMediaPlaybackSource Source
+        {
+            get
+            {
+                return MediaPlayer?.Source ?? mTempSource;
+            }
+            set
+            {
+                if(null==MediaPlayer)
+                {
+                    mTempSource = value;
+                }
+                else
+                {
+                    SetSource(value);
+                }
+            }
+        }
+        IMediaPlaybackSource mTempSource = null;
+
         #endregion
 
         #region Internal Accessor
 
         private MediaPlayer MediaPlayer
         {
-            get { return mMoviePlayer.MediaPlayer; }
+            get { return mMoviePlayer?.MediaPlayer; }
         }
         private MediaPlaybackSession PlaybackSession
         {
-            get { return mMoviePlayer.MediaPlayer.PlaybackSession; }
+            get { return mMoviePlayer?.MediaPlayer?.PlaybackSession; }
         }
         private WvvMoviePlayer CTX
         {
@@ -304,10 +361,15 @@ namespace wvv
 
             MediaPlayer.MediaOpened += MP_MediaOpened;
             MediaPlayer.VideoFrameAvailable += MP_FrameAvailable;
-            PlaybackSession.PositionChanged += PBS_PositionChanged;
+            //PlaybackSession.PositionChanged += PBS_PositionChanged;
             PlaybackSession.SeekCompleted += PBS_SeekCompletedForExtractFrames;
             PlaybackSession.PlaybackStateChanged += PBS_PlaybackStateChanged;
             mFullWindowListenerToken = mMoviePlayer.RegisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, MPE_FullWindowChanged);
+
+            if(null!=mTempSource)
+            {
+                SetSource(mTempSource);
+            }
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -316,7 +378,7 @@ namespace wvv
 
             MediaPlayer.MediaOpened -= MP_MediaOpened;
             MediaPlayer.VideoFrameAvailable -= MP_FrameAvailable;
-            PlaybackSession.PositionChanged -= PBS_PositionChanged;
+            //PlaybackSession.PositionChanged -= PBS_PositionChanged;
             PlaybackSession.SeekCompleted -= PBS_SeekCompletedForExtractFrames;
             PlaybackSession.PlaybackStateChanged -= PBS_PlaybackStateChanged;
             mMoviePlayer.UnregisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, mFullWindowListenerToken);
@@ -470,18 +532,21 @@ namespace wvv
         /**
          * 再生位置が変化した
          * - トラッカーの位置調整(MediaPlayerで描画するモードのときのみ)
+         * 
+         * この方法だと、イベントが少なすぎて、トラッカーが飛び飛びに動いてぎこちない。
+         * そこで、この方法はやめて、タイマー(DispatcherTimer)を使って、自前でトラッカーを動かすように変更。
          */
-        private async void PBS_PositionChanged(MediaPlaybackSession session, object args)
-        {
-            if (mGettingFrame || CTX.CustomDrawing)
-            {
-                return;
-            }
-            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-            {
-                updateSliderPosition(session.Position.TotalMilliseconds);
-            });
-        }
+        //private async void PBS_PositionChanged(MediaPlaybackSession session, object args)
+        //{
+        //    if (mGettingFrame || CTX.CustomDrawing)
+        //    {
+        //        return;
+        //    }
+        //    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+        //    {
+        //        updateSliderPosition(session.Position.TotalMilliseconds);
+        //    });
+        //}
 
         #endregion
 
@@ -566,7 +631,7 @@ namespace wvv
         /**
          * ソースをセットする
          */
-        public void SetSource(MediaSource source)
+        public void SetSource(IMediaPlaybackSource source)
         {
             CTX.Frames.Clear();
             CTX.IsPlaying = false;
