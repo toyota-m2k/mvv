@@ -684,6 +684,71 @@ namespace wvv
             }
         }
 
+        /**
+         * ホイールによるスライダーの操作にも対応しておこう。
+         */
+        private void OnSliderWheelChanged(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            var elem = sender as UIElement;
+            if (null != elem)
+            {
+                int delta = e.GetCurrentPoint(elem).Properties.MouseWheelDelta;
+                if (0 != delta)
+                {
+                    //Debug.WriteLine("Pointer: WheelChanged", delta);
+                    delta = (delta > 0) ? 1 : -1;
+                    double v = mSlider.Value + delta * mSlider.SmallChange;
+                    if (v < mSlider.Minimum)
+                    {
+                        v = mSlider.Minimum;
+                    }
+                    else if (v > mSlider.Maximum)
+                    {
+                        v = mSlider.Maximum;
+                    }
+                    mSlider.Value = v;
+                }
+            }
+        }
+
+        /**
+         * スライダーのThumbのドラッグが開始された
+         */
+        private void OnSliderDragStarted(object sender, DragStartedEventArgs e)
+        {
+            //Debug.WriteLine("Slider: DragStarted");
+            pauseOnStartTracking();
+        }
+
+        /**
+         * スライダーのThumbのドラッグが終わった
+         */
+        private void OnSliderDragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            //Debug.WriteLine("Slider: DragCompleted");
+            restartOnEndTracking();
+        }
+
+        /**
+         * スライダーのThumb以外の部分がクリックされた
+         */
+        private void OnSliderPointerPressed(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            //Debug.WriteLine("Slider: Pressed");
+            pauseOnStartTracking();
+        }
+
+        /**
+         * スライダーのThumb以外の部分で、マウス/タッチがリリースされた。
+         * 実際には、Thumb上でのReleasedでも呼ばれるみたい。この場合、Pressedは呼ばれず、Releasedだけが呼ばれる・・・なんか気持ち悪い。
+         */
+        private void OnSliderPointerReleased(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            //Debug.WriteLine("Slider: Released");
+            restartOnEndTracking();
+        }
+
+
         #endregion
 
         #region Methods
@@ -766,6 +831,7 @@ namespace wvv
                 catch (Exception e)
                 {
                     // 無視する
+                    Debug.WriteLine(e.ToString());
                 }
                 CTX.Frames.Add(canvasImageSrc);
             }
@@ -780,6 +846,9 @@ namespace wvv
             mSlider.Value = pos;
         }
 
+        /**
+         * スライダー位置に合わせてサムネイルビューをスクロールする
+         */
         private void scrollFrameThumbnails(double pos)
         {
             var border = VisualTreeHelper.GetChild(mFrameListView, 0) as Border;
@@ -792,6 +861,9 @@ namespace wvv
             }
         }
 
+        /**
+         * （ファイルは再読み込みしないで）サムネイルサイズが変わったときなどにサムネイルを再作成する。
+         */
         private void remakeThumbnails()
         {
             if(!MoviePrepared)
@@ -810,31 +882,9 @@ namespace wvv
             beginExtractFrames();
         }
 
-        #endregion
-
-        private void OnSliderWheelChanged(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
-        {
-            var elem = sender as UIElement;
-            if (null != elem) {
-                int delta = e.GetCurrentPoint(elem).Properties.MouseWheelDelta;
-                if (0 != delta)
-                {
-                    Debug.WriteLine("Pointer: WheelChanged", delta);
-                    delta = (delta > 0) ? 1 : -1;
-                    double v = mSlider.Value +  delta * mSlider.SmallChange;
-                    if (v < mSlider.Minimum)
-                    {
-                        v = mSlider.Minimum;
-                    }
-                    else if (v > mSlider.Maximum)
-                    {
-                        v = mSlider.Maximum;
-                    }
-                    mSlider.Value = v;
-                }
-            }
-        }
-
+        /**
+         * スライダー操作中に動画の再生を一時的に停止する
+         */
         private void pauseOnStartTracking()
         {
             mPauseTemporary = IsPlaying;
@@ -844,6 +894,9 @@ namespace wvv
             }
         }
 
+        /**
+         * スライダー操作が終わったときに（必要なら）動画の再生を再開する。
+         */
         private void restartOnEndTracking()
         {
             if (mPauseTemporary)
@@ -852,29 +905,7 @@ namespace wvv
                 MediaPlayer.Play();
             }
         }
+        #endregion
 
-        private void OnSliderDragStarted(object sender, DragStartedEventArgs e)
-        {
-            Debug.WriteLine("Slider: DragStarted");
-            pauseOnStartTracking();
-        }
-
-        private void OnSliderDragCompleted(object sender, DragCompletedEventArgs e)
-        {
-            Debug.WriteLine("Slider: DragCompleted");
-            restartOnEndTracking();
-        }
-
-        private void OnSliderPointerPressed(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
-        {
-            Debug.WriteLine("Slider: Pressed");
-            pauseOnStartTracking();
-        }
-
-        private void OnSliderPointerReleased(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
-        {
-            Debug.WriteLine("Slider: Released");
-            restartOnEndTracking();
-        }
     }
 }
