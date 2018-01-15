@@ -347,10 +347,13 @@
                 </Grid.Resources>
                 <Image x:Name="thumbDummyImage" Visibility="Collapsed" Source="{StaticResource ThumbIcon}">
                     <Interactivity:Interaction.Behaviors>
-                        <Core:DataTriggerBehavior Binding="{Binding ShowingFrames}" Value="True">
+                        <Core:DataTriggerBehavior Binding="{Binding ThumbMode}" Value="NOR">
                             <Core:ChangePropertyAction TargetObject="{Binding ElementName=thumbDummyImage}" PropertyName="Source" Value="{StaticResource ThumbIcon}" />
                         </Core:DataTriggerBehavior>
-                        <Core:DataTriggerBehavior Binding="{Binding ShowingFrames}" Value="False">
+                        <Core:DataTriggerBehavior Binding="{Binding ThumbMode}" Value="MAX">
+                            <Core:ChangePropertyAction TargetObject="{Binding ElementName=thumbDummyImage}" PropertyName="Source" Value="{StaticResource ThumbLongIcon}" />
+                        </Core:DataTriggerBehavior>
+                        <Core:DataTriggerBehavior Binding="{Binding ThumbMode}" Value="MIN">
                             <Core:ChangePropertyAction TargetObject="{Binding ElementName=thumbDummyImage}" PropertyName="Source" Value="{StaticResource ThumbMinIcon}" />
                         </Core:DataTriggerBehavior>
                     </Interactivity:Interaction.Behaviors>
@@ -380,7 +383,7 @@
                     </ListView.ItemsPanel>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="ImageSource">
-                            <Image Source="{Binding}" Height="44"/>
+                            <Image Source="{Binding}"/>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
@@ -396,7 +399,6 @@
                         ValueChanged="OnSliderChanged"
                         PointerWheelChanged="OnSliderWheelChanged"
                         Style="{StaticResource UpperSlider}"/>
-
             </Grid>
         </Grid>
 

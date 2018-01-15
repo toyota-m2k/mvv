@@ -218,8 +218,8 @@
         <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Center">
             <mvv:WvvMoviePlayer x:Name="mPlayer" Width="600" Height="400" 
                                 CustomDrawing="false"
-                                LayoutSize="400,200"
-                                PlayerLayout="Width"
+                                LayoutSize="200,200"
+                                PlayerLayout="Height"
                                 >
                 
             </mvv:WvvMoviePlayer>

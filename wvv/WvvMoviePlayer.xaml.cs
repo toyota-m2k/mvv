@@ -234,10 +234,57 @@ namespace wvv
                 {
                     mShowingFrames = value;
                     notify("ShowingFrames");
+                    notify("ThumbMode");
                 }
             }
         }
         public bool mShowingFrames = true;
+
+        /**
+         * フレームサムネイルの大小
+         */
+        public bool LargeThumbnail
+        {
+            get { return mLargeThumbnail; }
+            set
+            {
+                if (mLargeThumbnail != value)
+                {
+                    mLargeThumbnail = value;
+                    notify("LargeThumbnail");
+                    notify("ThumbMode");
+                    remakeThumbnails();
+                }
+            }
+        }
+        private bool mLargeThumbnail = false;
+
+        /**
+         * Slider Thumbのモード
+         * ShowingFramesとLargeThumbnailを組み合わせてバインドできればよいのだが、
+         * DataTriggerBehaviorで、これを実現する方法がわからないので、１つのプロパティにしておく。
+         */
+        public string ThumbMode
+        {
+            get
+            {
+                if (!ShowingFrames)
+                {
+                    return "MIN";
+                }
+                else
+                {
+                    if (LargeThumbnail)
+                    {
+                        return "MAX";
+                    }
+                    else
+                    {
+                        return "NOR";
+                    }
+                }
+            }
+        }
 
         /**
          * フレームリスト
@@ -266,6 +313,14 @@ namespace wvv
             }
         }
         private double mTotalRange = 100;
+
+        private double ThumbnailHeight
+        {
+            get
+            {
+                return (mLargeThumbnail) ? 63 : 44;
+            }
+        }
 
         /**
          * 矢印キーによるスライダーの移動量
@@ -446,20 +501,7 @@ namespace wvv
         {
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
-                if (null != mFrameServerDest)
-                {
-                    mFrameServerDest.Dispose();
-                    mFrameServerDest = null;
-                    mCanvasImageSource = null;
-                }
-                double total = mediaPlayer.PlaybackSession.NaturalDuration.TotalMilliseconds;
-                mSpan = total / (mFrameCount + 1);
-                mOffset = mSpan / 2;
-                mFrame = 0;
-                var videoSize = new Size(mediaPlayer.PlaybackSession.NaturalVideoWidth, mediaPlayer.PlaybackSession.NaturalVideoHeight);
-                CTX.VideoSize = videoSize;
-                mThumbnailSize.Width = videoSize.Width * mThumbnailSize.Height / videoSize.Height;
-                mediaPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(mOffset);
+                beginExtractFrames();
             });
         }
         #endregion
@@ -598,7 +640,23 @@ namespace wvv
          */
         private void OnShowHideFrameList(object sender, RoutedEventArgs e)
         {
-            CTX.ShowingFrames = !CTX.ShowingFrames;
+            // CTX.ShowingFrames = !CTX.ShowingFrames;
+            if(!CTX.ShowingFrames)
+            {
+                CTX.ShowingFrames = true;
+            }
+            else
+            {
+                if(CTX.LargeThumbnail)
+                {
+                    CTX.LargeThumbnail = false;
+                    CTX.ShowingFrames = false;
+                }
+                else
+                {
+                    CTX.LargeThumbnail = true;
+                }
+            }
         }
 
         /**
@@ -668,6 +726,28 @@ namespace wvv
         }
 
         /**
+         * 動画ファイルのオープンに成功したのち、フレームサムネイルの抽出を開始する。
+         */
+        private void beginExtractFrames()
+        {
+            if (null != mFrameServerDest)
+            {
+                mFrameServerDest.Dispose();
+                mFrameServerDest = null;
+                mCanvasImageSource = null;
+            }
+            double total = MediaPlayer.PlaybackSession.NaturalDuration.TotalMilliseconds;
+            mSpan = total / (mFrameCount + 1);
+            mOffset = mSpan / 2;
+            mFrame = 0;
+            var videoSize = new Size(MediaPlayer.PlaybackSession.NaturalVideoWidth, MediaPlayer.PlaybackSession.NaturalVideoHeight);
+            CTX.VideoSize = videoSize;
+            mThumbnailSize.Height = ThumbnailHeight;
+            mThumbnailSize.Width = videoSize.Width * mThumbnailSize.Height / videoSize.Height;
+            MediaPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(mOffset);
+        }
+
+        /**
          * １フレーム抽出
          */
         private void extractFrame(MediaPlayer mediaPlayer)
@@ -710,6 +790,24 @@ namespace wvv
                 // Debug.WriteLine("Scroll from {0} to {1}", scrollViewer.HorizontalOffset, offset);
                 scrollViewer.ChangeView(offset, null, null);
             }
+        }
+
+        private void remakeThumbnails()
+        {
+            if(!MoviePrepared)
+            {
+                return;
+            }
+            Stop();
+            MediaPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(0);
+
+            CTX.Frames.Clear();
+            CTX.IsPlaying = false;
+            mPauseTemporary = false;
+            mGettingFrame = true;
+
+            MediaPlayer.IsVideoFrameServerEnabled = true;
+            beginExtractFrames();
         }
 
         #endregion
