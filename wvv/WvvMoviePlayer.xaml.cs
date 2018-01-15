@@ -343,6 +343,7 @@ namespace wvv
         int mFrame = 0;
         Size mThumbnailSize = new Size(44, 44);
         bool mCustomDrawingBackup = false;
+        bool mPauseTemporary = false;
 
         #endregion
 
@@ -618,6 +619,7 @@ namespace wvv
         private void OnSliderChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
             var slider = sender as Slider;
+            scrollFrameThumbnails(slider.Value);
             if (null != slider && mReqPosition != slider.Value)
             {
                 PlaybackSession.Position = TimeSpan.FromMilliseconds(slider.Value);
@@ -636,7 +638,7 @@ namespace wvv
             CTX.Frames.Clear();
             CTX.IsPlaying = false;
             CTX.MoviePrepared = false;
-
+            mPauseTemporary = false;
             mGettingFrame = true;
             mMoviePlayer.MediaPlayer.IsVideoFrameServerEnabled = true;
             mMoviePlayer.MediaPlayer.Source = source;       // MediaPlayerが動画ファイルを読み込んだら MP_MediaOpened が呼ばれる。
@@ -696,17 +698,85 @@ namespace wvv
         {
             mReqPosition = pos;
             mSlider.Value = pos;
+        }
+
+        private void scrollFrameThumbnails(double pos)
+        {
             var border = VisualTreeHelper.GetChild(mFrameListView, 0) as Border;
             if (null != border)
             {
                 var scrollViewer = border.Child as ScrollViewer;
                 double offset = (scrollViewer.ExtentWidth - scrollViewer.ViewportWidth) * pos / CTX.TotalRange;
-                Debug.WriteLine("Scroll from {0} to {1}", scrollViewer.HorizontalOffset, offset);
+                // Debug.WriteLine("Scroll from {0} to {1}", scrollViewer.HorizontalOffset, offset);
                 scrollViewer.ChangeView(offset, null, null);
             }
         }
 
         #endregion
 
+        private void OnSliderWheelChanged(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            var elem = sender as UIElement;
+            if (null != elem) {
+                int delta = e.GetCurrentPoint(elem).Properties.MouseWheelDelta;
+                if (0 != delta)
+                {
+                    Debug.WriteLine("Pointer: WheelChanged", delta);
+                    delta = (delta > 0) ? 1 : -1;
+                    double v = mSlider.Value +  delta * mSlider.SmallChange;
+                    if (v < mSlider.Minimum)
+                    {
+                        v = mSlider.Minimum;
+                    }
+                    else if (v > mSlider.Maximum)
+                    {
+                        v = mSlider.Maximum;
+                    }
+                    mSlider.Value = v;
+                }
+            }
+        }
+
+        private void pauseOnStartTracking()
+        {
+            mPauseTemporary = IsPlaying;
+            if (mPauseTemporary)
+            {
+                MediaPlayer.Pause();
+            }
+        }
+
+        private void restartOnEndTracking()
+        {
+            if (mPauseTemporary)
+            {
+                mPauseTemporary = false;
+                MediaPlayer.Play();
+            }
+        }
+
+        private void OnSliderDragStarted(object sender, DragStartedEventArgs e)
+        {
+            Debug.WriteLine("Slider: DragStarted");
+            pauseOnStartTracking();
+        }
+
+        private void OnSliderDragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            Debug.WriteLine("Slider: DragCompleted");
+            restartOnEndTracking();
+        }
+
+        private void OnSliderPointerPressed(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            Debug.WriteLine("Slider: Pressed");
+            pauseOnStartTracking();
+        }
+
+        private void OnSliderPointerReleased(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            Debug.WriteLine("Slider: Released");
+            restartOnEndTracking();
+        }
     }
 }

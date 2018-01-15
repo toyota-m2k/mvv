@@ -228,7 +228,10 @@
                                             </Style>
                                         </Grid.Resources>
                                         <Grid x:Name="SliderContainer" 
-                                          Background="Transparent">
+                                            Background="Transparent"
+                                            PointerPressed="OnSliderPointerPressed"
+                                            PointerReleased="OnSliderPointerReleased"                                              
+                                            >
                                             <Grid x:Name="HorizontalTemplate">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -261,7 +264,9 @@
                                                    AutomationProperties.AccessibilityView="Raw" 
                                                    Grid.Column="1" 
                                                    DataContext="{TemplateBinding Value}" 
-                                                   Style="{StaticResource SliderThumbStyle}" 
+                                                   Style="{StaticResource SliderThumbStyle}"
+                                                   DragStarted="OnSliderDragStarted"
+                                                   DragCompleted="OnSliderDragCompleted"
                                                    />
                                             </Grid>
                                         </Grid>
@@ -388,7 +393,8 @@
                         SmallChange="{Binding SmallChange}"
                         LargeChange="{Binding LargeChange}"
                         Value="0"
-                        ValueChanged="OnSliderChanged"    
+                        ValueChanged="OnSliderChanged"
+                        PointerWheelChanged="OnSliderWheelChanged"
                         Style="{StaticResource UpperSlider}"/>
 
             </Grid>
