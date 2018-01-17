@@ -97,6 +97,9 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WvvConverter.cs" />
+    <Compile Include="WvvMarkerView.xaml.cs">
+      <DependentUpon>WvvMarkerView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WvvMovieControlPanel.xaml.cs">
       <DependentUpon>WvvMovieControlPanel.xaml</DependentUpon>
     </Compile>
@@ -147,6 +150,10 @@
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WvvMarkerView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="WvvMovieControlPanel.xaml">
       <SubType>Designer</SubType>

@@ -310,6 +310,7 @@ namespace wvv
                     notify("SmallChange");
                     notify("LargeChange");
                 }
+                mMarkerView.TotalRange = value;
             }
         }
         private double mTotalRange = 100;
@@ -381,6 +382,10 @@ namespace wvv
         public delegate bool CustomDrawHandler(WvvMoviePlayer sender, CanvasDrawingSession ds, ICanvasImage frame);
         public event CustomDrawHandler CustomDraw;
 
+        public delegate void MarkerEvent(WvvMoviePlayer sender, double position, object requester);
+        public event MarkerEvent MarkerAdded;
+        public event MarkerEvent MarkerRemoved;
+
         #endregion
 
         #region Fields
@@ -410,6 +415,9 @@ namespace wvv
             this.DataContext = this;
         }
 
+        /**
+         * 初期化
+         */
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             mMoviePlayer.SetMediaPlayer(new MediaPlayer());
@@ -422,12 +430,18 @@ namespace wvv
             PlaybackSession.PlaybackStateChanged += PBS_PlaybackStateChanged;
             mFullWindowListenerToken = mMoviePlayer.RegisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, MPE_FullWindowChanged);
 
-            if(null!=mTempSource)
+            mMarkerView.MarkerSelected += MV_MarkerSelected;
+            mMarkerView.MarkerAdded += MV_MarkerAdded;
+            mMarkerView.MarkerRemoved += MV_MarkerRemoved;
+            if (null!=mTempSource)
             {
                 SetSource(mTempSource);
             }
         }
 
+        /**
+         * 後始末
+         */
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             MediaPlayer.Pause();
@@ -438,6 +452,10 @@ namespace wvv
             PlaybackSession.SeekCompleted -= PBS_SeekCompletedForExtractFrames;
             PlaybackSession.PlaybackStateChanged -= PBS_PlaybackStateChanged;
             mMoviePlayer.UnregisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, mFullWindowListenerToken);
+
+            mMarkerView.MarkerSelected -= MV_MarkerSelected;
+            mMarkerView.MarkerAdded -= MV_MarkerAdded;
+            mMarkerView.MarkerRemoved -= MV_MarkerRemoved;
 
             MediaPlayer.Dispose();
             if (null != mFrameServerDest)
@@ -452,7 +470,9 @@ namespace wvv
 
         #region MediaPlayer Event Listener
 
-
+        /**
+         * CustomDrawingモード時のフレーム描画処理
+         */
         private async void MP_FrameAvailable(MediaPlayer mediaPlayer, object args)
         {
             if (mGettingFrame)
@@ -672,6 +692,30 @@ namespace wvv
         }
 
         /**
+         * マーカー追加ボタンクリック
+         */
+        private void OnAddMarker(object sender, RoutedEventArgs e)
+        {
+            mMarkerView.AddMarker(PlaybackSession.Position.TotalMilliseconds, this);
+        }
+
+        /**
+         * 次のマーカー位置へシーク
+         */
+        private void OnNextMarker(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            mMarkerView.NextMark(mSlider.Value, this);
+        }
+
+        /**
+         * 前のマーカー位置へシーク
+         */
+        private void OnPrevMarker(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            mMarkerView.PrevMark(mSlider.Value, this);
+        }
+
+        /**
          * スライダーのトラッカー操作
          */
         private void OnSliderChanged(object sender, RangeBaseValueChangedEventArgs e)
@@ -748,48 +792,33 @@ namespace wvv
             restartOnEndTracking();
         }
 
+        /**
+         * マーカー削除通知
+         */
+        private void MV_MarkerRemoved(double value, object clientData)
+        {
+            MarkerRemoved?.Invoke(this, value, clientData);
+        }
+
+        /**
+         * マーカー追加通知
+         */
+        private void MV_MarkerAdded(double value, object clientData)
+        {
+            MarkerAdded?.Invoke(this, value, clientData);
+        }
+
+        /**
+         * マーカー選択通知
+         */
+        private void MV_MarkerSelected(double value, object clientData)
+        {
+            mSlider.Value = value;
+        }
 
         #endregion
 
-        #region Methods
-
-        /**
-         * ソースをセットする
-         */
-        public void SetSource(IMediaPlaybackSource source)
-        {
-            CTX.Frames.Clear();
-            CTX.IsPlaying = false;
-            CTX.MoviePrepared = false;
-            mPauseTemporary = false;
-            mGettingFrame = true;
-            mMoviePlayer.MediaPlayer.IsVideoFrameServerEnabled = true;
-            mMoviePlayer.MediaPlayer.Source = source;       // MediaPlayerが動画ファイルを読み込んだら MP_MediaOpened が呼ばれる。
-        }
-
-        /**
-         * 再生を開始
-         */
-        public void Start()
-        {
-            if (CTX.MoviePrepared)
-            {
-                if (!CTX.IsPlaying)
-                {
-                    MediaPlayer.Play();
-                }
-            }
-        }
-
-        /**
-         * 再生中にアプリを終了すると例外（COMException:サスペンドされたアプリから動画再生を継続しようとした）がでるので、
-         * Application.OnSuspending()のタイミングでStopを呼び出すこと。
-         */
-        public void Stop()
-        {
-            MediaPlayer.Pause();
-        }
-
+        #region Privates
         /**
          * 動画ファイルのオープンに成功したのち、フレームサムネイルの抽出を開始する。
          */
@@ -856,7 +885,7 @@ namespace wvv
             {
                 var scrollViewer = border.Child as ScrollViewer;
                 double offset = (scrollViewer.ExtentWidth - scrollViewer.ViewportWidth) * pos / CTX.TotalRange;
-                // Debug.WriteLine("Scroll from {0} to {1}", scrollViewer.HorizontalOffset, offset);
+                // Debug.WriteLine("Scroll from {0} to {1}", scrollViewer.HorizontalOffset, offset);*
                 scrollViewer.ChangeView(offset, null, null);
             }
         }
@@ -866,7 +895,7 @@ namespace wvv
          */
         private void remakeThumbnails()
         {
-            if(!MoviePrepared)
+            if (!MoviePrepared)
             {
                 return;
             }
@@ -905,6 +934,64 @@ namespace wvv
                 MediaPlayer.Play();
             }
         }
+        #endregion
+
+        #region Methods
+
+        /**
+         * ソースをセットする
+         */
+        public void SetSource(IMediaPlaybackSource source)
+        {
+            CTX.Frames.Clear();
+            CTX.IsPlaying = false;
+            CTX.MoviePrepared = false;
+            mPauseTemporary = false;
+            mGettingFrame = true;
+            mMarkerView.Clear();
+            mMoviePlayer.MediaPlayer.IsVideoFrameServerEnabled = true;
+            mMoviePlayer.MediaPlayer.Source = source;       // MediaPlayerが動画ファイルを読み込んだら MP_MediaOpened が呼ばれる。
+        }
+
+        /**
+         * 再生を開始
+         */
+        public void Start()
+        {
+            if (CTX.MoviePrepared)
+            {
+                if (!CTX.IsPlaying)
+                {
+                    MediaPlayer.Play();
+                }
+            }
+        }
+
+        /**
+         * 再生中にアプリを終了すると例外（COMException:サスペンドされたアプリから動画再生を継続しようとした）がでるので、
+         * Application.OnSuspending()のタイミングでStopを呼び出すこと。
+         */
+        public void Stop()
+        {
+            MediaPlayer.Pause();
+        }
+
+        /**
+         * マーカーを追加
+         */
+        public void AddMarker(double position, object requester)
+        {
+            mMarkerView.AddMarker(position, requester);
+        }
+
+        /**
+         * マーカーを削除
+         */
+        public void RemoveMarker(double position, object requester)
+        {
+            mMarkerView.RemoveMarker(position, requester);
+        }
+
         #endregion
 
     }

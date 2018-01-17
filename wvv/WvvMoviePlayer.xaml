@@ -151,7 +151,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <Button Style="{StaticResource CtrlButtonStyle}" Click="OnButtoPlayStop"
+                    <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnButtoPlayStop"
                             IsEnabled="{Binding MoviePrepared}">
                         <Image x:Name="playButtonImage" Source="{StaticResource PlayIcon}" Width="40" Height="40">
                             <Interactivity:Interaction.Behaviors>
@@ -165,24 +165,24 @@
                         </Image>
 
                     </Button>
-                    <Button Style="{StaticResource CtrlButtonStyle}">
+                    <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnPrevMarker">
                         <Image Source="{StaticResource BackIcon}" Width="40" Height="40"/>
                     </Button>
-                    <Button Style="{StaticResource CtrlButtonStyle}">
+                    <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnNextMarker">
                         <Image Source="{StaticResource ForwardIcon}" Width="40" Height="40"/>
                     </Button>
-                    <Button Style="{StaticResource CtrlButtonStyle}">
+                    <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnAddMarker">
                         <Image Source="{StaticResource AddMarkerIcon}" Width="40" Height="40"/>
                     </Button>
                     <Button Style="{StaticResource CtrlButtonStyle}">
                         <Image Source="{StaticResource PinPIcon}" Width="40" Height="40"/>
                     </Button>
-                    <Button Style="{StaticResource CtrlButtonStyle}" Click="OnFullScreen">
+                    <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnFullScreen">
                         <Image Source="{StaticResource FullScreenOpenIcon}" Width="40" Height="40"/>
                     </Button>
                 </StackPanel>
                 <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                    <Button Style="{StaticResource CtrlButtonStyle}" Click="OnShowHideFrameList">
+                    <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnShowHideFrameList">
                         <Image x:Name="frameButtonImage" Source="{StaticResource ThumbnailOffIcon}" Width="40" Height="40">
                             <Interactivity:Interaction.Behaviors>
                                 <Core:DataTriggerBehavior Binding="{Binding ShowingFrames}" Value="True">
@@ -197,6 +197,7 @@
                 </StackPanel>
             </Grid>
             <!-- しおり（Marker) -->
+            <wvv:WvvMarkerView Grid.Row="1" x:Name="mMarkerView"/>
 
             <!-- スライダー＋フレームリスト -->
             <Grid Grid.Row="2">
