@@ -377,17 +377,6 @@ namespace wvv
 
         #endregion
 
-        #region Events
-
-        public delegate bool CustomDrawHandler(WvvMoviePlayer sender, CanvasDrawingSession ds, ICanvasImage frame);
-        public event CustomDrawHandler CustomDraw;
-
-        public delegate void MarkerEvent(WvvMoviePlayer sender, double position, object requester);
-        public event MarkerEvent MarkerAdded;
-        public event MarkerEvent MarkerRemoved;
-
-        #endregion
-
         #region Fields
 
         long mFullWindowListenerToken = 0;
@@ -696,7 +685,7 @@ namespace wvv
          */
         private void OnAddMarker(object sender, RoutedEventArgs e)
         {
-            mMarkerView.AddMarker(PlaybackSession.Position.TotalMilliseconds, this);
+            mMarkerView.AddMarker(PlaybackSession.Position.TotalMilliseconds, mMarkerView);
         }
 
         /**
@@ -704,7 +693,7 @@ namespace wvv
          */
         private void OnNextMarker(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
-            mMarkerView.NextMark(mSlider.Value, this);
+            mMarkerView.NextMark(mSlider.Value, mMarkerView);
         }
 
         /**
@@ -712,7 +701,7 @@ namespace wvv
          */
         private void OnPrevMarker(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
-            mMarkerView.PrevMark(mSlider.Value, this);
+            mMarkerView.PrevMark(mSlider.Value, mMarkerView);
         }
 
         /**
@@ -934,6 +923,45 @@ namespace wvv
                 MediaPlayer.Play();
             }
         }
+        #endregion
+
+        #region Events
+
+        /**
+         * CustomDrawing モードのときの描画用イベント
+         * デフォルトの処理は、
+         * 
+         *  ds.DrawImage(frame);
+         * 
+         * だが、このイベントをハンドリングすればフィルター処理などを行うことが可能。
+         * 
+         * 例）
+         *  wvvMoviePlayer.CustomDrawing = true;
+         *  wvvMoviePlayer.CustomDraw += (sender, ds, frame) => {
+         *  var gaussianBlurEffect = new GaussianBlurEffect {
+         *          Source = frame,
+         *          BlurAmount = 5f,
+         *          Optimization = EffectOptimization.Speed
+         *      };
+         *      ds.DrawImage(gaussianBlurEffect);
+         *  }
+         * 
+         */
+        public delegate bool CustomDrawHandler(WvvMoviePlayer sender, CanvasDrawingSession ds, ICanvasImage frame);
+        public event CustomDrawHandler CustomDraw;
+
+        /**
+         * マーカーの追加/削除の通知イベント
+         * 
+         * マーカーの追加・削除は、WvvMoviePlayer/WvvMarkerViewのUI操作によって実行される場合と、
+         * 外部から WvvMoviePlayer.AddMarker/RemoveMarker()を呼び出すことによって実行される場合がありえる。
+         * これらを区別するためには、requester 引数を利用する。
+         * 内部から呼び出された場合は、requesterに、WvvMoviePlayerまたはWvvMarkerViewのインスタンスがセットされる。
+         */
+        public delegate void MarkerEvent(WvvMoviePlayer sender, double position, object requester);
+        public event MarkerEvent MarkerAdded;
+        public event MarkerEvent MarkerRemoved;
+
         #endregion
 
         #region Methods
