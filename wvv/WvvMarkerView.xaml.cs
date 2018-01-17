@@ -21,15 +21,20 @@ using Windows.UI.Xaml.Navigation;
 
 namespace wvv
 {
-    public interface IAppendMarkerChecker
+    /**
+     * マーカー設定時のチェック用i/f
+     * WvvMarkerView.AddMarker()の第二引数(clientData)に渡して使う。
+     */
+    public interface IAddMarkerChecker
     {
-        bool CanAppendMarker(double position);
+        bool CanAddMarker(double position);
     }
 
-    public sealed partial class WvvMarkerView : UserControl, IAppendMarkerChecker
+    public sealed partial class WvvMarkerView : UserControl, IAddMarkerChecker
     {
         #region Constants
 
+        // レイアウト情報（アイコンサイズなどが変わったら見直しが必要
         const double POS_MIN = -1;
         const double POS_RIGHT_MARGIN = 16;
 
@@ -37,8 +42,8 @@ namespace wvv
 
         #region Fields
 
-        BitmapImage mMarkerImage;
-        SortedList<double, Image> mMarkers;
+        BitmapImage mMarkerImage;                   // マーカーアイコン
+        SortedList<double, Image> mMarkers;         // マーカーリスト
 
         #endregion
 
@@ -54,6 +59,9 @@ namespace wvv
 
         #region Properties
 
+        /**
+         * WvvMarkerViewのTotalRangeと同じ。
+         */
         public double TotalRange
         {
             get { return mTotalRange; }
@@ -68,10 +76,23 @@ namespace wvv
         }
         private double mTotalRange = 100;
 
+        /**
+         * マーカー設定間隔の最小値（デフォルト：100ms）
+         * 変更すると、それ以降の設定操作に対して有効となり、すでに設定されているマーカーには影響しない。
+         */
+        public double MinMarkerSpan
+        {
+            get; set;
+        } = 100;       // 100 ms
+
         #endregion
 
         #region UI Event Handlers
 
+        /**
+         * マーカー上での右クリック（orロングタップ）
+         * --> 削除
+         */
         private async void OnMarkerRightTapped(object sender, RightTappedRoutedEventArgs e)
         {
             // Debug.WriteLine("Mark Right Tapped {0}", (double)((Image)sender).Tag);
@@ -97,6 +118,10 @@ namespace wvv
             }
         }
 
+        /**
+         * マーカー上での左クリック（orタップ）
+         * --> 追加
+         */
         private void OnMarkerTapped(object sender, TappedRoutedEventArgs e)
         {
             // Debug.WriteLine("Mark Tapped {0}", (double)((Image)sender).Tag);
@@ -107,6 +132,9 @@ namespace wvv
             }
         }
 
+        /**
+         * ビューサイズが変更されたときに、マーカーアイコンの位置を更新する。
+         */
         private void OnSizeChanged(object sender, SizeChangedEventArgs e)
         {
             resetMarkerIconPositions();
@@ -116,6 +144,9 @@ namespace wvv
 
         #region Private Methods
 
+        /**
+         * マーカーアイコンを作る
+         */
         private Image createMarkerIcon(double value)
         {
             Image img = new Image();
@@ -130,12 +161,18 @@ namespace wvv
             return img;
         }
 
+        /**
+         * マーカーアイコンの後始末
+         */
         private void destroyMarkerIcon(Image img)
         {
             img.Tapped -= OnMarkerTapped;
             img.RightTapped -= OnMarkerRightTapped;
         }
 
+        /**
+         * マーカーアイコンの位置を設定する
+         */
         private void setMarkerIconPosition(Image img)
         {
             double value = (double)img.Tag;
@@ -144,6 +181,9 @@ namespace wvv
             img.Margin = new Thickness(pos, 0, 0, 0);
         }
 
+        /**
+         * すべてのマーカーアイコンの位置を再調整する。
+         */
         private void resetMarkerIconPositions()
         {
             foreach (Image img in mMarkerContainer.Children)
@@ -152,6 +192,9 @@ namespace wvv
             }
         }
 
+        /**
+         * マーカーを削除
+         */
         private void removeMarker(Image img, object clientData)
         {
             destroyMarkerIcon(img);
@@ -160,10 +203,65 @@ namespace wvv
             MarkerRemoved?.Invoke((double)img.Tag, clientData);
         }
 
+        /**
+         * マーカーを選択
+         */
         private void selectMarker(Image img, object clientData)
         {
             MarkerSelected?.Invoke((double)img.Tag, clientData);
         }
+
+        /**
+         * 指定位置(current)近傍のマーカーを取得
+         * 
+         * @param prev (out) currentの前のマーカー（なければ-1）
+         * @param next (out) currentの次のマーカー（なければ-1）
+         * @return true: currentがマーカー位置にヒット（prevとnextにひとつ前/後のindexがセットされる）
+         *         false: ヒットしていない
+         */
+        private bool getNeighbourMarkIndex(double current, out int prev, out int next)
+        {
+            prev = next = -1;
+            int count = mMarkers.Count, s = 0, e = count - 1, m;
+            if (e < 0)
+            {
+                return false;
+            }
+
+            var markers = mMarkers.Keys;
+            if (markers[e] < current)
+            {
+                prev = e;
+                return false;
+            }
+
+            while (s < e)
+            {
+                m = (s + e) / 2;
+                double v = markers[m];
+                if (v == current)
+                {
+                    prev = m - 1;
+                    if (m < count - 1)
+                    {
+                        next = m + 1;
+                    }
+                    return true;
+                }
+                else if (v < current)
+                {
+                    s = m + 1;
+                }
+                else // current < markers[m]
+                {
+                    e = m;
+                }
+            }
+            next = s;
+            prev = s - 1;
+            return false;
+        }
+
 
         #endregion
 
@@ -204,10 +302,10 @@ namespace wvv
         public void AddMarker(double value, object clientData)
         {
             Image img;
-            var checker = clientData as IAppendMarkerChecker;
+            var checker = clientData as IAddMarkerChecker;
             if(null!=checker)
             {
-                if(!checker.CanAppendMarker(value))
+                if(!checker.CanAddMarker(value))
                 {
                     return;
                 }
@@ -235,57 +333,6 @@ namespace wvv
             {
                 removeMarker(img, clientData);
             }
-        }
-
-        /**
-         * 指定位置(current)近傍のマーカーを取得
-         * 
-         * @param prev (out) currentの前のマーカー（なければ-1）
-         * @param next (out) currentの次のマーカー（なければ-1）
-         * @return true: currentがマーカー位置にヒット（prevとnextにひとつ前/後のindexがセットされる）
-         *         false: ヒットしていない
-         */
-        private bool getNeighbourMarkIndex(double current, out int prev, out int next)
-        {
-            prev = next = -1;
-            int count = mMarkers.Count, s = 0, e = count - 1, m;
-            if (e < 0)
-            {
-                return false;
-            }
-
-            var markers = mMarkers.Keys;
-            if(markers[e]<current)
-            {
-                prev = e;
-                return false;
-            }
-
-            while (s < e)
-            {
-                m = (s + e) / 2;
-                double v = markers[m];
-                if (v == current)
-                {
-                    prev = m - 1;
-                    if(m<count-1)
-                    {
-                        next = m + 1;
-                    }
-                    return true;
-                }
-                else if (v < current)
-                {
-                    s = m + 1;
-                }
-                else // current < markers[m]
-                {
-                    e = m;
-                }
-            }
-            next = s;
-            prev = s - 1;
-            return false;
         }
 
         /**
@@ -404,8 +451,7 @@ namespace wvv
          * マーカーを設定可能な最小スパンのチェック
          * あほみたいに追加ボタンを押してマーカーだらけになるのを回避するためのチェック
          */
-        private const double MIN_MARKER_SPAN = 100;       // 100 ms
-        public bool CanAppendMarker(double position)
+        public bool CanAddMarker(double position)
         {
             int next, prev;
             if(getNeighbourMarkIndex(position, out prev, out next))
@@ -413,11 +459,11 @@ namespace wvv
                 return false;
             }
 
-            if(prev>=0 && Math.Abs(mMarkers.Keys[prev]-position) < MIN_MARKER_SPAN)
+            if(prev>=0 && Math.Abs(mMarkers.Keys[prev]-position) < MinMarkerSpan)
             {
                 return false;
             }
-            if(next>=0 && Math.Abs(mMarkers.Keys[next]-position) < MIN_MARKER_SPAN)
+            if(next>=0 && Math.Abs(mMarkers.Keys[next]-position) < MinMarkerSpan)
             {
                 return false;
             }
@@ -442,6 +488,7 @@ namespace wvv
          * マーカーが選択されたときのイベント
          */
         public event MarkerEvent MarkerSelected;
-#endregion
+        
+        #endregion
     }
 }
