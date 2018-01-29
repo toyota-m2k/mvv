@@ -10,12 +10,13 @@
     Loaded="Page_Loaded">
 
     <StackPanel Orientation="Horizontal">
-        <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
-            <Button Click="PickFile_Click">Pick File</Button>
-            <Button Click="Play_Click">Play (default)</Button>
-            <Button Click="Play2_Click">Play (framewize drawing)</Button>
-            <Button Click="Play3_Click">Play (MMJ flavored player)</Button>
-            <Button Click="Frames_Click">Show Frames</Button>
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Center">
+            <Button Margin="4" Click="PickFile_Click">Pick File</Button>
+            <Button Margin="4" Click="Play_Click">Play (default)</Button>
+            <Button Margin="4" Click="Play2_Click">Play (framewize drawing)</Button>
+            <Button Margin="4" Click="Play3_Click">Play (MMJ flavored player)</Button>
+            <Button Margin="4" Click="Frames_Click">Show Frames</Button>
+            <Button Margin="4" Click="PinP_Click">P in P</Button>
         </StackPanel>
         <StackPanel Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Orientation="Vertical" HorizontalAlignment="Center">
             <MediaPlayerElement 

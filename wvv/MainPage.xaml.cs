@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
+using Windows.ApplicationModel.Core;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Graphics.Display;
@@ -18,6 +19,9 @@ using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.UI.Core;
+using Windows.UI.Core.Preview;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -51,6 +55,12 @@ namespace wvv
             videoPlayer.SetMediaPlayer(mMediaPlayer);
             App.Current.Suspending += OnSuspending;
             DataContext = this;
+
+            SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += (s, a) =>
+            {
+                Debug.WriteLine("MainPage Close Requested");
+            };
+
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)
@@ -338,6 +348,68 @@ namespace wvv
                 return;
             }
            mPlayer.SetSource(MediaSource.CreateFromStorageFile(mVideoFile));
+
+        }
+
+        private async void PinP_Click(object sender, RoutedEventArgs e)
+        {
+            if(!WvvPinPPage.IsSupported)
+            {
+                return;
+            }
+
+            if (null == mVideoFile)
+            {
+                var v = pickAndPlay(PinP_Click);
+                return;
+            }
+
+            await WvvPinPPage.OpenPinP(MediaSource.CreateFromStorageFile(mVideoFile), (player) =>
+            {
+                var timer = new DispatcherTimer();
+                timer.Interval = TimeSpan.FromSeconds(3);
+                timer.Tick += (x, a) =>
+                {
+                    player.Close();
+                };
+                timer.Start();
+            });
+
+#if false
+            CoreApplicationView newView = CoreApplication.CreateNewView();
+            int newViewId = 0;
+            await newView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+            {
+                Frame frame = new Frame();
+                frame.Navigate(typeof(WvvPinPPage), mVideoFile);
+                Window.Current.Content = frame;
+                // You have to activate the window in order to show it later.
+
+                //SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += (s, a) =>
+                //{
+                //    Debug.WriteLine("Close Requested");
+                //};
+
+                //Window.Current.Closed += (s, a) =>
+                //{
+                //    Debug.WriteLine("Closed");
+                //};
+                //Window.Current.Activated += (s, a) =>
+                //{
+                //    Debug.WriteLine(String.Format("Activated {0}", a.WindowActivationState.ToString()));
+                //};
+                //Window.Current.VisibilityChanged += (s, a) =>
+                //{
+                //    Debug.WriteLine(String.Format("Visibility Changed {0}", a.Visible.ToString()));
+                //};
+                Window.Current.Activate();
+
+                newViewId = ApplicationView.GetForCurrentView().Id;
+                await ApplicationView.GetForCurrentView().TryEnterViewModeAsync(ApplicationViewMode.CompactOverlay);
+            });
+            
+            bool viewShown = await ApplicationViewSwitcher.TryShowAsStandaloneAsync(newViewId);
+#endif
 
         }
     }
