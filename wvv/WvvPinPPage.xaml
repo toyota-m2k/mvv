@@ -8,9 +8,10 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <MediaPlayerElement x:Name="mPlayer"
-                            Stretch="Uniform"
-                AreTransportControlsEnabled="True"
-                            />
+        <MediaPlayerElement 
+            x:Name="mPlayer"
+            Stretch="Uniform"
+            AreTransportControlsEnabled="True"
+            />
     </Grid>
 </Page>

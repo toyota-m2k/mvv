@@ -52,13 +52,18 @@ namespace wvv
         private class PinPCreationInfo
         {
             private static int sIDGenerator = 0;
+
             public int ID { get; private set; }
             public MediaSource Source { get; private set; }
+            public double StartAt { get; private set; }
+            public Size? ReqSize { get; private set; }
 
-            public PinPCreationInfo(MediaSource source)
+            public PinPCreationInfo(MediaSource source, double startAt, Size? reqSize)
             {
                 this.Source = source;
                 this.ID = ++sIDGenerator;
+                this.StartAt = startAt;
+                this.ReqSize = reqSize;
             }
         }
 
@@ -76,16 +81,18 @@ namespace wvv
 
         /**
          * PinPPageを開く
-         * @param   source  動画ソース
-         * @param   opened  IPinPPlayerを返すデリゲート
+         * @param   source      動画ソース
+         * @param   position    動画を再生する位置（-1なら停止した状態で開く）
+         * @param   reqSize     プレーヤーのサイズ（参考値・・・この通りになるとは限らない）/ nullなら、サイズは成り行き任せ
+         * @param   opened      IPinPPlayerを返すデリゲート （通知不要ならnull）
          */
-        public static async Task<bool> OpenPinP(MediaSource source, NotifyPinPOpened opened)
+        public static async Task<bool> OpenPinP(MediaSource source, double position=-1, Size? reqSize=null, NotifyPinPOpened opened=null)
         {
             if(null==source)
             {
                 return false;
             }
-            var info = new PinPCreationInfo(source);
+            var info = new PinPCreationInfo(source, position, reqSize);
             if(null!=opened)
             {
                 if(null== sNotifyHanders)
@@ -104,17 +111,28 @@ namespace wvv
                 Window.Current.Content = frame;
                 Window.Current.Activate();
                 newViewId = ApplicationView.GetForCurrentView().Id;
-                await ApplicationView.GetForCurrentView().TryEnterViewModeAsync(ApplicationViewMode.CompactOverlay);
+                var option = getCompactOverlayOption(reqSize);
+                await ApplicationView.GetForCurrentView().TryEnterViewModeAsync(ApplicationViewMode.CompactOverlay, option);
             });
             return await ApplicationViewSwitcher.TryShowAsStandaloneAsync(newViewId);
+        }
+
+        private static ViewModePreferences getCompactOverlayOption(Size? reqSize)
+        {
+            var option = ViewModePreferences.CreateDefault(ApplicationViewMode.CompactOverlay);
+            if (null != reqSize)
+            {
+                // ToDo: 500 x 384 のサイズに制限する
+                option.CustomSize = reqSize.Value;
+            }
+            return option;
         }
 
         #endregion
 
         #region Fields
 
-        int mID;
-        MediaSource mSource;
+        private PinPCreationInfo mInfo;
         private long mFullWindowListenerToken;
 
         #endregion
@@ -126,7 +144,7 @@ namespace wvv
          */
         public WvvPinPPage()
         {
-            mID = 0;
+            mInfo = null;
             Loaded += OnLoaded;                 // xaml に定義するとメモリリークする
                                                 // Unloadedイベントは来ないので定義しない。代わりに、SystemNavigationManagerPreview.CloseRequested を使う。
             this.InitializeComponent();
@@ -137,33 +155,7 @@ namespace wvv
          */
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            var info = e.Parameter as PinPCreationInfo;
-            if(null!=info)
-            {
-                mSource = info.Source;
-                mID = info.ID;
-            }
-
-            var src = e.Parameter as MediaSource;
-            if (null != src)
-            {
-                mSource = src;
-                return;
-            }
-
-            var file = e.Parameter as StorageFile;
-            if(null!=file)
-            {
-                mSource = MediaSource.CreateFromStorageFile(file);
-                return;
-            }
-
-            var uri = e.Parameter as Uri;
-            if(null!=uri)
-            {
-                mSource = MediaSource.CreateFromUri(uri);
-                return;
-            }
+            mInfo = e.Parameter as PinPCreationInfo;
         }
 
         /**
@@ -172,13 +164,17 @@ namespace wvv
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             Loaded -= OnLoaded;                 // Loadedイベントハンドラはもう不要
-            if(null!=mSource)
+            if(null!=mInfo && null!=mInfo.Source)
             {
                 mPlayer.SetMediaPlayer(new MediaPlayer());
-                mPlayer.MediaPlayer.Source = mSource;
+                mPlayer.MediaPlayer.Source = mInfo.Source;
                 mFullWindowListenerToken = mPlayer.RegisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, MPE_FullWindowChanged);
 
-                mPlayer.MediaPlayer.Play();
+                if(mInfo.StartAt>=0) {
+                    mPlayer.MediaPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(mInfo.StartAt);
+                    mPlayer.MediaPlayer.Play();
+                }
+
 
                 // ×ボタンの監視
                 //
@@ -194,17 +190,17 @@ namespace wvv
                 //
                 SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += OnCloseRequested;
 
-                if(mID>0 && null!=sNotifyHanders)
+                if(mInfo.ID>0 && null!=sNotifyHanders)
                 {
                     NotifyPinPOpened notify;
                     
-                    if(sNotifyHanders.TryGetValue(mID, out notify))
+                    if(sNotifyHanders.TryGetValue(mInfo.ID, out notify))
                     {
                         if (null != notify)
                         {
                             notify(this);
                         }
-                        sNotifyHanders.Remove(mID);
+                        sNotifyHanders.Remove(mInfo.ID);
                     }
                 }
             }
@@ -242,7 +238,8 @@ namespace wvv
                 {
                     if (!mpe.IsFullWindow)
                     {
-                        await ApplicationView.GetForCurrentView().TryEnterViewModeAsync(ApplicationViewMode.CompactOverlay);
+                        var option = getCompactOverlayOption(mInfo.ReqSize);
+                        await ApplicationView.GetForCurrentView().TryEnterViewModeAsync(ApplicationViewMode.CompactOverlay, option);
                     }
                 });
             }
@@ -257,11 +254,13 @@ namespace wvv
             Dispose();
         }
 
+        /**
+         */
         public async void Close()
         {
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
-                Window.Current.Close();     // CloseRequested は呼ばれるのだろうか？
+                Window.Current.Close();     // CloseRequested は呼ばれるのだろうか？ --> 呼ばれなかったので、ここで呼ぶ。（万一、複数回呼び出しても安全なはず）
                 Dispose();
             });
         }
