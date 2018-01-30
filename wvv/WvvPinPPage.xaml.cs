@@ -255,6 +255,7 @@ namespace wvv
         }
 
         /**
+         * PinP Playerを閉じる (IPinPPlayerの唯一のメソッド）
          */
         public async void Close()
         {
