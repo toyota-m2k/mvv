@@ -17,6 +17,7 @@
             <Button Margin="4" Click="Play3_Click">Play (MMJ flavored player)</Button>
             <Button Margin="4" Click="Frames_Click">Show Frames</Button>
             <Button Margin="4" Click="PinP_Click">P in P</Button>
+            <Button Margin="4" Click="Dialog_Click">Dialog</Button>
         </StackPanel>
         <StackPanel Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Orientation="Vertical" HorizontalAlignment="Center">
             <MediaPlayerElement 
@@ -68,6 +69,7 @@
                                 >
                 
             </mvv:WvvMoviePlayer>
+            <Image x:Name="mFrameImage" Width="200" Height="200" Stretch="Uniform"/>
         </StackPanel>
     </StackPanel>
  

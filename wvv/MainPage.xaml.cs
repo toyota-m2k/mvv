@@ -28,6 +28,7 @@ using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 
 // 空白ページのアイテム テンプレートについては、http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409 を参照してください
@@ -81,7 +82,7 @@ namespace wvv
         StorageFile mVideoFile = null;
         delegate void PlayAction(object sender, RoutedEventArgs e);
 
-        private async Task pickAndPlay(PlayAction action)
+        private async Task pickAndPlay(PlayAction action, object sender = null)
         {
             // Create and open the file picker
             FileOpenPicker openPicker = new FileOpenPicker();
@@ -94,7 +95,7 @@ namespace wvv
             mVideoFile = await openPicker.PickSingleFileAsync();
             if (null != mVideoFile && null != action)
             {
-                action(null, null);
+                action(sender, null);
             }
         }
 
@@ -410,6 +411,55 @@ namespace wvv
             
             bool viewShown = await ApplicationViewSwitcher.TryShowAsStandaloneAsync(newViewId);
 #endif
+
+        }
+
+        private void Dialog_Click(object sender, RoutedEventArgs e)
+        {
+            //var m = new Flyout
+            //{
+            //    Placement = FlyoutPlacementMode.Full,
+            //    FlyoutPresenterStyle = (Style)this.Resources["CenteredFlyoutPresenterStyle"]
+            //};
+
+            //m.Content = new TextBlock() { Text = "Hoge Fuga" };
+            //m.ShowAt((FrameworkElement)sender);
+
+            // WvvDialog.Show(new WvvFrameSelectorDialog(), (FrameworkElement)sender);
+
+
+            if (null == mVideoFile)
+            {
+                var v = pickAndPlay(Dialog_Click, sender);
+                return;
+            }
+
+            WvvFrameSelectorDialog.Show(MediaSource.CreateFromStorageFile(mVideoFile), (FrameworkElement)sender, async (dlg, position, stream) =>
+            {
+                using (stream)
+                {
+                    stream.Seek(0);
+                    var image = new BitmapImage();
+                    image.DecodePixelWidth = 0;
+                    image.DecodePixelHeight = 0;
+                    image.SetSource(stream);
+                    mFrameImage.Source = image;
+
+                    //var decoder = await BitmapDecoder.CreateAsync(stream);
+                    //var softwareBitmap = await decoder.GetSoftwareBitmapAsync();
+                    //if (softwareBitmap.BitmapPixelFormat != BitmapPixelFormat.Bgra8 ||
+                    //    softwareBitmap.BitmapAlphaMode == BitmapAlphaMode.Straight)
+                    //{
+                    //    softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+                    //}
+                    //var source = new SoftwareBitmapSource();
+                    //await source.SetBitmapAsync(softwareBitmap);
+                    //mFrameImage.Source = source;
+
+
+                }
+
+            });
 
         }
     }

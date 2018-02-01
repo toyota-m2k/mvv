@@ -97,6 +97,12 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WvvConverter.cs" />
+    <Compile Include="WvvDialog.xaml.cs">
+      <DependentUpon>WvvDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WvvFrameSelectorDialog.xaml.cs">
+      <DependentUpon>WvvFrameSelectorDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WvvMarkerView.xaml.cs">
       <DependentUpon>WvvMarkerView.xaml</DependentUpon>
     </Compile>
@@ -125,6 +131,7 @@
     <Content Include="Assets\fullscreen.png" />
     <Content Include="Assets\fullscreen_close.png" />
     <Content Include="Assets\forward.png" />
+    <Content Include="Assets\frame_slider_handle.png" />
     <Content Include="Assets\marker.png" />
     <Content Include="Assets\play.png" />
     <Content Include="Assets\play_button.png" />
@@ -153,6 +160,18 @@
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WvvDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WvvFrameSelectorDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="WvvMarkerView.xaml">
       <SubType>Designer</SubType>
