@@ -25,7 +25,12 @@
         </StackPanel>
 
         <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
             <MediaPlayerElement 
+                Grid.Row="0"
                 x:Name="mPlayerElement" 
                 AutoPlay="False" Margin="5" 
                 HorizontalAlignment="Stretch" 

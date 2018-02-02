@@ -118,6 +118,9 @@
     <Compile Include="WvvPinPPage.xaml.cs">
       <DependentUpon>WvvPinPPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WvvTrimingSlider.xaml.cs">
+      <DependentUpon>WvvTrimingSlider.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -193,6 +196,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="WvvPinPPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WvvTrimingSlider.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
