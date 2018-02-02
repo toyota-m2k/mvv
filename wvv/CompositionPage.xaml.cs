@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Media.Capture;
 using Windows.Media.Core;
 using Windows.Media.Editing;
 using Windows.Media.Transcoding;
@@ -161,6 +162,25 @@ namespace wvv
         {
             mComposition.Clips.Clear();
             mPlayerElement.Source = null;
+        }
+
+        private async void OnRecord(object sender, TappedRoutedEventArgs e)
+        {
+            var camera = new CameraCaptureUI();
+            camera.VideoSettings.Format = CameraCaptureUIVideoFormat.Mp4;
+            camera.VideoSettings.AllowTrimming = true;
+            var file = await camera.CaptureFileAsync(CameraCaptureUIMode.Video);
+
+            if (null != file)
+            {
+                var picker = new FileSavePicker();
+                picker.FileTypeChoices.Add("mp4", new List<string> { ".mp4" });
+                var dist = await picker.PickSaveFileAsync();
+                if (dist != null)
+                {
+                    await file.CopyAndReplaceAsync(dist);
+                }
+            }
         }
     }
 }
