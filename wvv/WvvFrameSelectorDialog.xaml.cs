@@ -60,7 +60,7 @@ namespace wvv
          */
         public static async Task<bool> Show(MediaSource source, FrameworkElement anchor, WvvFrameSelectedHandler onSelected)
         {
-            if(null==onSelected)
+            if (null==onSelected)
             {
                 return false;
             }

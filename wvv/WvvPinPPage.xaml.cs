@@ -1,34 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Playback;
-using Windows.Storage;
 using Windows.UI.Core;
-using Windows.UI.Core.Preview;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
 // 空白ページの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234238 を参照してください
 
 namespace wvv
 {
+    public delegate void ClosedEventHandler(IPinPPlayer player, object clientData);
     public interface IPinPPlayer
     {
         void Close();
+        event ClosedEventHandler Closed;
     }
 
     public delegate void NotifyPinPOpened(IPinPPlayer pinp);
@@ -57,13 +49,15 @@ namespace wvv
             public MediaSource Source { get; private set; }
             public double StartAt { get; private set; }
             public Size? ReqSize { get; private set; }
+            public object ClientData { get; private set; }
 
-            public PinPCreationInfo(MediaSource source, double startAt, Size? reqSize)
+            public PinPCreationInfo(MediaSource source, double startAt, Size? reqSize, object clientData)
             {
                 this.Source = source;
                 this.ID = ++sIDGenerator;
                 this.StartAt = startAt;
                 this.ReqSize = reqSize;
+                this.ClientData = clientData;
             }
         }
 
@@ -86,13 +80,13 @@ namespace wvv
          * @param   reqSize     プレーヤーのサイズ（参考値・・・この通りになるとは限らない）/ nullなら、サイズは成り行き任せ
          * @param   opened      IPinPPlayerを返すデリゲート （通知不要ならnull）
          */
-        public static async Task<bool> OpenPinP(MediaSource source, double position=-1, Size? reqSize=null, NotifyPinPOpened opened=null)
+        public static async Task<bool> OpenPinP(MediaSource source, double position=-1, Size? reqSize=null, NotifyPinPOpened opened=null, object clientData=null)
         {
             if(null==source)
             {
                 return false;
             }
-            var info = new PinPCreationInfo(source, position, reqSize);
+            var info = new PinPCreationInfo(source, position, reqSize, clientData);
             if(null!=opened)
             {
                 if(null== sNotifyHanders)
@@ -164,8 +158,11 @@ namespace wvv
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             Loaded -= OnLoaded;                 // Loadedイベントハンドラはもう不要
-            if(null!=mInfo && null!=mInfo.Source)
+
+            if (null!=mInfo && null!=mInfo.Source)
             {
+                ApplicationView.GetForCurrentView().Consolidated += OnConsolidated;
+
                 mPlayer.SetMediaPlayer(new MediaPlayer());
                 mPlayer.MediaPlayer.Source = mInfo.Source;
                 mFullWindowListenerToken = mPlayer.RegisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, MPE_FullWindowChanged);
@@ -187,8 +184,8 @@ namespace wvv
                 //  <Capabilities>
                 //      < rescap:Capability Name = "confirmAppClose" />
                 //  </ Capabilities >
-                //
-                SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += OnCloseRequested;
+                //　↑ Restricted Capabilities を指定するのは避けたい。
+                //SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += OnCloseRequested;
 
                 if(mInfo.ID>0 && null!=sNotifyHanders)
                 {
@@ -207,6 +204,22 @@ namespace wvv
         }
 
         /**
+         * SubWindowの×ボタンがクリックされたときに呼び出される。
+         */
+        private void OnConsolidated(ApplicationView sender, ApplicationViewConsolidatedEventArgs args)
+        {
+            Debug.WriteLine("MediaPage Closed.");
+            ApplicationView.GetForCurrentView().Consolidated -= OnConsolidated;
+            Close();
+        }
+
+        //private void OnUnloaded(object sender, RoutedEventArgs e)
+        //{
+        //    Debug.WriteLine("MediaPage Unloaded.");
+        //    Dispose();
+        //}
+
+        /**
          * リソース解放
          */
         private void Dispose()
@@ -217,8 +230,12 @@ namespace wvv
                 mPlayer.UnregisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, mFullWindowListenerToken);
                 mPlayer.SetMediaPlayer(null);
                 player.Dispose();
-                SystemNavigationManagerPreview.GetForCurrentView().CloseRequested -= OnCloseRequested;
+                //この方法は、Restricted Capabilities の指定が必要なので、できれば避けたい。
+                //SystemNavigationManagerPreview.GetForCurrentView().CloseRequested -= OnCloseRequested;
             }
+            Closed = null;
+            mInfo = null;
+            Debug.WriteLine("PinP Player Disposed.");
         }
 
         #endregion
@@ -248,23 +265,34 @@ namespace wvv
 
         /**
          * ×ボタンがクリックされた
+         * この方法は、Restricted Capabilities の指定が必要なので、できれば避けたい。
          */
-        private void OnCloseRequested(object sender, SystemNavigationCloseRequestedPreviewEventArgs e)
-        {
-            Dispose();
-        }
+        //private void OnCloseRequested(object sender, SystemNavigationCloseRequestedPreviewEventArgs e)
+        //{
+        //    Dispose();
+        //}
 
         /**
          * PinP Playerを閉じる (IPinPPlayerの唯一のメソッド）
          */
         public async void Close()
         {
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            if (null != mInfo)
             {
-                Window.Current.Close();     // CloseRequested は呼ばれるのだろうか？ --> 呼ばれなかったので、ここで呼ぶ。（万一、複数回呼び出しても安全なはず）
-                Dispose();
-            });
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    Window.Current.Close();     // CloseRequested は呼ばれるのだろうか？ --> 呼ばれなかったので、ここで呼ぶ。（万一、複数回呼び出しても安全なはず）
+                    Closed?.Invoke(this, mInfo.ClientData);
+                    Dispose();
+                });
+            }
         }
+
+        /**
+         * PinP Playerが閉じたときのイベント
+         */
+        public event ClosedEventHandler Closed;
+
 
         #endregion
 

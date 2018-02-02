@@ -352,6 +352,8 @@ namespace wvv
 
         }
 
+        WeakReference<IPinPPlayer> mPinPPlayer = new WeakReference<IPinPPlayer>(null);
+
         private async void PinP_Click(object sender, RoutedEventArgs e)
         {
             if(!WvvPinPPage.IsSupported)
@@ -365,15 +367,27 @@ namespace wvv
                 return;
             }
 
+            IPinPPlayer oldPlayer;
+            if(mPinPPlayer.TryGetTarget(out oldPlayer) && null != oldPlayer)
+            {
+                oldPlayer.Close();
+                return;
+            }
+
             await WvvPinPPage.OpenPinP(MediaSource.CreateFromStorageFile(mVideoFile), 0, new Size(150, 300), (player) =>
             {
-                var timer = new DispatcherTimer();
-                timer.Interval = TimeSpan.FromSeconds(3);
-                timer.Tick += (x, a) =>
+                //var timer = new DispatcherTimer();
+                //timer.Interval = TimeSpan.FromSeconds(3);
+                //timer.Tick += (x, a) =>
+                //{
+                //    player.Close();
+                //};
+                //timer.Start();
+                player.Closed += (s, o) =>
                 {
-                    player.Close();
+                    mPinPPlayer.SetTarget(null);
                 };
-                timer.Start();
+                mPinPPlayer.SetTarget(player);
             });
 
 #if false
@@ -414,7 +428,7 @@ namespace wvv
 
         }
 
-        private void Dialog_Click(object sender, RoutedEventArgs e)
+        private async void Dialog_Click(object sender, RoutedEventArgs e)
         {
             //var m = new Flyout
             //{
@@ -434,7 +448,7 @@ namespace wvv
                 return;
             }
 
-            WvvFrameSelectorDialog.Show(MediaSource.CreateFromStorageFile(mVideoFile), (FrameworkElement)sender, async (dlg, position, stream) =>
+            await WvvFrameSelectorDialog.Show(MediaSource.CreateFromStorageFile(mVideoFile), (FrameworkElement)sender, async (dlg, position, stream) =>
             {
                 using (stream)
                 {
@@ -455,12 +469,13 @@ namespace wvv
                     //var source = new SoftwareBitmapSource();
                     //await source.SetBitmapAsync(softwareBitmap);
                     //mFrameImage.Source = source;
-
-
                 }
-
             });
+        }
 
+        private void Composition_Click(object sender, RoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(CompositionPage));
         }
     }
 }

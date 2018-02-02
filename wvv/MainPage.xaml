@@ -18,6 +18,7 @@
             <Button Margin="4" Click="Frames_Click">Show Frames</Button>
             <Button Margin="4" Click="PinP_Click">P in P</Button>
             <Button Margin="4" Click="Dialog_Click">Dialog</Button>
+            <Button Margin="4" Click="Composition_Click">Composition</Button>
         </StackPanel>
         <StackPanel Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Orientation="Vertical" HorizontalAlignment="Center">
             <MediaPlayerElement 
