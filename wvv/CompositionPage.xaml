@@ -36,6 +36,8 @@
                 HorizontalAlignment="Stretch" 
                 VerticalAlignment="Stretch"
                 AreTransportControlsEnabled="True" />
+
+            <local:WvvTrimingSlider Grid.Row="1"/>
         </Grid>
 
     </Grid>

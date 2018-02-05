@@ -12,10 +12,6 @@
     mc:Ignorable="d"
     d:DesignHeight="300"
     d:DesignWidth="400">
-    <UserControl.Resources>
-        <Style x:Key="ButtonStyle1" TargetType="Button">
-        </Style>
-    </UserControl.Resources>
 
     <Grid>
         <Grid.Resources>

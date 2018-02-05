@@ -8,28 +8,138 @@
     mc:Ignorable="d"
     d:DesignHeight="300"
     d:DesignWidth="400">
+    <UserControl.Resources>
+        <Style x:Key="TrackerButton" TargetType="Button">
+            <Setter Property="Background" Value="{ThemeResource ButtonBackground}"/>
+            <Setter Property="Foreground" Value="{ThemeResource ButtonForeground}"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource ButtonBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0,0,0,0"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontFamily" Value="{ThemeResource ContentControlThemeFontFamily}"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="FontSize" Value="{ThemeResource ControlContentThemeFontSize}"/>
+            <Setter Property="UseSystemFocusVisuals" Value="True"/>
+            <Setter Property="FocusVisualMargin" Value="-3"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal">
+                                        <Storyboard>
+                                            <PointerUpThemeAnimation Storyboard.TargetName="RootGrid"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="PointerOver">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonBackgroundPointerOver}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="BorderBrush">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonBorderBrushPointerOver}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <PointerUpThemeAnimation Storyboard.TargetName="RootGrid"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonBackgroundPressed}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="BorderBrush">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonBorderBrushPressed}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <PointerDownThemeAnimation Storyboard.TargetName="RootGrid"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonBackgroundDisabled}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="BorderBrush">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonBorderBrushDisabled}"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Opacity">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="0.3"/>
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter x:Name="ContentPresenter" AutomationProperties.AccessibilityView="Raw" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" ContentTransitions="{TemplateBinding ContentTransitions}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" Padding="{TemplateBinding Padding}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <BitmapImage x:Key="ThumbImage" UriSource="Assets/current_bar_min.png"/>
+        <local:GridLengthConverter x:Key="GridLengthConverter"/>
 
-    <Grid Height="40" Width="400">
+    </UserControl.Resources>
+
+    <Grid x:Name="mTrimmerBase" Margin="25,0" Height="50" SizeChanged="OnTrimmerSizeChanged">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="100"/>
+            <ColumnDefinition Width="{Binding LWidth, Converter={StaticResource GridLengthConverter}}"/>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="{Binding RWidth, Converter={StaticResource GridLengthConverter}}"/>
         </Grid.ColumnDefinitions>
-        <Rectangle Grid.ColumnSpan="3" Margin="27,0" Fill="Red" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Center"/>
-        <Rectangle Grid.Column="1" Margin="0,0" Fill="Blue" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Center"/>
-            <Button Grid.Column="0" Margin="-2,-2,0,0" Padding="0" Background="Transparent" HorizontalAlignment="Right">
-                <Button.Content>
-                        <Polygon
-                            Points="0,0 0,40 25,20"
-                            Fill="Green"/>
-                </Button.Content>
-            </Button>
-            <Button Grid.Column="2" Margin="-2,-2,0,0" Padding="0" Background="Transparent">
-            <Button.Content>
+        <Rectangle Grid.ColumnSpan="3" Margin="0" Fill="Red" HorizontalAlignment="Stretch" Height="2" VerticalAlignment="Center"/>
+        <Grid Grid.Column="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding MWidth, Converter={StaticResource GridLengthConverter}}"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Rectangle Grid.ColumnSpan="2" Margin="0,0" Fill="Blue" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Center"/>
+            <Rectangle Grid.Column="0" Margin="0,0" Fill="Gray" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Center"/>
+
+            <Canvas Grid.Column="1" Width="0" HorizontalAlignment="Left">
+                <Grid x:Name="mThumb" Canvas.Left="-7" HorizontalAlignment="Center" 
+                      Background="Transparent"
+                      PointerPressed="OnThumbPressed"
+                      PointerMoved="OnThumbMoved"
+                      PointerReleased="OnKnobReleased"
+                      PointerCanceled="OnKnobReleased"
+                      >
+                    <Image Source="{StaticResource ThumbImage}"/>
+                    <!--<Polygon
+                        Points="10,25 0,40 20,40"
+                        Fill="Magenta"/>-->
+                </Grid>
+            </Canvas>
+        </Grid>
+        <Canvas Grid.Column="0" Width="0" HorizontalAlignment="Right">
+            <Grid x:Name="mLKnob" 
+                    Canvas.Left="-25"
+                    Canvas.Top="5"
+                    Background="Transparent" 
+                    PointerPressed="OnLKnobPressed"
+                    PointerMoved="OnLKnobMoved"
+                    PointerReleased="OnKnobReleased"
+                    PointerCanceled="OnKnobReleased"
+                    >
                     <Polygon
-                        Points="25,0 25,40 0,20"
-                        Fill="Green"/>
-                </Button.Content>
-            </Button>
+                    Points="0,0 0,40 25,20"
+                    Fill="Green"/>
+            </Grid>
+        </Canvas>
+        <Canvas Grid.Column="2" Width="0" HorizontalAlignment="Left">
+
+            <Grid x:Name="mRKnob" 
+                    Canvas.Top="5"
+                    Background="Transparent"
+                    PointerPressed="OnRKnobPressed"
+                    PointerMoved="OnRKnobMoved"
+                    PointerReleased="OnKnobReleased"
+                    PointerCanceled="OnKnobReleased"
+                    >
+                    <Polygon
+                    Points="25,0 25,40 0,20"
+                    Fill="Green"/>
+            </Grid>
+        </Canvas>
     </Grid>
 </UserControl>
