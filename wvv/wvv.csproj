@@ -103,12 +103,14 @@
     <Compile Include="WvvDialog.xaml.cs">
       <DependentUpon>WvvDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WvvFrameExtractor.cs" />
     <Compile Include="WvvFrameSelectorDialog.xaml.cs">
       <DependentUpon>WvvFrameSelectorDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="WvvMarkerView.xaml.cs">
       <DependentUpon>WvvMarkerView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WvvMediaLoader.cs" />
     <Compile Include="WvvMovieControlPanel.xaml.cs">
       <DependentUpon>WvvMovieControlPanel.xaml</DependentUpon>
     </Compile>
@@ -118,8 +120,14 @@
     <Compile Include="WvvPinPPage.xaml.cs">
       <DependentUpon>WvvPinPPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WvvTrimingSlider.xaml.cs">
-      <DependentUpon>WvvTrimingSlider.xaml</DependentUpon>
+    <Compile Include="WvvTrimmingSlider.xaml.cs">
+      <DependentUpon>WvvTrimmingSlider.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WvvTrimmingView.xaml.cs">
+      <DependentUpon>WvvTrimmingView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WvvTrimmingDialog.xaml.cs">
+      <DependentUpon>WvvTrimmingDialog.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -199,7 +207,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="WvvTrimingSlider.xaml">
+    <Page Include="WvvTrimmingSlider.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WvvTrimmingView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WvvTrimmingDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

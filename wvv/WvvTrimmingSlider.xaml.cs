@@ -12,7 +12,7 @@ namespace wvv
     /**
      * トリミング用スライダークラス
      */
-    public sealed partial class WvvTrimingSlider : UserControl, INotifyPropertyChanged
+    public sealed partial class WvvTrimmingSlider : UserControl, INotifyPropertyChanged
     {
         #region INotifyPropertyChanged i/f
 
@@ -26,7 +26,7 @@ namespace wvv
 
         #region Events
 
-        public delegate void TrimmingEventHandler(WvvTrimingSlider sender, double position);
+        public delegate void TrimmingEventHandler(WvvTrimmingSlider sender, double position);
 
         /**
          * トリミング開始位置が変更された
@@ -102,7 +102,7 @@ namespace wvv
         /**
          * オリジナル動画全体の長さ
          */
-        private double TotalRange
+        public double TotalRange
         {
             get
             {
@@ -112,6 +112,11 @@ namespace wvv
             {
                 if (value != mTotalRange)
                 {
+                    mTotalRange = value;
+                    mTrimStart = 0;
+                    mTrimEnd = 0;
+                    mCurrentPosition = 0;
+
                     notify("LWidth");
                     notify("RWidth");
                     notify("MWidth");
@@ -220,7 +225,7 @@ namespace wvv
 
         #region Initializing / Terminating
 
-        public WvvTrimingSlider()
+        public WvvTrimmingSlider()
         {
             this.DataContext = this;
             this.InitializeComponent();
@@ -229,17 +234,17 @@ namespace wvv
         /**
          * totalRangeを与えてコントロールを初期化する
          */
-        public void Init(double totalRange)
-        {
-            mTotalRange = totalRange;
-            mTrimStart = 0;
-            mTrimEnd = 0;
-            mCurrentPosition = 0;
+        //public void Init(double totalRange)
+        //{
+        //    mTotalRange = totalRange;
+        //    mTrimStart = 0;
+        //    mTrimEnd = 0;
+        //    mCurrentPosition = 0;
 
-            notify("LWidth");
-            notify("RWidth");
-            notify("MWidth");
-        }
+        //    notify("LWidth");
+        //    notify("RWidth");
+        //    notify("MWidth");
+        //}
 
         #endregion
 
