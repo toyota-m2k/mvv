@@ -70,6 +70,8 @@ namespace wvv
             mPlayer.MediaOpened += OnOpened;
             mPlayer.Source = source;
         }
+        
+        #endregion
 
         #region Private Methods
 
