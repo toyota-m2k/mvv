@@ -458,10 +458,6 @@ namespace wvv
                     mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(seekPosition(seekTo));
                 }
             }
-            if(seekTo != PositionOf.CURRENT && ResetCurrentPositionOnTrimmed)
-            {
-                mTrimmingSlider.CurrentPosition = 0;
-            }
         }
         #endregion
 
@@ -479,6 +475,11 @@ namespace wvv
             var currentClip = mComposition.Clips[0];
             currentClip.TrimTimeFromStart = TimeSpan.FromMilliseconds(position);
             await stopPreview(PositionOf.START);
+
+            if (ResetCurrentPositionOnTrimmed)
+            {
+                mTrimmingSlider.CurrentPosition = 0;
+            }
         }
 
         /**
@@ -493,6 +494,11 @@ namespace wvv
             var currentClip = mComposition.Clips[0];
             currentClip.TrimTimeFromEnd = TimeSpan.FromMilliseconds(position);
             await stopPreview(PositionOf.END);
+
+            if (ResetCurrentPositionOnTrimmed)
+            {
+                mTrimmingSlider.CurrentPosition = 0;
+            }
         }
 
         /**
