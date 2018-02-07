@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Media.Core;
@@ -25,6 +26,9 @@ using Windows.UI.Xaml.Navigation;
 
 namespace wvv
 {
+    /**
+     * トリミング結果をファイルに保存するためのi/f
+     */
     public interface IWvvSaveAs
     {
         IAsyncOperationWithProgress<TranscodeFailureReason, double> SaveToFile(StorageFile toFile);
@@ -42,78 +46,54 @@ namespace wvv
 
         #endregion
 
+        #region IWvvSaveAs i/f
+
+        /**
+         * トリミング結果をファイルに保存
+         */
         public IAsyncOperationWithProgress<TranscodeFailureReason, double> SaveToFile(StorageFile toFile)
         {
             return mComposition.RenderToFileAsync(toFile);
         }
 
+        #endregion
 
+        #region Private Fields / Properties
+
+        // 動画ソースファイル (OnLoaded前にセットされる場合にのみ使用される）
         private StorageFile mSource;
 
-        /**
-         * フレームリスト
-         */
-        public ObservableCollection<ImageSource> Frames
-        {
-            get;
-        } = new ObservableCollection<ImageSource>();
+        // 再生中のトラッキングサムを移動させるためのタイマー
+        private DispatcherTimer TrackingTimer { get; set; }
+        
+        // 動画表示用コントロール
+        private MediaPlayer mPlayer;
 
-        /**
-         */
-        public bool Ready
-        {
-            get { return mReady; }
-            private set
-            {
-                if(value!=mReady)
-                {
-                    mReady = value;
-                    notify("Ready");
-                }
-            }
-        }
-        private bool mReady = false;
+        // 動画編集用
+        private MediaComposition mComposition;
 
-        public bool IsPlaying
-        {
-            get { return mIsPlaying; }
-            private set
-            {
-                if (value != mIsPlaying)
-                {
-                    mIsPlaying = value;
-                    notify("IsPlaying");
-                }
-            }
-        }
-        private bool mIsPlaying = false;
+        // 動画の元ファイルを保持するソースオブジェクト（トラッキングモード用）
+        private MediaSource mOriginalSource;
 
-        //public double TotalRange
-        //{
-        //    get { return mTotalRange; }
-        //    private set
-        //    {
-        //        if(mTotalRange!=value)
-        //        {
-        //            mTotalRange = value;
-        //            notify("TotalRange");
-        //        }
-        //    }
-        //}
-        //private double mTotalRange = 100;
+        // トラッキングモード(false)とプレビューモード(true)を区別するフラグ
+        bool mPreviewing = false;
 
-        public double TotalRange
+        // 動画の総再生時間
+        private double TotalRange
         {
             get { return mTrimmingSlider.TotalRange; }
             set { mTrimmingSlider.TotalRange = value; }
         }
 
+        /**
+         * 動画のサイズ
+         */
         private Size VideoSize
         {
             get { return mVideoSize; }
             set
             {
-                if(mVideoSize != value)
+                if (mVideoSize != value)
                 {
                     mVideoSize = value;
                     adjustPlayerSize(mVideoSize.Width, mVideoSize.Height);
@@ -121,15 +101,6 @@ namespace wvv
             }
         }
         private Size mVideoSize;
-
-
-        /**
-         * プレイヤーのサイズ（xamlレンダリング用）
-         */
-        public Size PlayerSize
-        {
-            get; private set;
-        }
 
         /**
          * 動画の実サイズに合わせてプレイヤーのサイズを調整する
@@ -159,9 +130,96 @@ namespace wvv
             return size;
         }
 
-        private MediaPlayer mPlayer;
-        private MediaComposition mComposition;
+        #endregion
 
+        #region Bindings
+
+        /**
+         * フレームリスト
+         */
+        public ObservableCollection<ImageSource> Frames
+        {
+            get;
+        } = new ObservableCollection<ImageSource>();
+
+        /**
+         * 動画の再生は可能か？
+         */
+        public bool Ready
+        {
+            get { return mReady; }
+            private set
+            {
+                if(value!=mReady)
+                {
+                    mReady = value;
+                    notify("Ready");
+                }
+            }
+        }
+        private bool mReady = false;
+
+        /**
+         * 動画再生中か？
+         */
+        public bool IsPlaying
+        {
+            get { return mIsPlaying; }
+            private set
+            {
+                if (value != mIsPlaying)
+                {
+                    mIsPlaying = value;
+
+                    if(value)
+                    {
+                        TrackingTimer.Start();
+                    }
+                    else
+                    {
+                        TrackingTimer.Stop();
+                    }
+                    notify("IsPlaying");
+                }
+            }
+        }
+        private bool mIsPlaying = false;
+
+
+        /**
+         * プレイヤーのサイズ（xamlレンダリング用）
+         */
+        public Size PlayerSize
+        {
+            get; private set;
+        }
+
+        #endregion
+
+        #region Public Properties
+
+        /**
+         * トリミングされているか？
+         */
+        public bool IsTrimmed
+        {
+            get
+            {
+                return mTrimmingSlider.TrimStart > 0 || mTrimmingSlider.TrimEnd > 0;
+            }
+        }
+
+        /**
+         * トリミング位置を変更したときに、CurrentPositionをゼロ(==TrimStart)にリセットする場合は true
+         */
+        public static bool ResetCurrentPositionOnTrimmed = true;
+
+        #endregion
+
+        #region Initialization / Tremination
+        /**
+         * コンストラクタ
+         */
         public WvvTrimmingView()
         {
             this.DataContext = this;
@@ -170,8 +228,9 @@ namespace wvv
             mComposition = new MediaComposition();
         }
 
-        private MediaSource mOriginalSource;
-
+        /**
+         * 動画ファイルをロードして、フレームサムネイルを抽出する。
+         */
         private async void LoadMediaSource(StorageFile source)
         {
             Ready = false;
@@ -179,19 +238,17 @@ namespace wvv
             if (null != source)
             {
                 mOriginalSource = MediaSource.CreateFromStorageFile(source);
-                var clip = await MediaClip.CreateFromFileAsync(source);
-                mComposition.Clips.Add(clip);
-
-                var loader = new WvvMediaLoader(mPlayer);
-                loader.Load(mOriginalSource, this, (sender, mediaPlayer) =>
+                var loader = await WvvMediaLoader.LoadAsync(mPlayer, mOriginalSource, this);
+                if(loader.Opened)
                 {
-                    TotalRange = sender.TotalRange;
-                    VideoSize = sender.VideoSize;
+                    TotalRange = loader.TotalRange;
+                    VideoSize = loader.VideoSize;
 
-                    var extractor = new WvvFrameExtractor(40, 20);
-                    extractor.Extract(mediaPlayer, this, (sender2, index, image) =>
+#if false
+                    var extractor = new WvvFrameExtractor(40, 30);
+                    extractor.Extract(mPlayer, this, (s, index, image) =>
                     {
-                        if (null != image)
+                        if (index >= 0)
                         {
                             Debug.WriteLine("Frame Extracted : {0}", index);
                             Frames.Add(image);
@@ -199,15 +256,43 @@ namespace wvv
                         else
                         {
                             Debug.WriteLine("Frame Extracted : Finalized.");
-                            Ready = true;
+                            Ready = extractor.IsCompleted;
                         }
                     });
-                });
+#else
+                    if (await WvvFrameExtractor.ExtractAsync(40, 30, mPlayer, this, (s, index, image) =>
+                     {
+                         Debug.WriteLine("Frame Extracted : {0}", index);
+                         Frames.Add(image);
+                     })) {
+                        Debug.WriteLine("Frame Extracted : Finalized.");
+                        Ready = true;
+                        var clip = await MediaClip.CreateFromFileAsync(source);
+                        mComposition.Clips.Add(clip);
+                    }
+#endif
+                }
             }
         }
 
+        /**
+         * ビューがロードされたときの初期化処理
+         */
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            TrackingTimer = new DispatcherTimer();
+            TrackingTimer.Interval = TimeSpan.FromMilliseconds(10);
+            TrackingTimer.Tick += (s, a) =>
+            {
+                if (mPreviewing)
+                {
+                    if (null != mPlayer)
+                    {
+                        mTrimmingSlider.CurrentPosition = mPlayer.PlaybackSession.Position.TotalMilliseconds;
+                    }
+                }
+            };
+
             mPlayer = new MediaPlayer();
             mPlayer.PlaybackSession.PlaybackStateChanged += PBS_StateChanged;
             mPlayerElement.SetMediaPlayer(mPlayer);
@@ -220,13 +305,23 @@ namespace wvv
             }
         }
 
+        /**
+         * ビューがアンロードロードされたときのクリーンアップ処理
+         */
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
+            TrackingTimer.Stop();
+
             mPlayerElement.SetMediaPlayer(null);
+            mPlayer.Pause();
             mPlayer.PlaybackSession.PlaybackStateChanged -= PBS_StateChanged;
             mPlayer.Dispose();
             mPlayer = null;
         }
+
+        #endregion
+
+        #region Media Player Events
 
         private async void PBS_StateChanged(MediaPlaybackSession session, object args)
         {
@@ -248,6 +343,13 @@ namespace wvv
             });
         }
 
+        #endregion
+
+        #region Public Methods
+
+        /**
+         * ソースファイル（mp4限定）をセットする。
+         */
         public void SetSource(StorageFile source)
         {
             if (null != mPlayer)
@@ -260,35 +362,21 @@ namespace wvv
             }
         }
 
-        private void preview(double pos, bool force)
-        {
-            if(mBusy && !force)
-            {
-                return;
-            }
-            mBusy = true;
-            MediaStreamSource mediaStreamSource = mComposition.GeneratePreviewMediaStreamSource(
-                    (int)mPlayerElement.ActualWidth,
-                    (int)mPlayerElement.ActualHeight);
-            var loader = new WvvMediaLoader(mPlayer);
-            loader.Load(MediaSource.CreateFromMediaStreamSource(mediaStreamSource), this, (sender, player) =>
-            {
-                if (pos < 0)
-                {
-                    pos = 0;
-                }
-                else if (pos > sender.TotalRange)
-                {
-                    pos = sender.TotalRange;
-                }
-                mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(pos);
-                mBusy = false;
-            });
-        }
+        #endregion
 
-        private bool mBusy = false;
-        bool mPreviewing = false;
-        private void startPreview(bool play)
+        #region Preview / Trimming Mode
+
+        /**
+         * プレビューモードを開始する。
+         * 
+         * トリミングモード：
+         *  MediaPlayerのソースに、オリジナルのソース（StorageFileから生成したもの）をセットした状態。
+         *  トリミング操作は、常にこのモードで行い、再生は行わない。
+         * プレビューモード:
+         *  MediaPlayerのソースに、MediaComposition から生成したストリームを指定し、トリミング後の動画を再生テストするモード
+         *  トリミング操作を行うと、自動的にこのモードはキャンセルされ、全体表示モードに戻る。
+         */
+        private async Task startPreview(bool play)
         {
             if(mPreviewing)
             {
@@ -302,8 +390,9 @@ namespace wvv
             MediaStreamSource mediaStreamSource = mComposition.GeneratePreviewMediaStreamSource(
                     (int)mPlayerElement.ActualWidth,
                     (int)mPlayerElement.ActualHeight);
-            var loader = new WvvMediaLoader(mPlayer);
-            loader.Load(MediaSource.CreateFromMediaStreamSource(mediaStreamSource), this, (sender, player) =>
+
+            var loader = await WvvMediaLoader.LoadAsync(mPlayer, MediaSource.CreateFromMediaStreamSource(mediaStreamSource), this);
+            if (null != loader)
             {
                 if (mPreviewing)
                 {
@@ -313,11 +402,20 @@ namespace wvv
                         mPlayer.Play();
                     }
                 }
-            });
+            }
+            else
+            {
+                mPreviewing = false;
+            }
         }
 
         enum PositionOf{ START, END, CURRENT };
 
+        /**
+         * トリミングモードでのシーク位置を取得
+         * 
+         * ちなみに、プレビューモードでは、mTrimmingSlider.CurrentPositionとシーク位置が一致する。
+         */
         private double seekPosition(PositionOf seekTo)
         {
             double pos;
@@ -337,7 +435,10 @@ namespace wvv
             return pos;
         }
 
-        private void stopPreview(PositionOf seekTo)
+        /**
+         * プレビューモードを終了して、トリミングモードに戻る。
+         */
+        private async Task stopPreview(PositionOf seekTo)
         {
             if(IsPlaying)
             {
@@ -349,18 +450,27 @@ namespace wvv
                 return;
             }
             mPreviewing = false;
-            var loader = new WvvMediaLoader(mPlayer);
-            loader.Load(mOriginalSource, this, (sender, player) =>
+            var loader = await WvvMediaLoader.LoadAsync(mPlayer, mOriginalSource, this);
+            if(null!=loader)
             {
                 if(!mPreviewing)
                 {
                     mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(seekPosition(seekTo));
                 }
-            });
-
+            }
+            if(seekTo != PositionOf.CURRENT && ResetCurrentPositionOnTrimmed)
+            {
+                mTrimmingSlider.CurrentPosition = 0;
+            }
         }
+        #endregion
 
-        private void OnTrimStartChanged(WvvTrimmingSlider sender, double position, bool finalize)
+        #region Trimming Slider Handling
+
+        /**
+         * TrimStartが操作された
+         */
+        private async void OnTrimStartChanged(WvvTrimmingSlider sender, double position, bool finalize)
         {
             if(mComposition.Clips.Count!=1)
             {
@@ -368,10 +478,13 @@ namespace wvv
             }
             var currentClip = mComposition.Clips[0];
             currentClip.TrimTimeFromStart = TimeSpan.FromMilliseconds(position);
-            stopPreview(PositionOf.START);
+            await stopPreview(PositionOf.START);
         }
 
-        private void OnTrimEndChanged(WvvTrimmingSlider sender, double position, bool finalize)
+        /**
+         * TrimEndが操作された
+         */
+        private async void OnTrimEndChanged(WvvTrimmingSlider sender, double position, bool finalize)
         {
             if (mComposition.Clips.Count != 1)
             {
@@ -379,17 +492,31 @@ namespace wvv
             }
             var currentClip = mComposition.Clips[0];
             currentClip.TrimTimeFromEnd = TimeSpan.FromMilliseconds(position);
-            stopPreview(PositionOf.END);
+            await stopPreview(PositionOf.END);
         }
 
+        /**
+         * CurrentPositionが操作された
+         */
         private void OnCurrentPositionChanged(WvvTrimmingSlider sender, double position, bool finalize)
         {
-            mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(TotalRange - position);
-            
-            stopPreview(PositionOf.CURRENT);
+            if (mPreviewing)
+            {
+                mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(sender.CurrentPosition);
+            }
+            else
+            {
+                mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(sender.AbsoluteCurrentPosition);
+            }
         }
 
-        private void OnPlay(object sender, TappedRoutedEventArgs e)
+        /**
+         * 再生ボタン押下時の処理
+         * 
+         * トリミングモードなら、プレビューモードに変えて再生を開始
+         * プレビューモードなら、再生/停止をトグル
+         */
+        private async void OnPlay(object sender, TappedRoutedEventArgs e)
         {
             if(IsPlaying)
             {
@@ -397,8 +524,10 @@ namespace wvv
             }
             else
             {
-                startPreview(true);
+                await startPreview(true);
             }
         }
+
+        #endregion
     }
 }

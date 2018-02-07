@@ -88,6 +88,37 @@
             <ColumnDefinition Width="{Binding RWidth, Converter={StaticResource GridLengthConverter}}"/>
         </Grid.ColumnDefinitions>
         <Rectangle Grid.ColumnSpan="3" Margin="0" Fill="Red" HorizontalAlignment="Stretch" Height="2" VerticalAlignment="Center"/>
+        <Canvas Grid.Column="0" Width="0" HorizontalAlignment="Right">
+            <Grid x:Name="mLKnob" 
+                    Canvas.Left="-25"
+                    Canvas.Top="5"
+                    Background="Transparent" 
+                    PointerPressed="OnLKnobPressed"
+                    PointerMoved="OnKnobMoved"
+                    PointerReleased="OnKnobReleased"
+                    PointerCanceled="OnKnobReleased"
+                    >
+                <Polygon
+                    Points="0,0 0,40 25,20"
+                    Fill="Green"/>
+            </Grid>
+        </Canvas>
+        <Canvas Grid.Column="2" Width="0" HorizontalAlignment="Left">
+
+            <Grid x:Name="mRKnob" 
+                    Canvas.Top="5"
+                    Background="Transparent"
+                    PointerPressed="OnRKnobPressed"
+                    PointerMoved="OnKnobMoved"
+                    PointerReleased="OnKnobReleased"
+                    PointerCanceled="OnKnobReleased"
+                    >
+                <Polygon
+                    Points="25,0 25,40 0,20"
+                    Fill="Green"/>
+            </Grid>
+        </Canvas>
+
         <Grid Grid.Column="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="{Binding MWidth, Converter={StaticResource GridLengthConverter}}"/>
@@ -111,35 +142,5 @@
                 </Grid>
             </Canvas>
         </Grid>
-        <Canvas Grid.Column="0" Width="0" HorizontalAlignment="Right">
-            <Grid x:Name="mLKnob" 
-                    Canvas.Left="-25"
-                    Canvas.Top="5"
-                    Background="Transparent" 
-                    PointerPressed="OnLKnobPressed"
-                    PointerMoved="OnKnobMoved"
-                    PointerReleased="OnKnobReleased"
-                    PointerCanceled="OnKnobReleased"
-                    >
-                    <Polygon
-                    Points="0,0 0,40 25,20"
-                    Fill="Green"/>
-            </Grid>
-        </Canvas>
-        <Canvas Grid.Column="2" Width="0" HorizontalAlignment="Left">
-
-            <Grid x:Name="mRKnob" 
-                    Canvas.Top="5"
-                    Background="Transparent"
-                    PointerPressed="OnRKnobPressed"
-                    PointerMoved="OnKnobMoved"
-                    PointerReleased="OnKnobReleased"
-                    PointerCanceled="OnKnobReleased"
-                    >
-                    <Polygon
-                    Points="25,0 25,40 0,20"
-                    Fill="Green"/>
-            </Grid>
-        </Canvas>
     </Grid>
 </UserControl>
