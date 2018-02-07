@@ -26,6 +26,8 @@ namespace wvv
 
         /**
          * 動画トリミング完了通知用デイゲート型
+         * @param trimmed   true: トリミングされている / false:されていない --- この場合は、無駄なのでrendererを呼ばずに、ソースファイルをそのまま使うのがよい。
+         * @param renderer  ファイル保存用i/f
          */
         public delegate void WvvTrimmingCompleted(bool trimmed, IWvvSaveAs renderer);
 
@@ -59,6 +61,7 @@ namespace wvv
         #endregion
 
         #region Internal Properties/Fields
+
         // トリミング完了通知コールバック
         private WvvTrimmingCompleted Completed
         {
@@ -73,6 +76,10 @@ namespace wvv
             }
         }
         private WeakReference<WvvTrimmingCompleted> mCompleted = new WeakReference<WvvTrimmingCompleted>(null);
+
+        #endregion
+
+        #region WvvDialog Specific
 
         // ダイアログクラスの参照を保持するためのフィールド
         private WvvDialog Dialog
@@ -92,10 +99,6 @@ namespace wvv
         // ダイアログを閉じるときのフラグ
         bool mClosing = false;
 
-        #endregion
-
-        #region Dialog Handlers
-
         /**
          * ダイアログを閉じる
          */
@@ -114,7 +117,8 @@ namespace wvv
          */
         private void OnCloseTapped(object sender, TappedRoutedEventArgs e)
         {
-            Completed?.Invoke(true, mTrimmingView);
+            Completed?.Invoke(mTrimmingView.IsTrimmed, mTrimmingView);
+            closeDialog();
         }
 
         /**
