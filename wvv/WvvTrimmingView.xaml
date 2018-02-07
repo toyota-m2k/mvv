@@ -10,9 +10,14 @@
     mc:Ignorable="d"
     d:DesignHeight="300"
     d:DesignWidth="400">
+    <UserControl.Resources>
+        <BitmapImage x:Key="PlayIcon" UriSource="Assets/play.png"/>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -30,11 +35,17 @@
         </Grid>
         <Grid Grid.Row="1" Margin="0,5">
             <local:WvvTrimmingSlider
-                TotalRange="{Binding TotalRange}"
+                x:Name="mTrimmingSlider"
                 TrimStartChanged="OnTrimStartChanged"
                 TrimEndChanged="OnTrimEndChanged"
                 CurrentPositionChanged="OnCurrentPositionChanged"
                 />
+        </Grid>
+        <Grid Grid.Row="2">
+            <!-- フレーム-->
+        </Grid>
+        <Grid Grid.Row="3">
+            <Button Tapped="OnPlay">Play</Button>
         </Grid>
     </Grid>
 </UserControl>

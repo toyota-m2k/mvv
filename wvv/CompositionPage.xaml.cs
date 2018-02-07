@@ -182,5 +182,24 @@ namespace wvv
                 }
             }
         }
+
+        private async void OnTrimmingDialog(object sender, TappedRoutedEventArgs e)
+        {
+            var picker = new FileOpenPicker();
+            picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
+            picker.FileTypeFilter.Add(".mp4");
+            Windows.Storage.StorageFile file = await picker.PickSingleFileAsync();
+            if (file == null)
+            {
+                Debug.WriteLine("File picking cancelled");
+                return;
+            }
+
+            await WvvTrimmingDialog.Show(file, (FrameworkElement)sender, async (trimmed, renderer) =>
+            {
+                Debug.WriteLine("Trimmed.");
+            });
+
+        }
     }
 }

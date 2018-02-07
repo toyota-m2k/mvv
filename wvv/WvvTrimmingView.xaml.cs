@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -10,6 +11,7 @@ using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Editing;
 using Windows.Media.Playback;
+using Windows.Media.Transcoding;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -23,7 +25,12 @@ using Windows.UI.Xaml.Navigation;
 
 namespace wvv
 {
-    public sealed partial class WvvTrimmingView : UserControl, INotifyPropertyChanged
+    public interface IWvvSaveAs
+    {
+        IAsyncOperationWithProgress<TranscodeFailureReason, double> SaveToFile(StorageFile toFile);
+    }
+
+    public sealed partial class WvvTrimmingView : UserControl, INotifyPropertyChanged, IWvvSaveAs
     {
         #region INotifyPropertyChanged i/f
 
@@ -35,14 +42,12 @@ namespace wvv
 
         #endregion
 
-        public StorageFile Source
+        public IAsyncOperationWithProgress<TranscodeFailureReason, double> SaveToFile(StorageFile toFile)
         {
-            get { return mSource; }
-            set
-            {
-                SetSource(value);
-            }
+            return mComposition.RenderToFileAsync(toFile);
         }
+
+
         private StorageFile mSource;
 
         /**
@@ -83,19 +88,25 @@ namespace wvv
         }
         private bool mIsPlaying = false;
 
+        //public double TotalRange
+        //{
+        //    get { return mTotalRange; }
+        //    private set
+        //    {
+        //        if(mTotalRange!=value)
+        //        {
+        //            mTotalRange = value;
+        //            notify("TotalRange");
+        //        }
+        //    }
+        //}
+        //private double mTotalRange = 100;
+
         public double TotalRange
         {
-            get { return mTotalRange; }
-            private set
-            {
-                if(mTotalRange!=value)
-                {
-                    mTotalRange = value;
-                    notify("TotalRange");
-                }
-            }
+            get { return mTrimmingSlider.TotalRange; }
+            set { mTrimmingSlider.TotalRange = value; }
         }
-        private double mTotalRange = 100;
 
         private Size VideoSize
         {
@@ -153,39 +164,41 @@ namespace wvv
 
         public WvvTrimmingView()
         {
-            this.InitializeComponent();
             this.DataContext = this;
+            this.InitializeComponent();
             mSource = null;
             mComposition = new MediaComposition();
         }
 
-        private async void LoadMediaSource()
+        private MediaSource mOriginalSource;
+
+        private async void LoadMediaSource(StorageFile source)
         {
             Ready = false;
             mComposition.Clips.Clear();
-            if (null != mSource)
+            if (null != source)
             {
-                var clip = await MediaClip.CreateFromFileAsync(mSource);
+                mOriginalSource = MediaSource.CreateFromStorageFile(source);
+                var clip = await MediaClip.CreateFromFileAsync(source);
                 mComposition.Clips.Add(clip);
-                MediaStreamSource mediaStreamSource = mComposition.GeneratePreviewMediaStreamSource(
-                        (int)400,
-                        (int)400);
 
                 var loader = new WvvMediaLoader(mPlayer);
-                loader.Load(MediaSource.CreateFromMediaStreamSource(mediaStreamSource), (sender, mediaPlayer) =>
+                loader.Load(mOriginalSource, this, (sender, mediaPlayer) =>
                 {
                     TotalRange = sender.TotalRange;
                     VideoSize = sender.VideoSize;
 
-                    var extractor = new WvvFrameExtractor(40, 30);
+                    var extractor = new WvvFrameExtractor(40, 20);
                     extractor.Extract(mediaPlayer, this, (sender2, index, image) =>
                     {
-                        if(null!=image)
+                        if (null != image)
                         {
+                            Debug.WriteLine("Frame Extracted : {0}", index);
                             Frames.Add(image);
                         }
                         else
                         {
+                            Debug.WriteLine("Frame Extracted : Finalized.");
                             Ready = true;
                         }
                     });
@@ -195,16 +208,16 @@ namespace wvv
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            if(null!=mPlayer)
-            {
-                mPlayer.Dispose();
-                mPlayer = null;
-            }
             mPlayer = new MediaPlayer();
             mPlayer.PlaybackSession.PlaybackStateChanged += PBS_StateChanged;
             mPlayerElement.SetMediaPlayer(mPlayer);
 
-            LoadMediaSource();
+            if(null!=mSource)
+            {
+                var s = mSource;
+                mSource = null;
+                LoadMediaSource(s);
+            }
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -237,17 +250,28 @@ namespace wvv
 
         public void SetSource(StorageFile source)
         {
-            mSource = source;
-            LoadMediaSource();
+            if (null != mPlayer)
+            {
+                LoadMediaSource(source);
+            }
+            else
+            {
+                mSource = source;
+            }
         }
 
-        private void preview(double pos)
+        private void preview(double pos, bool force)
         {
+            if(mBusy && !force)
+            {
+                return;
+            }
+            mBusy = true;
             MediaStreamSource mediaStreamSource = mComposition.GeneratePreviewMediaStreamSource(
                     (int)mPlayerElement.ActualWidth,
                     (int)mPlayerElement.ActualHeight);
             var loader = new WvvMediaLoader(mPlayer);
-            loader.Load(MediaSource.CreateFromMediaStreamSource(mediaStreamSource), (sender, player) =>
+            loader.Load(MediaSource.CreateFromMediaStreamSource(mediaStreamSource), this, (sender, player) =>
             {
                 if (pos < 0)
                 {
@@ -258,10 +282,85 @@ namespace wvv
                     pos = sender.TotalRange;
                 }
                 mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(pos);
+                mBusy = false;
             });
         }
 
-        private void OnTrimStartChanged(WvvTrimmingSlider sender, double position)
+        private bool mBusy = false;
+        bool mPreviewing = false;
+        private void startPreview(bool play)
+        {
+            if(mPreviewing)
+            {
+                if(!IsPlaying)
+                {
+                    mPlayer.Play();
+                }
+                return;
+            }
+            mPreviewing = true;
+            MediaStreamSource mediaStreamSource = mComposition.GeneratePreviewMediaStreamSource(
+                    (int)mPlayerElement.ActualWidth,
+                    (int)mPlayerElement.ActualHeight);
+            var loader = new WvvMediaLoader(mPlayer);
+            loader.Load(MediaSource.CreateFromMediaStreamSource(mediaStreamSource), this, (sender, player) =>
+            {
+                if (mPreviewing)
+                {
+                    mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(mTrimmingSlider.CurrentPosition);
+                    if (play)
+                    {
+                        mPlayer.Play();
+                    }
+                }
+            });
+        }
+
+        enum PositionOf{ START, END, CURRENT };
+
+        private double seekPosition(PositionOf seekTo)
+        {
+            double pos;
+            switch (seekTo)
+            {
+                case PositionOf.START:
+                    pos = mTrimmingSlider.TrimStart;
+                    break;
+                case PositionOf.END:
+                    pos = mTrimmingSlider.TotalRange - mTrimmingSlider.TrimEnd;
+                    break;
+                case PositionOf.CURRENT:
+                default:
+                    pos = mTrimmingSlider.AbsoluteCurrentPosition;
+                    break;
+            }
+            return pos;
+        }
+
+        private void stopPreview(PositionOf seekTo)
+        {
+            if(IsPlaying)
+            {
+                mPlayer.Pause();
+            }
+            if(!mPreviewing)
+            {
+                mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(seekPosition(seekTo));
+                return;
+            }
+            mPreviewing = false;
+            var loader = new WvvMediaLoader(mPlayer);
+            loader.Load(mOriginalSource, this, (sender, player) =>
+            {
+                if(!mPreviewing)
+                {
+                    mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(seekPosition(seekTo));
+                }
+            });
+
+        }
+
+        private void OnTrimStartChanged(WvvTrimmingSlider sender, double position, bool finalize)
         {
             if(mComposition.Clips.Count!=1)
             {
@@ -269,10 +368,10 @@ namespace wvv
             }
             var currentClip = mComposition.Clips[0];
             currentClip.TrimTimeFromStart = TimeSpan.FromMilliseconds(position);
-            preview(0);
+            stopPreview(PositionOf.START);
         }
 
-        private void OnTrimEndChanged(WvvTrimmingSlider sender, double position)
+        private void OnTrimEndChanged(WvvTrimmingSlider sender, double position, bool finalize)
         {
             if (mComposition.Clips.Count != 1)
             {
@@ -280,14 +379,26 @@ namespace wvv
             }
             var currentClip = mComposition.Clips[0];
             currentClip.TrimTimeFromEnd = TimeSpan.FromMilliseconds(position);
-            preview(TotalRange - position - currentClip.TrimTimeFromStart.TotalMilliseconds);
+            stopPreview(PositionOf.END);
         }
 
-        private void OnCurrentPositionChanged(WvvTrimmingSlider sender, double position)
+        private void OnCurrentPositionChanged(WvvTrimmingSlider sender, double position, bool finalize)
         {
             mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(TotalRange - position);
-            mPlayer.Play();
+            
+            stopPreview(PositionOf.CURRENT);
         }
 
+        private void OnPlay(object sender, TappedRoutedEventArgs e)
+        {
+            if(IsPlaying)
+            {
+                mPlayer.Pause();
+            }
+            else
+            {
+                startPreview(true);
+            }
+        }
     }
 }

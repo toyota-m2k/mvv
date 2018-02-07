@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Media.Core;
 using Windows.Media.Playback;
+using Windows.UI.Xaml;
 
 namespace wvv
 {
@@ -18,27 +19,54 @@ namespace wvv
          */
         public double TotalRange
         {
-            get
-            {
-                return mPlayer.PlaybackSession.NaturalDuration.TotalMilliseconds;
-            }
+            //get
+            //{
+            //    return mPlayer.PlaybackSession.NaturalDuration.TotalMilliseconds;
+            //}
+            get; private set;
         }
         /**
          * 動画のサイズ（OnLoadedHandler内でのみ利用可能）
          */
         public Size VideoSize
         {
-            get
-            {
-                return new Size(mPlayer.PlaybackSession.NaturalVideoWidth, mPlayer.PlaybackSession.NaturalVideoHeight);
-            }
+            //get
+            //{
+            //    return new Size(mPlayer.PlaybackSession.NaturalVideoWidth, mPlayer.PlaybackSession.NaturalVideoHeight);
+            //}
+            get; private set;
         }
         #endregion
 
         #region Private Fields
         private MediaPlayer mPlayer;
-        private OnLoadedHandler mLoaded;
-
+        private WeakReference<UIElement> mOwnerView = new WeakReference<UIElement>(null);
+        private WeakReference<OnLoadedHandler> mLoaded = new WeakReference<OnLoadedHandler>(null);
+        
+        private UIElement OwnerView
+        {
+            get
+            {
+                UIElement v;
+                return mOwnerView.TryGetTarget(out v) ? v : null;
+            }
+            set
+            {
+                mOwnerView.SetTarget(value);
+            }
+        }
+        private OnLoadedHandler Loaded
+        {
+            get
+            {
+                OnLoadedHandler v;
+                return mLoaded.TryGetTarget(out v) ? v : null;
+            }
+            set
+            {
+                mLoaded.SetTarget(value);
+            }
+        }
         #endregion
 
         #region Public API
@@ -64,9 +92,10 @@ namespace wvv
         /**
          * ソースをMediaPlayerにロードする
          */
-        public void Load(MediaSource source, OnLoadedHandler onLoaded)
+        public void Load(MediaSource source, UIElement ownerView, OnLoadedHandler onLoaded)
         {
-            mLoaded = onLoaded;
+            Loaded = onLoaded;
+            OwnerView = ownerView;
             mPlayer.MediaOpened += OnOpened;
             mPlayer.Source = source;
         }
@@ -78,12 +107,21 @@ namespace wvv
         /**
          * MediaOpenedイベントのハンドラ
          */
-        private void OnOpened(MediaPlayer sender, object args)
+        private async void OnOpened(MediaPlayer sender, object args)
         {
-            sender.MediaOpened -= OnOpened;
-            mLoaded(this, sender);
-            mLoaded = null;
-            mPlayer = null;
+            if(null!=OwnerView)
+            {
+                TotalRange = mPlayer.PlaybackSession.NaturalDuration.TotalMilliseconds;
+                VideoSize = new Size(mPlayer.PlaybackSession.NaturalVideoWidth, mPlayer.PlaybackSession.NaturalVideoHeight);
+                await OwnerView.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    sender.MediaOpened -= OnOpened;
+                    Loaded?.Invoke(this, sender);
+                    Loaded = null;
+                    OwnerView = null;
+                    mPlayer = null;
+                });
+            }
         }
 
         #endregion

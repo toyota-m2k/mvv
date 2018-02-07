@@ -21,6 +21,7 @@
             <Button Margin="4" Content="Reset" Tapped="OnReset"/>
             <Button Margin="4" Content="Save As" Tapped="OnSaveAs"/>
             <Button Margin="4" Content="Record" Tapped="OnRecord"/>
+            <Button Margin="4" Content="Trimming Dialog" Tapped="OnTrimmingDialog"/>
             <Button Margin="4" Content="Player Page" Tapped="OnPlayerPage"/>
         </StackPanel>
 

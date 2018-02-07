@@ -28,11 +28,11 @@ namespace wvv
         private double mOriginalSeekPosition = 0;
 
         private SoftwareBitmap mFrameServerDest;
-        private CanvasImageSource mCanvasImageSource = null;
         private double mSpan = 0;
         private double mOffset = 0;
         private int mFrame = 0;
         private int mFrameCount;
+        private double mNextPosition = 0;
         private double mThumbnailHeight;
         private Size mThumbnailSize = new Size();
         private OnThumbnailExtractedHandler mOnExtracted;
@@ -51,6 +51,7 @@ namespace wvv
             mIsVideoFrameServerEnabled = mPlayer.IsVideoFrameServerEnabled;
             mOriginalSeekPosition = mPlayer.PlaybackSession.Position.TotalMilliseconds;
 
+            mPlayer.IsVideoFrameServerEnabled = true;
             mPlayer.PlaybackSession.SeekCompleted += PBS_SeekCompleted;
             mOnExtracted = extracted;
 
@@ -61,7 +62,8 @@ namespace wvv
             var videoSize = new Size(mPlayer.PlaybackSession.NaturalVideoWidth, mPlayer.PlaybackSession.NaturalVideoHeight);
             mThumbnailSize.Height = mThumbnailHeight;
             mThumbnailSize.Width = videoSize.Width * mThumbnailSize.Height / videoSize.Height;
-            mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(mOffset);
+            mNextPosition = mOffset;
+            mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(mNextPosition);
         }
 
         private void completed()
@@ -82,7 +84,6 @@ namespace wvv
             {
                 mFrameServerDest.Dispose();
                 mFrameServerDest = null;
-                mCanvasImageSource = null;
             }
         }
 
@@ -92,15 +93,29 @@ namespace wvv
          */
         private async void PBS_SeekCompleted(MediaPlaybackSession session, object args)
         {
+            Debug.WriteLine(string.Format("SeekCompleted : Position:{0}", session.Position));
+
+            //var d = Math.Abs(session.Position.TotalMilliseconds - mNextPosition);
+            //if (d > mSpan / 3)
+            //{
+            //    Debug.WriteLine("extracting: NextFrame:{0} NextPosition:{1} CurrentFrame:{2}", mFrame, mNextPosition, session.Position.TotalMilliseconds);
+            //    return;
+            //}
+            //mFrame++;
+            //mNextPosition = mOffset + mSpan * mFrame;
+
             await mOwnerView.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
                 var mediaPlayer = session.MediaPlayer;
                 extractFrame(mediaPlayer);
 
-                if (mFrame < mFrameCount - 1)
+                if (mFrame < mFrameCount)
                 {
+
                     mFrame++;
-                    session.Position = TimeSpan.FromMilliseconds(mOffset + mSpan * mFrame);
+                    mNextPosition = mOffset + mSpan * mFrame;
+                    Debug.WriteLine(string.Format("...Seek to Frame:{0} / Position:{1}", mFrame, mNextPosition));
+                    session.Position = TimeSpan.FromMilliseconds(mNextPosition);
                 }
                 else
                 {
@@ -120,6 +135,7 @@ namespace wvv
             {
                 try
                 {
+                    Debug.WriteLine(string.Format("...Extract Position:{0} (State={1})", mediaPlayer.PlaybackSession.Position, mediaPlayer.PlaybackSession.PlaybackState.ToString()));
                     mediaPlayer.CopyFrameToVideoSurface(inputBitmap);
                     ds.DrawImage(inputBitmap);
                 }

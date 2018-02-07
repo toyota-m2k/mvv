@@ -10,6 +10,25 @@
     d:DesignWidth="400">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">Select Flame</TextBlock>
+            <Button Grid.Column="0" Tapped="OnCancelTapped">Cancel</Button>
+            <Button Grid.Column="2" Tapped="OnCloseTapped">Close</Button>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <local:WvvTrimmingView x:Name="mTrimmingView"/>
+        </Grid>
 
     </Grid>
 </UserControl>

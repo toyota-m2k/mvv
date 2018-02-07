@@ -100,7 +100,7 @@
                 <Grid x:Name="mThumb" Canvas.Left="-7" HorizontalAlignment="Center" 
                       Background="Transparent"
                       PointerPressed="OnThumbPressed"
-                      PointerMoved="OnThumbMoved"
+                      PointerMoved="OnKnobMoved"
                       PointerReleased="OnKnobReleased"
                       PointerCanceled="OnKnobReleased"
                       >
@@ -117,7 +117,7 @@
                     Canvas.Top="5"
                     Background="Transparent" 
                     PointerPressed="OnLKnobPressed"
-                    PointerMoved="OnLKnobMoved"
+                    PointerMoved="OnKnobMoved"
                     PointerReleased="OnKnobReleased"
                     PointerCanceled="OnKnobReleased"
                     >
@@ -132,7 +132,7 @@
                     Canvas.Top="5"
                     Background="Transparent"
                     PointerPressed="OnRKnobPressed"
-                    PointerMoved="OnRKnobMoved"
+                    PointerMoved="OnKnobMoved"
                     PointerReleased="OnKnobReleased"
                     PointerCanceled="OnKnobReleased"
                     >

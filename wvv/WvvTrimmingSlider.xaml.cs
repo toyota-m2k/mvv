@@ -26,7 +26,7 @@ namespace wvv
 
         #region Events
 
-        public delegate void TrimmingEventHandler(WvvTrimmingSlider sender, double position);
+        public delegate void TrimmingEventHandler(WvvTrimmingSlider sender, double position, bool force);
 
         /**
          * トリミング開始位置が変更された
@@ -69,7 +69,6 @@ namespace wvv
                     mTrimStart = v;
                     notify("LWidth");
                     AbsoluteCurrentPosition = c;
-                    TrimStartChanged?.Invoke(this, mTrimStart);
                 }
             }
         }
@@ -93,7 +92,6 @@ namespace wvv
                     mTrimEnd = v;
                     notify("RWidth");
                     AbsoluteCurrentPosition = c;
-                    TrimEndChanged?.Invoke(this, mTrimEnd);
                 }
             }
         }
@@ -110,7 +108,7 @@ namespace wvv
             }
             set
             {
-                if (value != mTotalRange)
+                if (value != mTotalRange && mTotalRange>0)
                 {
                     mTotalRange = value;
                     mTrimStart = 0;
@@ -274,12 +272,17 @@ namespace wvv
          */
         struct Tracking
         {
+            public delegate void MovedHandler(double newValue, bool completed);
+
             public bool Active;
             public double Orginal;
             public double Min;
             public double Max;
             public double Start;
             public double Prev;
+            public double Ext;
+            public int Dir;
+            public MovedHandler Moved;
         }
         private Tracking mTracking = new Tracking();
 
@@ -289,41 +292,20 @@ namespace wvv
         private void OnLKnobPressed(object sender, PointerRoutedEventArgs e)
         {
             ((UIElement)sender).CapturePointer(e.Pointer);
-            var pos = e.GetCurrentPoint(mTrimmerBase);
-            mTracking.Start = pos.Position.X;
-            mTracking.Active = true;
-            mTracking.Orginal = LWidth;
-            mTracking.Max = TotalRange - TrimEnd;
-            mTracking.Min = 0;
+
+            beginTracking(e, 1, LWidth, TrimStart, TotalRange-TrimEnd);
+
+            mTracking.Moved = (v, last) =>
+            {
+                TrimStart = v;
+                if (mTracking.Ext != v)
+                {
+                    mTracking.Ext = v;
+                    TrimStartChanged?.Invoke(this, v, last);
+                }
+            };
 
             Debug.WriteLine("LKnob Pressed.");
-        }
-
-        /**
-         * TrimStart位置調整用Knobのドラッグ処理
-         */
-        private void OnLKnobMoved(object sender, PointerRoutedEventArgs e)
-        {
-            if(!mTracking.Active)
-            {
-                return;
-            }
-
-            var pos = e.GetCurrentPoint(mTrimmerBase);
-            Debug.WriteLine("LKnob Moving. {0}", pos.Position.X - mTracking.Start);
-
-            double x = mTracking.Orginal + (pos.Position.X - mTracking.Start);
-            double v = x * TotalRange / mTrimmerWidth;
-            if(v< mTracking.Min)
-            {
-                v = mTracking.Min;
-            }
-            else if(v>mTracking.Max)
-            {
-                v = mTracking.Max;
-            }
-            TrimStart = v;
-            
         }
 
         /**
@@ -333,41 +315,20 @@ namespace wvv
         {
             ((UIElement)sender).CapturePointer(e.Pointer);
 
-            var pos = e.GetCurrentPoint(mTrimmerBase);
-            mTracking.Start = pos.Position.X;
-            mTracking.Active = true;
-            mTracking.Orginal = RWidth;
-            mTracking.Max = TotalRange - TrimStart;
-            mTracking.Min = 0;
+            beginTracking(e, -1, RWidth, TrimEnd, TotalRange-TrimStart);
+
+            mTracking.Moved = (v, last) =>
+            {
+                TrimEnd = v;
+                if (mTracking.Ext != v)
+                {
+                    mTracking.Ext = v;
+                    TrimEndChanged?.Invoke(this, v, last);
+                }
+            };
 
             Debug.WriteLine("RKnob Pressed.");
 
-        }
-
-        /**
-         * TrimEnd位置調整用Knobのドラッグ処理
-         */
-        private void OnRKnobMoved(object sender, PointerRoutedEventArgs e)
-        {
-            if (!mTracking.Active)
-            {
-                return;
-            }
-
-            var pos = e.GetCurrentPoint(mTrimmerBase);
-            Debug.WriteLine("RKnob Moving. {0}", pos.Position.X - mTracking.Start);
-
-            double x = mTracking.Orginal - (pos.Position.X - mTracking.Start);
-            double v = x * TotalRange / mTrimmerWidth;
-            if (v < mTracking.Min)
-            {
-                v = mTracking.Min;
-            }
-            else if (v > mTracking.Max)
-            {
-                v = mTracking.Max;
-            }
-            TrimEnd = v;
         }
 
         /**
@@ -376,33 +337,40 @@ namespace wvv
         private void OnThumbPressed(object sender, PointerRoutedEventArgs e)
         {
             ((UIElement)sender).CapturePointer(e.Pointer);
-            var pos = e.GetCurrentPoint(mTrimmerBase);
-            mTracking.Start = pos.Position.X;
-            mTracking.Active = true;
-            mTracking.Orginal = MWidth;
-            mTracking.Prev = AbsoluteCurrentPosition;
 
-            mTracking.Min = 0;
-            mTracking.Max = TotalRange - TrimEnd - TrimStart;
+            beginTracking(e, 1, MWidth, AbsoluteCurrentPosition, TotalRange - TrimEnd - TrimStart);
+
+            mTracking.Moved = (v, last) =>
+            {
+                CurrentPosition = v;
+                if (mTracking.Ext != AbsoluteCurrentPosition)
+                {
+                    mTracking.Ext = AbsoluteCurrentPosition;
+                    CurrentPositionChanged?.Invoke(this, CurrentPosition, false);
+                }
+            };
 
             Debug.WriteLine("Thumb Pressed.");
         }
 
-        /**
-         * CurrentPosition調整用Thumbのドラッグ処理
-         */
-        private void OnThumbMoved(object sender, PointerRoutedEventArgs e)
+        private void beginTracking(PointerRoutedEventArgs e, int dir, double original, double ext, double max)
         {
-            if (!mTracking.Active)
-            {
-                return;
-            }
-
             var pos = e.GetCurrentPoint(mTrimmerBase);
-            Debug.WriteLine("Thumb Moving. {0}", pos.Position.X - mTracking.Start);
+            mTracking.Start = pos.Position.X;
+            mTracking.Active = true;
+            mTracking.Orginal = mTracking.Prev = original;
+            mTracking.Ext = ext;
+            mTracking.Dir = dir;
+            mTracking.Min = 0;
+            mTracking.Max = max;
+        }
 
-            double x = mTracking.Orginal + (pos.Position.X - mTracking.Start);
+        private double getNewValue(PointerRoutedEventArgs e)
+        {
+            var pos = e.GetCurrentPoint(mTrimmerBase);
+            Debug.WriteLine("Knob Moving. {0}", pos.Position.X - mTracking.Start);
 
+            double x = mTracking.Orginal + (pos.Position.X - mTracking.Start) * mTracking.Dir;
             double v = x * TotalRange / mTrimmerWidth;
             if (v < mTracking.Min)
             {
@@ -412,21 +380,35 @@ namespace wvv
             {
                 v = mTracking.Max;
             }
-            CurrentPosition = v;
-            if(mTracking.Prev != AbsoluteCurrentPosition)
-            {
-                mTracking.Prev = AbsoluteCurrentPosition;
-                CurrentPositionChanged?.Invoke(this, CurrentPosition);
-            }
+            return v;
         }
+
+        private void OnKnobMoved(object sender, PointerRoutedEventArgs e)
+        {
+            if (!mTracking.Active)
+            {
+                return;
+            }
+
+            var v = getNewValue(e);
+            mTracking.Prev = v;
+            mTracking.Moved(v, false);
+        }
+
 
         private void OnKnobReleased(object sender, PointerRoutedEventArgs e)
         {
             ((UIElement)sender).ReleasePointerCapture(e.Pointer);
 
             mTracking.Active = false;
-            Debug.WriteLine("Knob Released.");
 
+            if (null != mTracking.Moved)
+            {
+                var v = getNewValue(e);
+                mTracking.Moved(v, true);
+                mTracking.Moved = null;
+            }
+            Debug.WriteLine("Knob Released.");
         }
 
         #endregion
