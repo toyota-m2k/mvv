@@ -7,3 +7,5 @@ wvv/wvv_TemporaryKey.pfx
 wvv/wvv\.csproj\.user
 
 *.user
+
+*.bak

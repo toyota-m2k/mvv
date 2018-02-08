@@ -474,7 +474,7 @@ namespace wvv
             {
                 mTrimmingSlider.CurrentPosition = 0;
             }
-            mFrameListView.TickPosition = position / sender.TotalRange;
+            mFrameListView.LeftTrim = position / sender.TotalRange;
         }
 
         /**
@@ -494,7 +494,7 @@ namespace wvv
             {
                 mTrimmingSlider.CurrentPosition = 0;
             }
-            mFrameListView.TickPosition = position / sender.TotalRange;
+            mFrameListView.RightTrim = position / sender.TotalRange;
         }
 
         /**

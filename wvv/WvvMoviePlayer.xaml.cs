@@ -12,13 +12,14 @@ using Windows.Media.Playback;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
+using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
 
 namespace wvv
 {
-    public sealed partial class WvvMoviePlayer : UserControl, INotifyPropertyChanged
+    public sealed partial class WvvMoviePlayer : UserControl, INotifyPropertyChanged, IDisposable
     {
         #region Constants
         /**
@@ -27,8 +28,11 @@ namespace wvv
         public enum LayoutMode {
             Width,       // 指定された幅になるように高さを調整
             Height,      // 指定された高さになるよう幅を調整
-            Inside       // 指定された矩形に収まるよう幅、または、高さを調整
+            Inside,      // 指定された矩形に収まるよう幅、または、高さを調整
+            Fit          // 指定された矩形にリサイズする
         }
+
+        public const int MinFrameCount = 20;
         #endregion
 
         #region INotifyPropertyChanged i/f
@@ -54,12 +58,15 @@ namespace wvv
                 if (mPlayerLayout != value)
                 {
                     mPlayerLayout = value;
-                    notify("PlayerSize");
+                    updatePlayerSize();
                 }
             }
         }
-        private LayoutMode mPlayerLayout = LayoutMode.Height;
+        private LayoutMode mPlayerLayout = LayoutMode.Fit;
 
+        /**
+         * プレイヤーの配置サイズのヒント
+         */
         public Size LayoutSize
         {
             get { return mLayoutSize; }
@@ -68,7 +75,7 @@ namespace wvv
                 if (value != mLayoutSize)
                 {
                     mLayoutSize = value;
-                    notify("PlayerSize");
+                    updatePlayerSize();
                 }
             }
         }
@@ -81,14 +88,34 @@ namespace wvv
         {
             get
             {
-                return fitSize(mPlayerLayout);
+                return mPlayerSize;
+            }
+        }
+        private Size mPlayerSize = new Size(300, 300);
+
+        /**
+         * PlayerLayout/LayoutSize/VideoSize が変更されたときに、PlayerSizeを更新する。
+         */
+        private void updatePlayerSize()
+        {
+            Size size = fitSize(PlayerLayout);
+            if (size != mPlayerSize)
+            {
+                mPlayerSize = size;
+                notify("PlayerSize");
+                notify("PanelWidth");
             }
         }
 
+        /**
+         * PlayerLayout/LayoutSize/VideoSize から実際のサイズを決定する。
+         */
         private Size fitSize(LayoutMode mode)
         {
             switch (mode)
             {
+                case LayoutMode.Fit:
+                    return mLayoutSize;
                 case LayoutMode.Width:
                     return new Size(mLayoutSize.Width, mVideoSize.Height * mLayoutSize.Width / mVideoSize.Width);
                 case LayoutMode.Height:
@@ -139,11 +166,11 @@ namespace wvv
                 if (mVideoSize != value)
                 {
                     mVideoSize = value;
-                    notify("PlayerSize");
+                    updatePlayerSize();
                 }
             }
         }
-        private Size mVideoSize = new Size(0, 0);
+        private Size mVideoSize = new Size(300, 300);
 
         /**
          * カスタム描画モード
@@ -174,7 +201,7 @@ namespace wvv
                 }
             }
         }
-        private bool mCustomDrawing = true;
+        private bool mCustomDrawing = false;
 
 
         /**
@@ -204,7 +231,10 @@ namespace wvv
             }
         }
         private bool mPlaying = false;
-        private DispatcherTimer mTruckingTimer = null;
+
+        /**
+         * CustomDrawingでないときに、スライダーの動きがぎこちないので、これを自前で動かすためのタイマー
+         */
         private DispatcherTimer TruckingTimer
         {
             get
@@ -221,9 +251,10 @@ namespace wvv
                 return mTruckingTimer;
             }
         }
+        private DispatcherTimer mTruckingTimer = null;
 
         /**
-         * フレーム一覧の表示状態
+         * フレーム一覧を表示する(true)か、しない(false)か
          */
         public bool ShowingFrames
         {
@@ -311,10 +342,15 @@ namespace wvv
                     notify("LargeChange");
                 }
                 mMarkerView.TotalRange = value;
+                updatePositionString();
             }
         }
         private double mTotalRange = 100;
 
+        /**
+         * サムネイルの高さ
+         * スライダーのThumb（画像）の高さで決まる値・・・即値
+         */
         private double ThumbnailHeight
         {
             get
@@ -330,6 +366,7 @@ namespace wvv
         {
             get { return mTotalRange / 100; }
         }
+
         /**
          * スライダーの移動量（大きいやつ・・・操作方法は知らない）
          */
@@ -338,6 +375,10 @@ namespace wvv
             get { return mTotalRange / 20; }
         }
 
+        /**
+         * 動画ソース
+         * setter は、SetSource()と同じ
+         */
         public IMediaPlaybackSource Source
         {
             get
@@ -346,17 +387,121 @@ namespace wvv
             }
             set
             {
-                if(null==MediaPlayer)
-                {
-                    mTempSource = value;
-                }
-                else
-                {
-                    SetSource(value);
-                }
+                SetSource(value);
             }
         }
         IMediaPlaybackSource mTempSource = null;
+
+
+        /**
+         * 親ビューでズームしたときに、Panelのサイズが変わらないように、外から拡大率を指定する。
+         */
+        private ScaleTransform mScale;
+        public double PanelScale
+        {
+            get { return mScale.ScaleX; }
+            set
+            {
+                if (mScale.ScaleX != value)
+                {
+                    mScale.ScaleX = value;
+                    mScale.ScaleY = value;
+                    notify("PanelWidth");
+                }
+            }
+        }
+
+        /**
+         * パネルを表示する(true)か、しない(false)か。
+         */
+        public bool ShowPanel
+        {
+            get
+            {
+                return mShowPanel;
+            }
+            set
+            {
+                if(value != mShowPanel)
+                {
+                    mShowPanel = value;
+                    notify("ShowPanel");
+                }
+            }
+        }
+        private bool mShowPanel = true;
+
+        /**
+         * パネルの幅
+         * PanelScaleを考慮して、PlayerSize.Widthに合わせる。
+         */
+        public double PanelWidth
+        {
+            get
+            {
+                return PlayerSize.Width / PanelScale;
+            }
+        }
+
+        /**
+         * スライダーの下に表示する、再生位置を示す文字列
+         */
+        public string PositionString
+        {
+            get
+            {
+                // return "00:00:00/00:00:00";
+                return mPositionString;
+            }
+        }
+        private string mPositionString = "";
+
+        /**
+         * PositionStringを更新する。
+         * @param   pos     スライダーの位置（＝再生位置）
+         */
+        private void updatePositionString(double pos)
+        {
+            string v = "";
+            TimeSpan total = TimeSpan.FromMilliseconds(TotalRange);
+            TimeSpan current = TimeSpan.FromMilliseconds(pos);
+            if (total.Hours > 0)
+            {
+                v = String.Format("{0:00}:{1:00}:{2:00} / {3:00}:{4:00}:{5:00}", current.Hours, current.Minutes, current.Seconds, total.Hours, total.Minutes, total.Seconds);
+            }
+            else if(total.Minutes > 0)
+                {
+                v = String.Format("{0:00}:{1:00} / {2:00}:{3:00}", current.Minutes, current.Seconds, total.Minutes, total.Seconds);
+                }
+                else
+                {
+                v = String.Format("{0:00}:{1:000} / {2:00}:{3:000}", current.Seconds, current.Milliseconds, total.Seconds, total.Milliseconds);
+            }
+
+            if (v != mPositionString)
+            {
+                mPositionString = v;
+                notify("PositionString");
+            }
+        }
+
+        /**
+         * 現在の再生位置で、PositionStringを更新する。
+         */
+        private void updatePositionString()
+        {
+            var session = PlaybackSession;
+            if (null != session)
+            {
+                updatePositionString(session.Position.TotalMilliseconds);
+                return;
+                }
+            else if(mPositionString.Length!=0)
+            {
+                mPositionString = "";
+                notify("PositionString");
+            }
+        }
 
         #endregion
 
@@ -385,7 +530,7 @@ namespace wvv
         CanvasImageSource mCanvasImageSource = null;
 
         bool mGettingFrame = false;
-        int mFrameCount = 20;
+        int mFrameCount = MinFrameCount;
         double mReqPosition = 0;
         double mSpan = 0;
         double mOffset = 0;
@@ -400,6 +545,12 @@ namespace wvv
 
         public WvvMoviePlayer()
         {
+            mScale = new ScaleTransform();
+            mScale.CenterX = 0;
+            mScale.CenterY = 0;
+            mScale.ScaleX = 1;
+            mScale.ScaleY = 1;
+
             this.InitializeComponent();
             this.DataContext = this;
         }
@@ -407,9 +558,14 @@ namespace wvv
         /**
          * 初期化
          */
+        private MediaPlayer mInternalPlayer = null;
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            mMoviePlayer.SetMediaPlayer(new MediaPlayer());
+            if(null== mInternalPlayer)
+            {
+                mInternalPlayer = new MediaPlayer();
+            }
+            mMoviePlayer.SetMediaPlayer(mInternalPlayer);
             MediaPlayer.IsVideoFrameServerEnabled = CTX.CustomDrawing;
 
             MediaPlayer.MediaOpened += MP_MediaOpened;
@@ -426,6 +582,9 @@ namespace wvv
             {
                 SetSource(mTempSource);
             }
+
+            mPanel.RenderTransformOrigin = new Point(0, 0);
+            mPanel.RenderTransform = mScale;
         }
 
         /**
@@ -434,7 +593,10 @@ namespace wvv
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             MediaPlayer.Pause();
-
+            if(null!=mTruckingTimer)
+            {
+                mTruckingTimer.Stop();
+            }
             MediaPlayer.MediaOpened -= MP_MediaOpened;
             MediaPlayer.VideoFrameAvailable -= MP_FrameAvailable;
             //PlaybackSession.PositionChanged -= PBS_PositionChanged;
@@ -446,7 +608,7 @@ namespace wvv
             mMarkerView.MarkerAdded -= MV_MarkerAdded;
             mMarkerView.MarkerRemoved -= MV_MarkerRemoved;
 
-            MediaPlayer.Dispose();
+            mMoviePlayer.SetMediaPlayer(null);
             if (null != mFrameServerDest)
             {
                 mFrameServerDest.Dispose();
@@ -454,6 +616,17 @@ namespace wvv
                 mCanvasImageSource = null;
             }
         }
+
+        public void Dispose()
+        {
+            if(null!=mInternalPlayer)
+            {
+                mMoviePlayer.SetMediaPlayer(null);
+                mInternalPlayer.Dispose();
+                mInternalPlayer = null;
+            }
+        }
+
 
         #endregion
 
@@ -478,7 +651,7 @@ namespace wvv
                     // FrameServerImage in this example is a XAML image control
                     var playerSize = CTX.PlayerSize;
                     mFrameServerDest = new SoftwareBitmap(BitmapPixelFormat.Rgba8, (int)playerSize.Width, (int)playerSize.Height, BitmapAlphaMode.Ignore);
-                    mCanvasImageSource = new CanvasImageSource(canvasDevice, (int)playerSize.Width, (int)playerSize.Height, DisplayInformation.GetForCurrentView().LogicalDpi);//96); 
+                    mCanvasImageSource = new CanvasImageSource(canvasDevice, (int)playerSize.Width, (int)playerSize.Height, 96/*DisplayInformation.GetForCurrentView().LogicalDpi*/);
                     mFrameImage.Source = mCanvasImageSource;
                 }
                 Debug.WriteLine("Frame: {0}", mediaPlayer.PlaybackSession.Position);
@@ -533,7 +706,7 @@ namespace wvv
                 var mediaPlayer = session.MediaPlayer;
                 extractFrame(mediaPlayer);
 
-                if (mFrame < mFrameCount)
+                if (mFrame < mFrameCount - 1)
                 {
                     mFrame++;
                     session.Position = TimeSpan.FromMilliseconds(mOffset + mSpan * mFrame);
@@ -573,6 +746,7 @@ namespace wvv
                     case MediaPlaybackState.Paused:
                     default:
                         CTX.IsPlaying = false;
+                        updateSliderPosition(session.Position.TotalMilliseconds);
                         break;
                     case MediaPlaybackState.Playing:
                         CTX.IsPlaying = true;
@@ -628,7 +802,7 @@ namespace wvv
         /**
          * 再生/停止ボタン
          */
-        private void OnButtoPlayStop(object sender, RoutedEventArgs e)
+        private void OnButtoPlayStop(object sender, TappedRoutedEventArgs e)
         {
             //CTX.IsPlaying = !CTX.IsPlaying;
             if (CTX.MoviePrepared)
@@ -642,12 +816,13 @@ namespace wvv
                     MediaPlayer.Play();
                 }
             }
+            e.Handled = true;
         }
 
         /**
          * フレームリスト表示/非表示切替ボタン
          */
-        private void OnShowHideFrameList(object sender, RoutedEventArgs e)
+        private void OnShowHideFrameList(object sender, TappedRoutedEventArgs e)
         {
             // CTX.ShowingFrames = !CTX.ShowingFrames;
             if(!CTX.ShowingFrames)
@@ -666,26 +841,30 @@ namespace wvv
                     CTX.LargeThumbnail = true;
                 }
             }
+            e.Handled = true;
         }
 
         /**
          * フルスクリーンモード切替ボタン
          */
-        private void OnFullScreen(object sender, RoutedEventArgs e)
+        private void OnFullScreen(object sender, TappedRoutedEventArgs e)
         {
             mMoviePlayer.MediaPlayer.IsVideoFrameServerEnabled = false;
             mMoviePlayer.AreTransportControlsEnabled = true;
             mCustomDrawingBackup = CTX.CustomDrawing;
             CTX.CustomDrawing = false;
             mMoviePlayer.IsFullWindow = true;
+
+            e.Handled = true;
         }
 
         /**
          * マーカー追加ボタンクリック
          */
-        private void OnAddMarker(object sender, RoutedEventArgs e)
+        private void OnAddMarker(object sender, TappedRoutedEventArgs e)
         {
             mMarkerView.AddMarker(PlaybackSession.Position.TotalMilliseconds, mMarkerView);
+            e.Handled = true;
         }
 
         /**
@@ -694,6 +873,7 @@ namespace wvv
         private void OnNextMarker(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
             mMarkerView.NextMark(mSlider.Value, mMarkerView);
+            e.Handled = true;
         }
 
         /**
@@ -702,6 +882,7 @@ namespace wvv
         private void OnPrevMarker(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
             mMarkerView.PrevMark(mSlider.Value, mMarkerView);
+            e.Handled = true;
         }
 
         /**
@@ -714,6 +895,7 @@ namespace wvv
             if (null != slider && mReqPosition != slider.Value)
             {
                 PlaybackSession.Position = TimeSpan.FromMilliseconds(slider.Value);
+                updatePositionString(slider.Value);
             }
         }
 
@@ -742,6 +924,7 @@ namespace wvv
                     mSlider.Value = v;
                 }
             }
+            e.Handled = true;
         }
 
         /**
@@ -769,6 +952,7 @@ namespace wvv
         {
             //Debug.WriteLine("Slider: Pressed");
             pauseOnStartTracking();
+            e.Handled = true;
         }
 
         /**
@@ -779,7 +963,48 @@ namespace wvv
         {
             //Debug.WriteLine("Slider: Released");
             restartOnEndTracking();
+            e.Handled = true;
         }
+
+        /**
+         * タップイベントを親(MMJScrollViewer)に回さないためのストッパー
+         */
+        private void OnContainerTapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        /**
+         * 上のストッパーをいれると、Sliderが（Thumbボタンの外の）タップイベントを処理できなくなるので、自前で処理する。
+         */
+        private void OnSliderTapped(object sender, TappedRoutedEventArgs e)
+        {
+            if (sender is Slider)
+            {
+                var pos = e.GetPosition(mSlider);
+                if (pos.Y < 12 || !ShowingFrames)
+                {
+                    // スライダー部分のタップ
+                    mSlider.Value = mSlider.Maximum * (double)pos.X / (double)mSlider.ActualWidth;
+                }
+                else
+                {
+                    // フレームサムネイル部分のタップ
+                    var border = VisualTreeHelper.GetChild(mFrameListView, 0) as Border;
+                    if (null != border)
+                    {
+                        var scrollViewer = border.Child as ScrollViewer;
+                        double offset = scrollViewer.HorizontalOffset + pos.X;
+                        double cell = mThumbnailSize.Width + 1;
+                        double frame = Math.Floor(offset / cell) + 0.5;
+                        double time = (TotalRange / (double)mFrameCount) * frame;
+                        mSlider.Value = time;
+                    }
+                }
+                e.Handled = true;
+            }
+        }
+
 
         /**
          * マーカー削除通知
@@ -820,7 +1045,7 @@ namespace wvv
                 mCanvasImageSource = null;
             }
             double total = MediaPlayer.PlaybackSession.NaturalDuration.TotalMilliseconds;
-            mSpan = total / (mFrameCount + 1);
+            mSpan = total / mFrameCount;
             mOffset = mSpan / 2;
             mFrame = 0;
             var videoSize = new Size(MediaPlayer.PlaybackSession.NaturalVideoWidth, MediaPlayer.PlaybackSession.NaturalVideoHeight);
@@ -836,7 +1061,7 @@ namespace wvv
         private void extractFrame(MediaPlayer mediaPlayer)
         {
             CanvasDevice canvasDevice = CanvasDevice.GetSharedDevice();
-            var canvasImageSrc = new CanvasImageSource(canvasDevice, (int)mThumbnailSize.Width, (int)mThumbnailSize.Height, DisplayInformation.GetForCurrentView().LogicalDpi);//96); 
+            var canvasImageSrc = new CanvasImageSource(canvasDevice, (int)mThumbnailSize.Width, (int)mThumbnailSize.Height, 96/*DisplayInformation.GetForCurrentView().LogicalDpi*/);
             using (SoftwareBitmap softwareBitmap = new SoftwareBitmap(BitmapPixelFormat.Rgba8, (int)mThumbnailSize.Width, (int)mThumbnailSize.Height, BitmapAlphaMode.Ignore))
             using (CanvasBitmap inputBitmap = CanvasBitmap.CreateFromSoftwareBitmap(canvasDevice, softwareBitmap))
             using (CanvasDrawingSession ds = canvasImageSrc.CreateDrawingSession(Windows.UI.Colors.Black))
@@ -862,6 +1087,7 @@ namespace wvv
         {
             mReqPosition = pos;
             mSlider.Value = pos;
+            updatePositionString(pos);
         }
 
         /**
@@ -971,14 +1197,19 @@ namespace wvv
          */
         public void SetSource(IMediaPlaybackSource source)
         {
+            if(null== MediaPlayer)
+            {
+                mTempSource = source;
+                return;
+            }
             CTX.Frames.Clear();
             CTX.IsPlaying = false;
             CTX.MoviePrepared = false;
             mPauseTemporary = false;
             mGettingFrame = true;
             mMarkerView.Clear();
-            mMoviePlayer.MediaPlayer.IsVideoFrameServerEnabled = true;
-            mMoviePlayer.MediaPlayer.Source = source;       // MediaPlayerが動画ファイルを読み込んだら MP_MediaOpened が呼ばれる。
+            MediaPlayer.IsVideoFrameServerEnabled = true;
+            MediaPlayer.Source = source;       // MediaPlayerが動画ファイルを読み込んだら MP_MediaOpened が呼ばれる。
         }
 
         /**
@@ -990,7 +1221,7 @@ namespace wvv
             {
                 if (!CTX.IsPlaying)
                 {
-                    MediaPlayer.Play();
+                    MediaPlayer?.Play();
                 }
             }
         }
@@ -1001,7 +1232,7 @@ namespace wvv
          */
         public void Stop()
         {
-            MediaPlayer.Pause();
+            MediaPlayer?.Pause();
         }
 
         /**

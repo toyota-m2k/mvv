@@ -57,7 +57,7 @@ namespace wvv
                 }
             }
         }
-        double mTickPosition = 0.1;
+        double mTickPosition = 0;
 
         /**
          * 先頭のトリミング位置（全体を１とした値： 0--1)
@@ -90,7 +90,7 @@ namespace wvv
                 {
                     mRightTrim = value;
                     notify("RWidth");
-                    Position = value;
+                    Position = 1.0 - value;
                 }
             }
         }

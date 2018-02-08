@@ -33,11 +33,18 @@
             <BitmapImage x:Key="ThumbMinIcon" UriSource="Assets/current_bar_min.png"/>
             <BitmapImage x:Key="ThumbLongIcon" UriSource="Assets/current_bar_fullscreen.png"/>
 
+            <SolidColorBrush x:Key="ButtonFaceColor" Color="LightGray"/>
+            <SolidColorBrush x:Key="ButtonTextColor" Color="Black"/>
+            <SolidColorBrush x:Key="ButtonBorderColor" Color="LightGray"/>
+            <SolidColorBrush x:Key="PanelColor" Color="#FF343434"/>
+            <SolidColorBrush x:Key="PanelTextColor" Color="#FFFFFFFF"/>
+            <SolidColorBrush x:Key="ProgresBgColor" Color="#90000000"/>
+
             <Style x:Key="CtrlButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="{ThemeResource ButtonBackground}"/>
-                <Setter Property="Foreground" Value="{ThemeResource ButtonForeground}"/>
-                <Setter Property="BorderBrush" Value="{ThemeResource ButtonBorderBrush}"/>
-                <Setter Property="BorderThickness" Value="{ThemeResource ButtonBorderThemeThickness}"/>
+                <Setter Property="Background" Value="{StaticResource ButtonFaceColor}"/>
+                <Setter Property="Foreground" Value="{StaticResource ButtonTextColor}"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource ButtonBorderColor}"/>
+                <Setter Property="BorderThickness" Value="4"/>
                 <Setter Property="Padding" Value="0,0,0,0"/>
                 <Setter Property="HorizontalAlignment" Value="Left"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -107,13 +114,17 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center"
+        <Grid Grid.Row="0" VerticalAlignment="Top" HorizontalAlignment="Left"
             Width="{Binding PlayerSize.Width}"
-            Height="{Binding PlayerSize.Height}">
+              Height="{Binding PlayerSize.Height}"
+              Background="{StaticResource ProgresBgColor}"
+              Visibility="{Binding MoviePrepared, Converter={StaticResource NegBoolVisibilityConverter}}"
+              >
             <ProgressRing 
                 Width="40"
                 Height="40"
-                IsActive="{Binding MoviePrepared, Converter={StaticResource NegBoolConverter}}"/>
+                IsActive="{Binding MoviePrepared, Converter={StaticResource NegBoolConverter}}"
+                />
         </Grid>
         <Grid Grid.Row="0"
             Visibility="{Binding MoviePrepared, Converter={StaticResource BoolVisibilityConverter}}">
@@ -133,15 +144,23 @@
                 />
         </Grid>
 
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" 
+              Margin="0,4,0,0"
+              Tapped="OnContainerTapped" 
+              x:Name="mPanel" 
+              HorizontalAlignment="Left"
+              Background="{StaticResource PanelColor}" 
+              Visibility="{Binding ShowPanel, Converter={StaticResource BoolVisibilityConverter}}" 
+              MinWidth="300" Width="{Binding PanelWidth}">
+            
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- 操作ボタンパネル -->
-            <Grid Grid.Row="0">
+            <Grid Grid.Row="0" Background="{StaticResource ButtonFaceColor}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -193,7 +212,7 @@
                 </StackPanel>
             </Grid>
             <!-- しおり（Marker) -->
-            <wvv:WvvMarkerView Grid.Row="1" x:Name="mMarkerView"/>
+            <wvv:WvvMarkerView Grid.Row="1" x:Name="mMarkerView" Tapped="OnContainerTapped"/>
 
             <!-- スライダー＋フレームリスト -->
             <Grid Grid.Row="2">
@@ -272,75 +291,6 @@
                             </Setter.Value>
                         </Setter>
                     </Style>
-                    <Style x:Key="LowerSlider" TargetType="Slider">
-                        <!-- Slider Bar の色 -->
-                        <Setter Property="Background" Value="Gray"/>
-                        <Setter Property="BorderBrush" Value="Red"/>
-                        <Setter Property="BorderThickness" Value="2"/>
-                        <Setter Property="Foreground" Value="Blue"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="Slider">
-                                    <Grid Margin="{TemplateBinding Padding}">
-                                        <Grid.Resources>
-                                            <Style x:Key="SliderThumbStyle" TargetType="Thumb">
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <!-- Thumb の形状 -->
-                                                        <ControlTemplate TargetType="Thumb">
-                                                            <Image Source="Assets/current_bar.png"
-                                                               Margin="0,0,0,0"
-                                                               Stretch="Uniform" 
-                                                               HorizontalAlignment="Center"/>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </Style>
-                                        </Grid.Resources>
-                                        <Grid x:Name="SliderContainer" 
-                                          Background="Transparent">
-                                            <Grid x:Name="HorizontalTemplate">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                </Grid.RowDefinitions>
-                                                <!-- Thumb の右側-->
-                                                <Rectangle x:Name="HorizontalTrackRect" 
-                                                       Grid.ColumnSpan="3"
-                                                       Grid.Row="1" Height="3" 
-                                                       Fill="WhiteSmoke"
-                                                       />
-                                                <!-- Thumb の左側-->
-                                                <Rectangle x:Name="HorizontalDecreaseRect" 
-                                                       Grid.Row="1" Height="3"
-                                                       Fill="DarkGray"
-                                                       />
-                                                <!-- Slider Bar 全体の外枠　-->
-                                                <Rectangle x:Name="HorizontalBorder" 
-                                                       Grid.ColumnSpan="3"
-                                                       Grid.Row="1" 
-                                                       Height="3"/>
-                                                <!-- Thumb -->
-                                                <Thumb x:Name="HorizontalThumb" 
-                                                   AutomationProperties.AccessibilityView="Raw" 
-                                                   Grid.Column="1" 
-                                                   DataContext="{TemplateBinding Value}" 
-                                                   Grid.Row="1" 
-                                                   Style="{StaticResource SliderThumbStyle}" 
-                                                   Height="18" Width="0"/>
-                                            </Grid>
-                                        </Grid>
-                                    </Grid>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
                 </Grid.Resources>
                 <Image x:Name="thumbDummyImage" Visibility="Collapsed" Source="{StaticResource ThumbIcon}">
                     <Interactivity:Interaction.Behaviors>
@@ -395,7 +345,12 @@
                         Value="0"
                         ValueChanged="OnSliderChanged"
                         PointerWheelChanged="OnSliderWheelChanged"
+                        Tapped="OnSliderTapped"
                         Style="{StaticResource UpperSlider}"/>
+            </Grid>
+            
+            <Grid Grid.Row="3" HorizontalAlignment="Center">
+                <TextBlock Text="{Binding PositionString}" HorizontalAlignment="Center" Margin="0,2" Foreground="{StaticResource PanelTextColor}"/>
             </Grid>
         </Grid>
 
