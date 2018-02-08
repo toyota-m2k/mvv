@@ -282,6 +282,7 @@ namespace wvv
                     if (null != mPlayer)
                     {
                         mTrimmingSlider.CurrentPosition = mPlayer.PlaybackSession.Position.TotalMilliseconds;
+                        mFrameListView.TickPosition = mTrimmingSlider.AbsoluteCurrentPosition / mTrimmingSlider.TotalRange;
                     }
                 }
             };
@@ -473,6 +474,7 @@ namespace wvv
             {
                 mTrimmingSlider.CurrentPosition = 0;
             }
+            mFrameListView.TickPosition = position / sender.TotalRange;
         }
 
         /**
@@ -492,6 +494,7 @@ namespace wvv
             {
                 mTrimmingSlider.CurrentPosition = 0;
             }
+            mFrameListView.TickPosition = position / sender.TotalRange;
         }
 
         /**
@@ -507,6 +510,7 @@ namespace wvv
             {
                 mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(sender.AbsoluteCurrentPosition);
             }
+            mFrameListView.TickPosition = sender.AbsoluteCurrentPosition / sender.TotalRange;
         }
 
         /**

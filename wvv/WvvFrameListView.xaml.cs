@@ -25,6 +25,7 @@ namespace wvv
 
         /**
          * スクロール位置（全体を1とした値: 0--1)
+         * 通常、TickPosition / LeftTrim / RightTrim の指定に連動して自動的に調整されるため、特にこれだけを設定する必要はないと思う。
          */
         public double Position
         {
@@ -41,6 +42,24 @@ namespace wvv
         private double mPosition = 0;
 
         /**
+         * 再生位置（全体を1とした値: 0--1)
+         */
+        public double TickPosition
+        {
+            get { return mTickPosition; }
+            set
+            {
+                if (value != mTickPosition)
+                {
+                    mTickPosition = value;
+                    notify("TWidth");
+                    Position = value;
+                }
+            }
+        }
+        double mTickPosition = 0.1;
+
+        /**
          * 先頭のトリミング位置（全体を１とした値： 0--1)
          */
         public double LeftTrim
@@ -52,6 +71,7 @@ namespace wvv
                 {
                     mLeftTrim = value;
                     notify("LWidth");
+                    Position = value;
                 }
             }
 
@@ -70,11 +90,29 @@ namespace wvv
                 {
                     mRightTrim = value;
                     notify("RWidth");
+                    Position = value;
                 }
             }
         }
         private double mRightTrim;
 
+        /**
+         * 再生位置マークを表示するか？
+         */
+        public bool ShowCurrentTick
+        {
+            get { return mShowCurrentTick; }
+            set
+            {
+                if(value != mShowCurrentTick )
+                {
+                    mShowCurrentTick = value;
+                    notify("ShowCurrentTick");
+                }
+            }
+        }
+        private bool mShowCurrentTick = true;
+        
         #endregion
 
         #region Bindings
@@ -87,11 +125,111 @@ namespace wvv
             get;
         } = new ObservableCollection<ImageSource>();
 
-        public ScrollViewer ScrollViewer
+        /**
+         * スクロールコンテントの幅
+         */
+        public double FrameListWidth
         {
             get
             {
-                if(null==mScrollViewer && null!=mListView)
+                return mFrameListWidth;
+            }
+            set
+            {
+                if(mFrameListWidth!=value)
+                {
+                    mFrameListWidth = value;
+                    notify("FrameListWidth");
+                    notify("LWidth");
+                    notify("RWidth");
+                    notify("TWidth");
+                    notify("ScrollMargin");
+                }
+            }
+        }
+        private double mFrameListWidth = 100;
+
+        /**
+         * スクロールコンテントの高さ
+         * 
+         * Height="{Binding ElementName=mListView, Path=ActualHeight}" という指定がうまく動作しなかったので、
+         * コードビハインドでなんとかする。
+         */
+        public double FrameListHeight
+        {
+            get
+            {
+                return mFrameListHeight;
+            }
+            set
+            {
+                if(mFrameListHeight!=value)
+                {
+                    mFrameListHeight = value;
+                    notify("FrameListHeight");
+                }
+            }
+        }
+        private double mFrameListHeight = 44;
+
+        /**
+         * 左トリミング部分の幅(px)
+         */
+        public double LWidth
+        {
+            get
+            {
+                return FrameListWidth * LeftTrim;
+            }
+        }
+
+        /**
+         * 右トリミング部分の幅(px)
+         */
+        public double RWidth
+        {
+            get
+            {
+                return FrameListWidth * RightTrim;
+            }
+        }
+
+        /**
+         * 先頭から再生位置までの幅(px)
+         */
+        public double TWidth
+        {
+            get
+            {
+                return FrameListWidth * TickPosition;
+            }
+        }
+
+        /**
+         * Positionに応じたスクロール量
+         */
+        public Thickness ScrollMargin
+        {
+            get
+            {
+                double sc = ScrollableWidth * Position;
+                return new Thickness(-sc, 0, 0, 0);
+            }
+        }
+
+        #endregion
+
+
+        #region Private Fields / Properties
+
+        /**
+         * ScrollViewerオブジェクトを取得
+         */
+        private ScrollViewer ScrollViewer
+        {
+            get
+            {
+                if (null == mScrollViewer && null != mListView)
                 {
                     var border = VisualTreeHelper.GetChild(mListView, 0) as Border;
                     if (null != border)
@@ -104,48 +242,10 @@ namespace wvv
         }
         private ScrollViewer mScrollViewer = null;
 
+
         /**
-         * スクロールコンテントの幅
+         * スクロールビューアのExtentWidthの変化を監視するためのリスナー登録トークン
          */
-        public double FrameListWidth
-        {
-            get
-            {
-                return ScrollViewer?.ExtentWidth ?? 100;
-            }
-        }
-
-        public double LWidth
-        {
-            get
-            {
-                return ScrollableWidth * LeftTrim;
-            }
-        }
-
-        public double RWidth
-        {
-            get
-            {
-                return ScrollableWidth * RightTrim;
-            }
-        }
-
-        public Thickness ScrollMargin
-        {
-            get
-            {
-                double sc = ScrollableWidth * Position;
-                return new Thickness(-sc, 0, 0, 0);
-            }
-        }
-
-
-        #endregion
-
-
-        #region Private Fields / Properties
-
         private long mScrollViewerExtentWidthChangedToken = 0;
 
         /**
@@ -164,18 +264,26 @@ namespace wvv
 
         #region Initialzation /Termination
 
+        /**
+         * コンストラクタ
+         */
         public WvvFrameListView()
         {
             this.InitializeComponent();
             this.DataContext = this;
         }
 
-
+        /**
+         * 初期化
+         */
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             mScrollViewerExtentWidthChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, ScrollViewer_ExtentWidthChanged);
         }
 
+        /**
+         * 解放処理
+         */
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, mScrollViewerExtentWidthChangedToken);
@@ -185,9 +293,13 @@ namespace wvv
 
         #region Event Handlers
 
+        /**
+         * ExtentWidth監視リスナー
+         */
         private void ScrollViewer_ExtentWidthChanged(DependencyObject sender, DependencyProperty dp)
         {
-            notify("FrameListWidth");
+            FrameListWidth = ScrollViewer.ExtentWidth;
+            FrameListHeight = ScrollViewer.ActualHeight;
         }
 
         #endregion

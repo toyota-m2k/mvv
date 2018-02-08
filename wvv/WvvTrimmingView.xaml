@@ -41,7 +41,7 @@
                 CurrentPositionChanged="OnCurrentPositionChanged"
                 />
         </Grid>
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="2" Padding="25,0">
             <local:WvvFrameListView
                 x:Name="mFrameListView"/>
         </Grid>

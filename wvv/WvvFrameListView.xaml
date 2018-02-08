@@ -13,6 +13,7 @@
     d:DesignWidth="400">
     <UserControl.Resources>
         <local:GridLengthConverter x:Key="GridLengthConverter"/>
+        <local:BoolVisibilityConverter x:Key="BoolVisibilityConverter"/>
     </UserControl.Resources>
     
 
@@ -62,12 +63,61 @@
                 Fill="#B0FFFFFF"
                 />
             <Rectangle
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Stretch"
+                Width="4"
+                Fill="Yellow"
+                />
+            <Rectangle
+                Grid.Column="1"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Fill="#00000000"
+                />
+            <Rectangle
                 Grid.Column="2"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 x:Name="xTrimRight"
                 Fill="#B0FFFFFF"
                 />
+            <Rectangle
+                Grid.Column="2"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Left"
+                Width="4"
+                Fill="Yellow"
+                />
+
+            <Grid Grid.ColumnSpan="3" 
+                  HorizontalAlignment="Stretch" 
+                  Visibility="{Binding ShowCurrentTick, Converter={StaticResource BoolVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{Binding TWidth, Converter={StaticResource GridLengthConverter}}"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Canvas VerticalAlignment="Stretch"
+                    Grid.Column="1"
+                    HorizontalAlignment="Left"
+                    >
+                    <Rectangle
+                        Canvas.Left="-3"
+                        Width="6"
+                        Height="{Binding FrameListHeight}"
+                        Fill="#80FFFFFF"
+                        x:Name="mTickUnder"
+                        />
+                    <Rectangle
+                        Canvas.Left="-1"
+                        Width="2"
+                        Height="{Binding FrameListHeight}"
+                        VerticalAlignment="Stretch"
+                        Fill="#A0808080"
+                        x:Name="mTick"
+                    />
+                </Canvas>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>
