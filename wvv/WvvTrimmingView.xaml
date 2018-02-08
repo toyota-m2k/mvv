@@ -11,7 +11,7 @@
     d:DesignHeight="300"
     d:DesignWidth="400">
     <UserControl.Resources>
-        <BitmapImage x:Key="PlayIcon" UriSource="Assets/play.png"/>
+        <ResourceDictionary Source="WvvResources.xaml"/>
     </UserControl.Resources>
 
     <Grid>

@@ -71,5 +71,24 @@ namespace wvv
             composer.Clips.Clear();
             return clip;
         }
+
+        public async Task<BitmapImage> ExtractSingleFrameAsync(StorageFile source, TimeSpan position)
+        {
+            var clip = await MediaClip.CreateFromFileAsync(source);
+            return await ExtractSingleFrameAsync(clip, position);
+
+        }
+
+        public async Task<BitmapImage> ExtractSingleFrameAsync(MediaClip clip, TimeSpan position)
+        {
+            var composer = new MediaComposition();
+            composer.Clips.Add(clip);
+
+            var imageStream = await composer.GetThumbnailAsync(position, 0, mThumbnailHeight, VideoFramePrecision.NearestFrame);
+            var bmp = new BitmapImage();
+            bmp.SetSource(imageStream);
+            composer.Clips.Clear();
+            return bmp;
+        }
     }
 }
