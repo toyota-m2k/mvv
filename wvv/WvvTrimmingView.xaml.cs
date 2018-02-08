@@ -139,8 +139,8 @@ namespace wvv
          */
         public ObservableCollection<ImageSource> Frames
         {
-            get;
-        } = new ObservableCollection<ImageSource>();
+            get { return mFrameListView?.Frames; }
+        }
 
         /**
          * 動画の再生は可能か？
@@ -243,23 +243,7 @@ namespace wvv
                 {
                     TotalRange = loader.TotalRange;
                     VideoSize = loader.VideoSize;
-
 #if false
-                    var extractor = new WvvFrameExtractor(40, 30);
-                    extractor.Extract(mPlayer, this, (s, index, image) =>
-                    {
-                        if (index >= 0)
-                        {
-                            Debug.WriteLine("Frame Extracted : {0}", index);
-                            Frames.Add(image);
-                        }
-                        else
-                        {
-                            Debug.WriteLine("Frame Extracted : Finalized.");
-                            Ready = extractor.IsCompleted;
-                        }
-                    });
-#else
                     if (await WvvFrameExtractor.ExtractAsync(40, 30, mPlayer, this, (s, index, image) =>
                      {
                          Debug.WriteLine("Frame Extracted : {0}", index);
@@ -270,7 +254,16 @@ namespace wvv
                         var clip = await MediaClip.CreateFromFileAsync(source);
                         mComposition.Clips.Add(clip);
                     }
+#else
+                    var clip = await WvvFrameExtractor2.ExtractAsync(40, 30, source, (s, index, image) =>
+                      {
+                          Debug.WriteLine("Frame Extracted : {0}", index);
+                          Frames.Add(image);
+                      });
+                    mComposition.Clips.Add(clip);
+                    Ready = true;
 #endif
+
                 }
             }
         }
@@ -319,9 +312,9 @@ namespace wvv
             mPlayer = null;
         }
 
-        #endregion
+#endregion
 
-        #region Media Player Events
+#region Media Player Events
 
         private async void PBS_StateChanged(MediaPlaybackSession session, object args)
         {
@@ -343,9 +336,9 @@ namespace wvv
             });
         }
 
-        #endregion
+#endregion
 
-        #region Public Methods
+#region Public Methods
 
         /**
          * ソースファイル（mp4限定）をセットする。
@@ -362,9 +355,9 @@ namespace wvv
             }
         }
 
-        #endregion
+#endregion
 
-        #region Preview / Trimming Mode
+#region Preview / Trimming Mode
 
         /**
          * プレビューモードを開始する。
@@ -459,9 +452,9 @@ namespace wvv
                 }
             }
         }
-        #endregion
+#endregion
 
-        #region Trimming Slider Handling
+#region Trimming Slider Handling
 
         /**
          * TrimStartが操作された
@@ -534,6 +527,6 @@ namespace wvv
             }
         }
 
-        #endregion
+#endregion
     }
 }

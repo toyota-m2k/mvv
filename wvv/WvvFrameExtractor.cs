@@ -337,7 +337,7 @@ namespace wvv
             Debug.WriteLine("extractFrame: player={0}, session={1}", Player.CurrentState.ToString(), Player.PlaybackSession.PlaybackState.ToString());
 
             CanvasDevice canvasDevice = CanvasDevice.GetSharedDevice();
-            var canvasImageSrc = new CanvasImageSource(canvasDevice, (int)mThumbnailSize.Width, (int)mThumbnailSize.Height, DisplayInformation.GetForCurrentView().LogicalDpi);//96); 
+            var canvasImageSrc = new CanvasImageSource(canvasDevice, (int)mThumbnailSize.Width, (int)mThumbnailSize.Height, 96/*DisplayInformation.GetForCurrentView().LogicalDpi*/);
             using (SoftwareBitmap softwareBitmap = new SoftwareBitmap(BitmapPixelFormat.Rgba8, (int)mThumbnailSize.Width, (int)mThumbnailSize.Height, BitmapAlphaMode.Ignore))
             using (CanvasBitmap inputBitmap = CanvasBitmap.CreateFromSoftwareBitmap(canvasDevice, softwareBitmap))
             using (CanvasDrawingSession ds = canvasImageSrc.CreateDrawingSession(Windows.UI.Colors.Black))

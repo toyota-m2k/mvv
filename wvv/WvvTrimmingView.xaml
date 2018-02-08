@@ -42,7 +42,8 @@
                 />
         </Grid>
         <Grid Grid.Row="2">
-            <!-- フレーム-->
+            <local:WvvFrameListView
+                x:Name="mFrameListView"/>
         </Grid>
         <Grid Grid.Row="3">
             <Button Tapped="OnPlay">Play</Button>
