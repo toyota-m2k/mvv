@@ -9,6 +9,10 @@ using Windows.UI.Xaml.Media;
 
 namespace wvv.utils
 {
+    /**
+     * UWPには、UIElement.ClipToBounds プロパティが存在しないので、
+     * それと同じ動作をする依存プロパティを登録しておいて利用する。
+     */
     public class WvvClip
     {
         public static bool GetToBounds(DependencyObject depObj)

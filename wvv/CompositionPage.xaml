@@ -23,6 +23,7 @@
             <Button Margin="4" Content="Record" Tapped="OnRecord"/>
             <Button Margin="4" Content="Trimming Dialog" Tapped="OnTrimmingDialog"/>
             <Button Margin="4" Content="Player Page" Tapped="OnPlayerPage"/>
+            <Button Margin="4" Content="VideoPlayer Page" Tapped="OnVideoPlayer"/>
         </StackPanel>
 
         <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">

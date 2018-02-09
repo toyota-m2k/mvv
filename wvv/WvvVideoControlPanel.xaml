@@ -1,0 +1,212 @@
+﻿<UserControl
+    x:Class="wvv.WvvVideoControlPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:wvv="using:wvv"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Interactivity="using:Microsoft.Xaml.Interactivity" 
+    xmlns:Core="using:Microsoft.Xaml.Interactions.Core" 
+    Loaded="OnLoaded"
+    Unloaded="OnUnloaded"
+    mc:Ignorable="d"
+    d:DesignHeight="300"
+    d:DesignWidth="400">
+    <UserControl.Resources>
+        <ResourceDictionary Source="WvvResources.xaml"/>
+    </UserControl.Resources>
+
+    <Grid 
+        Tapped="OnContainerTapped" 
+        x:Name="mVideoControlPanelContainer"
+        HorizontalAlignment="Left"
+        Background="{StaticResource PanelColor}" 
+        MinWidth="300" 
+        Width="{Binding PanelWidth}">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Background="{StaticResource ButtonFaceColor}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnButtonPlayStop"
+                        IsEnabled="{Binding MoviePrepared}">
+                    <Image x:Name="playButtonImage" Source="{StaticResource PlayIcon}" Width="40" Height="40">
+                        <Interactivity:Interaction.Behaviors>
+                            <Core:DataTriggerBehavior Binding="{Binding IsPlaying}" Value="True">
+                                <Core:ChangePropertyAction TargetObject="{Binding ElementName=playButtonImage}" PropertyName="Source" Value="{StaticResource StopIcon}" />
+                            </Core:DataTriggerBehavior>
+                            <Core:DataTriggerBehavior Binding="{Binding IsPlaying}" Value="False">
+                                <Core:ChangePropertyAction TargetObject="{Binding ElementName=playButtonImage}" PropertyName="Source" Value="{StaticResource PlayIcon}" />
+                            </Core:DataTriggerBehavior>
+                        </Interactivity:Interaction.Behaviors>
+                    </Image>
+
+                </Button>
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnPrevMarker">
+                    <Image Source="{StaticResource BackIcon}" Width="40" Height="40"/>
+                </Button>
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnNextMarker">
+                    <Image Source="{StaticResource ForwardIcon}" Width="40" Height="40"/>
+                </Button>
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnAddMarker">
+                    <Image Source="{StaticResource AddMarkerIcon}" Width="40" Height="40"/>
+                </Button>
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnPInP">
+                    <Image Source="{StaticResource PinPIcon}" Width="40" Height="40"/>
+                </Button>
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnFullScreen">
+                    <Image Source="{StaticResource FullScreenOpenIcon}" Width="40" Height="40"/>
+                </Button>
+            </StackPanel>
+            <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnShowHideFrameList">
+                    <Image x:Name="frameButtonImage" Source="{StaticResource ThumbnailOffIcon}" Width="40" Height="40">
+                        <Interactivity:Interaction.Behaviors>
+                            <Core:DataTriggerBehavior Binding="{Binding ShowingFrames}" Value="True">
+                                <Core:ChangePropertyAction TargetObject="{Binding ElementName=frameButtonImage}" PropertyName="Source" Value="{StaticResource ThumbnailOnIcon}" />
+                            </Core:DataTriggerBehavior>
+                            <Core:DataTriggerBehavior Binding="{Binding ShowingFrames}" Value="False">
+                                <Core:ChangePropertyAction TargetObject="{Binding ElementName=frameButtonImage}" PropertyName="Source" Value="{StaticResource ThumbnailOffIcon}" />
+                            </Core:DataTriggerBehavior>
+                        </Interactivity:Interaction.Behaviors>
+                    </Image>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- しおり（Marker) -->
+        <wvv:WvvMarkerView Grid.Row="1" 
+            x:Name="mMarkerView" 
+            Tapped="OnContainerTapped"
+            MarkerSelected="MV_MarkerSelected"
+            MarkerAdded = "MV_MarkerAdded"
+            MarkerRemoved = "MV_MarkerRemoved"
+            />
+
+        <!-- スライダー＋フレームリスト -->
+        <Grid Grid.Row="2">
+            <Grid.Resources>
+                <Style x:Key="UpperSlider" TargetType="Slider">
+                    <!-- Slider Bar の色 -->
+                    <Setter Property="Background" Value="Gray"/>
+                    <Setter Property="BorderBrush" Value="Red"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="Foreground" Value="Blue"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Slider">
+                                <Grid Margin="{TemplateBinding Padding}">
+                                    <Grid.Resources>
+                                        <Style x:Key="SliderThumbStyle" TargetType="Thumb">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <!-- Thumb の形状 -->
+                                                    <ControlTemplate TargetType="Thumb">
+                                                        <Image Source="{Binding Path=Source, ElementName=thumbDummyImage}"
+                                                            Margin="0,0,0,0"
+                                                            Stretch="None"
+                                                            HorizontalAlignment="Center">
+                                                        </Image>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Grid.Resources>
+                                    <Grid x:Name="SliderContainer" 
+                                        Background="Transparent"
+                                        PointerPressed="OnSliderPointerPressed"
+                                        PointerReleased="OnSliderPointerReleased"                                              
+                                        >
+                                        <Grid x:Name="HorizontalTemplate">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <!-- Thumb の右側-->
+                                            <Rectangle x:Name="HorizontalTrackRect" 
+                                                        VerticalAlignment="Top"
+                                                        Grid.ColumnSpan="3"
+                                                        Height="3" 
+                                                        Fill="WhiteSmoke"
+                                                        Margin="0,8,0,0"
+                                                        />
+                                            <!-- Thumb の左側-->
+                                            <Rectangle x:Name="HorizontalDecreaseRect" 
+                                                        VerticalAlignment="Top"
+                                                        Height="3"
+                                                        Fill="DarkGray"
+                                                        Margin="0,8,0,0"
+                                                        />
+                                            <!-- Slider Bar 全体の外枠　-->
+                                            <Rectangle x:Name="HorizontalBorder" 
+                                                        VerticalAlignment="Top"
+                                                        Grid.ColumnSpan="3"
+                                                        Margin="0,8,0,0"
+                                                        Height="3"/>
+                                            <!-- Thumb -->
+                                            <Thumb x:Name="HorizontalThumb" 
+                                                AutomationProperties.AccessibilityView="Raw" 
+                                                Grid.Column="1" 
+                                                DataContext="{TemplateBinding Value}" 
+                                                Style="{StaticResource SliderThumbStyle}"
+                                                DragStarted="OnSliderDragStarted"
+                                                DragCompleted="OnSliderDragCompleted"
+                                                />
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Grid.Resources>
+            <Image x:Name="thumbDummyImage" Visibility="Collapsed" Source="{StaticResource ThumbIcon}">
+                    <Interactivity:Interaction.Behaviors>
+                        <Core:DataTriggerBehavior Binding="{Binding ThumbMode}" Value="NOR">
+                            <Core:ChangePropertyAction TargetObject="{Binding ElementName=thumbDummyImage}" PropertyName="Source" Value="{StaticResource ThumbIcon}" />
+                        </Core:DataTriggerBehavior>
+                        <Core:DataTriggerBehavior Binding="{Binding ThumbMode}" Value="MAX">
+                            <Core:ChangePropertyAction TargetObject="{Binding ElementName=thumbDummyImage}" PropertyName="Source" Value="{StaticResource ThumbLongIcon}" />
+                        </Core:DataTriggerBehavior>
+                        <Core:DataTriggerBehavior Binding="{Binding ThumbMode}" Value="MIN">
+                            <Core:ChangePropertyAction TargetObject="{Binding ElementName=thumbDummyImage}" PropertyName="Source" Value="{StaticResource ThumbMinIcon}" />
+                        </Core:DataTriggerBehavior>
+                    </Interactivity:Interaction.Behaviors>
+                </Image>
+            <wvv:WvvFrameListView
+                x:Name="mFrameListView"
+                ShowCurrentTick="False"
+                Margin="0,10,0,0"
+                Visibility="{Binding ShowingFrames, Converter={StaticResource BoolVisibilityConverter}}"/>
+            <Slider 
+                x:Name="mSlider" HorizontalAlignment="Stretch" 
+                IsThumbToolTipEnabled="False"
+                VerticalAlignment="Top" 
+                TickPlacement="None" 
+                Minimum="0"
+                Maximum="{Binding TotalRange}"
+                SmallChange="{Binding SmallChange}"
+                LargeChange="{Binding LargeChange}"
+                Value="0"
+                ValueChanged="OnSliderChanged"
+                PointerWheelChanged="OnSliderWheelChanged"
+                Tapped="OnSliderTapped"
+                Style="{StaticResource UpperSlider}"/>
+        </Grid>
+
+        <!-- 再生時間表示 -->
+        <Grid Grid.Row="3" HorizontalAlignment="Center">
+            <TextBlock Text="{Binding PositionString}" HorizontalAlignment="Center" Margin="0,2" Foreground="{StaticResource PanelTextColor}"/>
+        </Grid>
+    </Grid>
+</UserControl>

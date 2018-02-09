@@ -112,7 +112,25 @@ namespace wvv
             }
         }
         private bool mShowCurrentTick = true;
-        
+
+
+        /**
+         * 操作情報をクリアする
+         */
+        public void Reset()
+        {
+            TickPosition = LeftTrim = RightTrim = 0;
+        }
+
+        /**
+         * タップ位置から全フレーム内の位置（シーク位置）を取得する。
+         */
+        public double GetTappedPosition(TappedRoutedEventArgs e)
+        {
+            var pos = e.GetPosition(mContainerGrid);
+            return ( ScrollableWidth * Position + pos.X ) / FrameListWidth;
+        }
+
         #endregion
 
         #region Bindings

@@ -234,6 +234,13 @@ namespace wvv
         private async void LoadMediaSource(StorageFile source)
         {
             Ready = false;
+
+            //
+            mTrimmingSlider.Reset();
+            mFrameListView.Reset();
+            bool showTick = mFrameListView.ShowCurrentTick;
+            mFrameListView.ShowCurrentTick = false;
+
             mComposition.Clips.Clear();
             if (null != source)
             {
@@ -255,13 +262,22 @@ namespace wvv
                         mComposition.Clips.Add(clip);
                     }
 #else
-                    var clip = await WvvFrameExtractor2.ExtractAsync(40, 30, source, (s, index, image) =>
-                      {
-                          Debug.WriteLine("Frame Extracted : {0}", index);
-                          Frames.Add(image);
-                      });
-                    mComposition.Clips.Add(clip);
-                    Ready = true;
+                    var clip = await MediaClip.CreateFromFileAsync(source);
+                    if (await WvvFrameExtractor2.ExtractAsync(40, 30, clip, (s, index, image) =>
+                       {
+                           Debug.WriteLine("Frame Extracted : {0}", index);
+                           Frames.Add(image);
+                       }))
+                    {
+                        Ready = true;
+                        mComposition.Clips.Add(clip);
+                        mFrameListView.ShowCurrentTick = showTick;
+                    }
+                    else
+                    {
+                        // Error!
+                        // what can i do?
+                    }
 #endif
 
                 }

@@ -229,6 +229,11 @@ namespace wvv
             this.InitializeComponent();
         }
 
+        public void Reset()
+        {
+            TrimStart = TrimEnd = CurrentPosition = 0;
+        }
+
         /**
          * totalRangeを与えてコントロールを初期化する
          */

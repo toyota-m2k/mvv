@@ -19,6 +19,7 @@ using Windows.UI.Xaml.Media;
 
 namespace wvv
 {
+    [Obsolete("Replaced by WvvVideoPlayer", false)]
     public sealed partial class WvvMoviePlayer : UserControl, INotifyPropertyChanged, IDisposable
     {
         #region Constants

@@ -43,9 +43,14 @@ namespace wvv
             mPlayerElement.Source = null;
         }
 
-            private void OnPlayerPage(object sender, TappedRoutedEventArgs e)
+        private void OnPlayerPage(object sender, TappedRoutedEventArgs e)
         {
             Frame.Navigate(typeof(MainPage));
+        }
+
+        private void OnVideoPlayer(object sender, TappedRoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(WvvVideoPlayerPage));
         }
 
         private async void OnAddClip(object sender, TappedRoutedEventArgs e)
@@ -195,11 +200,12 @@ namespace wvv
                 return;
             }
 
-            await WvvTrimmingDialog.Show(file, (FrameworkElement)sender, async (trimmed, renderer) =>
+            await WvvTrimmingDialog.Show(file, (FrameworkElement)sender, (trimmed, renderer) =>
             {
                 Debug.WriteLine("Trimmed.");
             });
 
         }
+
     }
 }

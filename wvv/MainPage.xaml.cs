@@ -430,25 +430,13 @@ namespace wvv
 
         private async void Dialog_Click(object sender, RoutedEventArgs e)
         {
-            //var m = new Flyout
-            //{
-            //    Placement = FlyoutPlacementMode.Full,
-            //    FlyoutPresenterStyle = (Style)this.Resources["CenteredFlyoutPresenterStyle"]
-            //};
-
-            //m.Content = new TextBlock() { Text = "Hoge Fuga" };
-            //m.ShowAt((FrameworkElement)sender);
-
-            // WvvDialog.Show(new WvvFrameSelectorDialog(), (FrameworkElement)sender);
-
-
             if (null == mVideoFile)
             {
                 var v = pickAndPlay(Dialog_Click, sender);
                 return;
             }
 
-            await WvvFrameSelectorDialog.Show(MediaSource.CreateFromStorageFile(mVideoFile), (FrameworkElement)sender, async (dlg, position, stream) =>
+            await WvvFrameSelectorDialog.Show(MediaSource.CreateFromStorageFile(mVideoFile), (FrameworkElement)sender, (dlg, position, stream) =>
             {
                 using (stream)
                 {
@@ -476,6 +464,11 @@ namespace wvv
         private void Composition_Click(object sender, RoutedEventArgs e)
         {
             Frame.Navigate(typeof(CompositionPage));
+        }
+
+        private void OnVideoPlayer(object sender, TappedRoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(WvvVideoPlayerPage));
         }
     }
 }

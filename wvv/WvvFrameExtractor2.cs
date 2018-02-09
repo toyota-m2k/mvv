@@ -23,14 +23,22 @@ namespace wvv
          */
         public delegate void OnThumbnailExtractedHandler(WvvFrameExtractor2 sender, int frameIndex, ImageSource frameImage);
 
-        public static Task<MediaClip> ExtractAsync(int frameHeight, int frameCount, StorageFile source, OnThumbnailExtractedHandler extracted)
+        public static Task<bool> ExtractAsync(int frameHeight, int frameCount, StorageFile source, OnThumbnailExtractedHandler extracted)
         {
             var ex = new WvvFrameExtractor2(frameHeight, frameCount);
             return ex.ExtractAsync(source, extracted);
         }
 
+        public static Task<bool> ExtractAsync(int frameHeight, int frameCount, MediaClip clip, OnThumbnailExtractedHandler extracted)
+        {
+            var ex = new WvvFrameExtractor2(frameHeight, frameCount);
+            return ex.ExtractAsync(clip, extracted);
+        }
+
         private int mFrameCount;
         private int mThumbnailHeight;
+
+        public Exception Error { get; private set; }
 
         /**
          * コンストラクタ
@@ -47,48 +55,86 @@ namespace wvv
         /**
          * フレームの抽出処理を開始
          * 
-         * @param   player      Sourceを設定してMediaOpenedの状態になっているMediaPlayerオブジェクト
-         * @param   ownerView   Dispatcherを供給するビュー
+         * @param   source      ソースファイル
          * @param   extracted   取得したフレーム画像をコールバックするハンドラ
          */
-        public async Task<MediaClip> ExtractAsync(StorageFile source, OnThumbnailExtractedHandler extracted)
+        public async Task<bool> ExtractAsync(StorageFile source, OnThumbnailExtractedHandler extracted)
         {
+            var clip = await MediaClip.CreateFromFileAsync(source);
+            return await ExtractAsync(clip, extracted);
+        }
+
+        /**
+         * フレームの抽出処理を開始
+         * 
+         * @param   clip        ソースを保持したMediaClip
+         * @param   extracted   取得したフレーム画像をコールバックするハンドラ
+         */
+        public async Task<bool> ExtractAsync(MediaClip clip, OnThumbnailExtractedHandler extracted)
+        {
+            Error = null;
+
             // Debug.WriteLine("Logical-DPI = {0}", DisplayInformation.GetForCurrentView().LogicalDpi);
             var composer = new MediaComposition();
-            var clip = await MediaClip.CreateFromFileAsync(source);
             composer.Clips.Add(clip);
 
-            var totalRange = clip.OriginalDuration.TotalMilliseconds;
-            var span = totalRange / mFrameCount;
-            var offset = span / 2;
-            for(int n=0; n<mFrameCount; n++ )
+            try
             {
-                var imageStream = await composer.GetThumbnailAsync(TimeSpan.FromMilliseconds(offset + span * n), 0, mThumbnailHeight, VideoFramePrecision.NearestFrame);
-                var bmp = new BitmapImage();
-                bmp.SetSource(imageStream);
-                extracted(this, n, bmp);
+                var totalRange = clip.OriginalDuration.TotalMilliseconds;
+                var span = totalRange / mFrameCount;
+                var offset = span / 2;
+                for (int n = 0; n < mFrameCount; n++)
+                {
+                    var imageStream = await composer.GetThumbnailAsync(TimeSpan.FromMilliseconds(offset + span * n), 0, mThumbnailHeight, VideoFramePrecision.NearestFrame);
+                    var bmp = new BitmapImage();
+                    bmp.SetSource(imageStream);
+                    extracted(this, n, bmp);
+                }
+                return true;
             }
-            composer.Clips.Clear();
-            return clip;
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                Error = e;
+                return false;
+            }
+            finally
+            {
+                composer.Clips.Clear();
+            }
         }
 
         public async Task<BitmapImage> ExtractSingleFrameAsync(StorageFile source, TimeSpan position)
         {
             var clip = await MediaClip.CreateFromFileAsync(source);
             return await ExtractSingleFrameAsync(clip, position);
-
         }
 
         public async Task<BitmapImage> ExtractSingleFrameAsync(MediaClip clip, TimeSpan position)
         {
+            Error = null;
+
             var composer = new MediaComposition();
             composer.Clips.Add(clip);
 
-            var imageStream = await composer.GetThumbnailAsync(position, 0, mThumbnailHeight, VideoFramePrecision.NearestFrame);
-            var bmp = new BitmapImage();
-            bmp.SetSource(imageStream);
-            composer.Clips.Clear();
-            return bmp;
+            try
+            {
+                var imageStream = await composer.GetThumbnailAsync(position, 0, mThumbnailHeight, VideoFramePrecision.NearestFrame);
+                var bmp = new BitmapImage();
+                bmp.SetSource(imageStream);
+                composer.Clips.Clear();
+                return bmp;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                Error = e;
+                return null;
+            }
+            finally
+            {
+                composer.Clips.Clear();
+            }
         }
     }
 }
