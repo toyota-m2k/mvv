@@ -131,14 +131,15 @@ namespace wvv
         /**
          * Videoの総再生時間
          * MediaClipから取り出した値と、MediaPlaybackSessionから取り出した値が異なるようなので、Playerからもらうことにする。
+         * 。。。気のせい
          */
-        public double TotalRange
-        {
-            get
-            {
-                return PlayerState != PlayerState.NONE ? Session.NaturalDuration.TotalMilliseconds : 0;
-            }
-        }
+        //public double TotalRange
+        //{
+        //    get
+        //    {
+        //        return PlayerState != PlayerState.NONE ? Session.NaturalDuration.TotalMilliseconds : 0;
+        //    }
+        //}
 
         /**
          * VideoPlayerの状態変更通知イベント

@@ -169,6 +169,8 @@
     <Content Include="Assets\sample2.mp4" />
     <Content Include="Assets\sample.mp4" />
     <Content Include="Assets\stop.png" />
+    <Content Include="Assets\lsel.png" />
+    <Content Include="Assets\rsel.png" />
     <Content Include="Assets\thumbnail_on.png" />
     <Content Include="Assets\thumbnail.png" />
     <Content Include="Properties\Default.rd.xml" />
