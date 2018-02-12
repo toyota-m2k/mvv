@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Graphics.Imaging;
 using Windows.Media.Editing;
 using Windows.Storage;
 using Windows.UI.Xaml;
@@ -15,6 +17,7 @@ using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
@@ -47,21 +50,22 @@ namespace wvv
             TrackingTimer.Interval = TimeSpan.FromMilliseconds(10);
             TrackingTimer.Tick += updatePlayingPosition;
 
+            mExtractor = new WvvFrameExtractor2(ThumbnailHeight, ThumbnailCount);
 
             this.DataContext = this;
             this.InitializeComponent();
         }
 
-    private void updatePlayingPosition(object s, object e)
-    {
-        if (null != Player)
+        private void updatePlayingPosition(object s, object e)
         {
-            double pos = Player.SeekPosition;
-            mSlider.Value = pos;
-            mFrameListView.TickPosition = pos / TotalRange;
-            updatePositionString();
+            if (null != Player)
+            {
+                double pos = Player.SeekPosition;
+                mSlider.Value = pos;
+                mFrameListView.TickPosition = pos / TotalRange;
+                updatePositionString();
+            }
         }
-    }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
@@ -69,6 +73,7 @@ namespace wvv
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
+            mExtractor.Cancel();
             TrackingTimer.Stop();
         }
 
@@ -81,14 +86,14 @@ namespace wvv
          */
         public bool MoviePrepared
         {
-            get { return FramesLoaded && PlayerState != PlayerState.NONE; }
+            get { return PlayerState != PlayerState.NONE; }
         }
 
         public bool IsPlaying
         {
             get
             {
-                return Player?.IsPlaying ?? false;
+                return mPauseTemporary || (Player?.IsPlaying ?? false);
             }
         }
         /**
@@ -330,21 +335,45 @@ namespace wvv
             }
         }
 
+        private WvvFrameExtractor2 mExtractor;
+
         /**
          * サムネイルを作成する
          */
         private async void makeThumbnails()
         {
             FramesLoaded = false;
-            mFrameListView.Frames.Clear();
+            mFrameListView.Reset();
 
-            MediaClip clip = await MediaClip.CreateFromFileAsync(mSource);
-            TotalRange = clip.OriginalDuration.TotalMilliseconds;
-            await WvvFrameExtractor2.ExtractAsync(ThumbnailHeight, ThumbnailCount, clip, (s, i, img) =>
+            mExtractor.Cancel();
+            mExtractor.ThumbnailHeight = ThumbnailHeight;
+            mExtractor.FrameCount = ThumbnailCount;
+
+            try
             {
-                mFrameListView.Frames.Add(img);
-            });
-            FramesLoaded = true;
+                MediaClip clip = await MediaClip.CreateFromFileAsync(mSource);
+                TotalRange = clip.OriginalDuration.TotalMilliseconds;
+                await mExtractor.ExtractAsync(clip, (s, i, img) =>
+                {
+                   mFrameListView.Frames[i] = img;
+                },
+                (sender, blank) =>
+                {
+                    for (int i = 0; i < ThumbnailCount; i++)
+                    {
+                        mFrameListView.Frames.Add(blank);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                TotalRange = 1000;
+                Debug.WriteLine(ex);
+            }
+            finally
+            {
+                FramesLoaded = true;
+            }
         }
 
         /**
@@ -428,7 +457,7 @@ namespace wvv
                 case PlayerState.PAUSED:
                     TrackingTimer.Stop();
                     // 最後の更新が行われないことがあるのではないかと思って、Stop後にupdateを呼ぶようにしてみたが、あまり効果はなさそうだ。
-                    updatePlayingPosition(null, null);
+                    // updatePlayingPosition(null, null);
                     break;
                 case PlayerState.NONE:
                 default:

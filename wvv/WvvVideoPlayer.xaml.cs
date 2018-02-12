@@ -276,6 +276,41 @@ namespace wvv
         private Size mVideoSize = new Size(300, 300);
 
 
+        /**
+         * 動画ロード中フラグ（ぐるぐる表示用）
+         */
+        private bool mMovieLoading = false;
+        public bool MovieLoading
+        {
+            get { return mMovieLoading; }
+            set
+            {
+                if(value != mMovieLoading)
+                {
+                    mMovieLoading = value;
+                    notify("MovieLoading");
+                }
+            }
+        }
+
+        /**
+         * 動画ロード中フラグ（ぐるぐる表示用）
+         */
+        private bool mMovieError = false;
+        public bool MovieError
+        {
+            get { return mMovieError; }
+            set
+            {
+                if (value != mMovieError)
+                {
+                    mMovieError= value;
+                    notify("MovieError");
+                }
+            }
+        }
+
+
         #endregion
 
         #region Privates
@@ -381,17 +416,26 @@ namespace wvv
             }
             mTempSource = null;
 
+            MovieError = false;
             PlayerState = PlayerState.NONE;
-            if(source==null)
+            mInternalPlayer.Source = null;
+
+            if (source==null)
             {
-                mInternalPlayer.Source = null;
                 return;
             }
+            MovieLoading = true;
             var loader = await WvvMediaLoader.LoadAsync(mInternalPlayer, MediaSource.CreateFromStorageFile(source), this);
-            if(loader.Opened)
+            if (loader.Opened)
             {
                 VideoSize = new Size(mInternalPlayer.PlaybackSession.NaturalVideoWidth, mInternalPlayer.PlaybackSession.NaturalVideoHeight);
+                mInternalPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(0);
             }
+            else
+            {
+                MovieError = true;
+            }
+            MovieLoading = false;
         }
 
         #endregion

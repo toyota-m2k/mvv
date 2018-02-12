@@ -21,17 +21,17 @@
             Width="{Binding PlayerSize.Width}"
             Height="{Binding PlayerSize.Height}"
             Background="{StaticResource ProgresBgColor}"
-            Visibility="{Binding MoviePrepared, Converter={StaticResource NegBoolVisibilityConverter}}">
+            Visibility="{Binding MovieLoading, Converter={StaticResource BoolVisibilityConverter}}">
 
             <ProgressRing 
                 Width="40"
                 Height="40"
                 VerticalAlignment="Center" 
                 HorizontalAlignment="Center"
-                IsActive="{Binding MoviePrepared, Converter={StaticResource NegBoolConverter}}"/>
+                IsActive="{Binding MovieLoading}"/>
         </Grid>
         <Grid 
-            Visibility="{Binding MoviePrepared, Converter={StaticResource BoolVisibilityConverter}}">
+            Visibility="{Binding MovieLoading, Converter={StaticResource NegBoolVisibilityConverter}}">
             <MediaPlayerElement 
                 x:Name="mPlayerElement" 
                 Stretch="Fill"

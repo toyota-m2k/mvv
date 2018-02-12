@@ -119,7 +119,12 @@ namespace wvv
          */
         public void Reset()
         {
-            TickPosition = LeftTrim = RightTrim = 0;
+            Frames.Clear();
+            mPosition = mTickPosition = mLeftTrim = mRightTrim = 0;
+            notify("LWidth");
+            notify("RWidth");
+            notify("TWidth");
+            notify("ScrollMargin");
         }
 
         /**

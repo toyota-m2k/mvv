@@ -183,11 +183,13 @@
                         </Core:DataTriggerBehavior>
                     </Interactivity:Interaction.Behaviors>
                 </Image>
-            <wvv:WvvFrameListView
+            <Grid
+                Visibility="{Binding ShowingFrames, Converter={StaticResource BoolVisibilityConverter}}"                >
+                <wvv:WvvFrameListView
                 x:Name="mFrameListView"
                 ShowCurrentTick="False"
-                Margin="0,10,0,0"
-                Visibility="{Binding ShowingFrames, Converter={StaticResource BoolVisibilityConverter}}"/>
+                Margin="0,10,0,0"/>
+            </Grid>
             <Slider 
                 x:Name="mSlider" HorizontalAlignment="Stretch" 
                 IsThumbToolTipEnabled="False"

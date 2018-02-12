@@ -231,7 +231,7 @@ namespace wvv
 
         public void Reset()
         {
-            TrimStart = TrimEnd = CurrentPosition = 0;
+            TotalRange = 100;
         }
 
         /**

@@ -130,6 +130,11 @@ namespace wvv
             return size;
         }
 
+        private WvvFrameExtractor2 mExtractor;
+
+        public int ThumbnailHeight { get; set; } = 40;
+        public int ThumbnailCount { get; set; } = 30;
+
         #endregion
 
         #region Bindings
@@ -226,6 +231,7 @@ namespace wvv
             this.InitializeComponent();
             mSource = null;
             mComposition = new MediaComposition();
+            mExtractor = new WvvFrameExtractor2(ThumbnailHeight, ThumbnailCount);
         }
 
         /**
@@ -236,8 +242,11 @@ namespace wvv
             Ready = false;
 
             //
+            mPlayer.Source = null;
+            mPreviewing = false;
             mTrimmingSlider.Reset();
             mFrameListView.Reset();
+            mExtractor.Cancel();
             bool showTick = mFrameListView.ShowCurrentTick;
             mFrameListView.ShowCurrentTick = false;
 
@@ -262,25 +271,49 @@ namespace wvv
                         mComposition.Clips.Add(clip);
                     }
 #else
-                    var clip = await MediaClip.CreateFromFileAsync(source);
-                    if (await WvvFrameExtractor2.ExtractAsync(40, 30, clip, (s, index, image) =>
-                       {
-                           Debug.WriteLine("Frame Extracted : {0}", index);
-                           Frames.Add(image);
-                       }))
+                    try
                     {
-                        Ready = true;
-                        mComposition.Clips.Add(clip);
+                        var clip = await MediaClip.CreateFromFileAsync(source);
+                        mComposition.Clips.Add(clip.Clone());
+
+                        await mExtractor.ExtractAsync(clip, (s, i, img) =>
+                        {
+                            mFrameListView.Frames[i] = img;
+
+                        },
+                        (s, img) =>
+                        {
+                            for (int i = 0; i < ThumbnailCount; i++)
+                            {
+                                mFrameListView.Frames.Add(img);
+                            }
+
+                        });
                         mFrameListView.ShowCurrentTick = showTick;
                     }
-                    else
+                    catch (Exception e)
                     {
-                        // Error!
-                        // what can i do?
+                        Debug.WriteLine(e);
                     }
+
+                        //if (await WvvFrameExtractor2.ExtractAsync(40, 30, clip, (s, index, image) =>
+                        //   {
+                        //       Debug.WriteLine("Frame Extracted : {0}", index);
+                        //       Frames.Add(image);
+                        //   }))
+                        //{
+                        //    Ready = true;
+                        //    mComposition.Clips.Add(clip);
+                        //    mFrameListView.ShowCurrentTick = showTick;
+                        //}
+                        //else
+                        //{
+                        //    // Error!
+                        //    // what can i do?
+                        //}
 #endif
 
-                }
+                    }
             }
         }
 
@@ -537,6 +570,11 @@ namespace wvv
          */
         private async void OnPlay(object sender, TappedRoutedEventArgs e)
         {
+            if(mComposition.Clips.Count!=1)
+            {
+                return;
+            }
+
             if(IsPlaying)
             {
                 mPlayer.Pause();

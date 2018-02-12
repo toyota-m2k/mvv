@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -30,19 +31,23 @@ namespace wvv
             this.InitializeComponent();
         }
 
+        private StorageFile mSource;
+
         private async void OnOpenFile(object sender, TappedRoutedEventArgs e)
         {
             var picker = new FileOpenPicker();
             picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
             picker.FileTypeFilter.Add(".mp4");
-            Windows.Storage.StorageFile file = await picker.PickSingleFileAsync();
-            if (file == null)
+            picker.FileTypeFilter.Add(".wmv");
+            picker.FileTypeFilter.Add(".mpg");
+            mSource = await picker.PickSingleFileAsync();
+            if (mSource == null)
             {
                 Debug.WriteLine("File picking cancelled");
                 return;
             }
-            mPlayer.SetSource(file);
-            mPanel.SetSource(file);
+            mPlayer.SetSource(mSource);
+            mPanel.SetSource(mSource);
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -63,6 +68,11 @@ namespace wvv
         private void Composition_Click(object sender, RoutedEventArgs e)
         {
             Frame.Navigate(typeof(CompositionPage));
+        }
+
+        private void OnTrimming(object sender, TappedRoutedEventArgs e)
+        {
+            mTrimmingView.SetSource(mSource);
         }
     }
 }

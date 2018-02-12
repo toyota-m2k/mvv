@@ -13,7 +13,11 @@
     </UserControl.Resources>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <StackPanel VerticalAlignment="Center" Orientation="Vertical">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
             <Button Tapped="OnOpenFile">Select Video</Button>
             <Grid Height="30"/>
             <local:WvvVideoPlayer
@@ -31,5 +35,10 @@
             </StackPanel>
         </StackPanel>
 
+        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
+            <Button Tapped="OnTrimming">Trimming</Button>
+            <Grid Height="30"/>
+            <local:WvvTrimmingView x:Name="mTrimmingView"/>
+        </StackPanel>
     </Grid>
 </Page>
