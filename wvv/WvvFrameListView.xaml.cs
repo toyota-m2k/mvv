@@ -35,7 +35,7 @@ namespace wvv
                 if (mPosition != value)
                 {
                     mPosition = value;
-                    notify("ScrollMargin");
+                    notify("ScrollAmount");
                 }
             }
         }
@@ -129,7 +129,7 @@ namespace wvv
             notify("LWidth");
             notify("RWidth");
             notify("TWidth");
-            notify("ScrollMargin");
+            notify("ScrollAmount");
         }
 
         /**
@@ -171,7 +171,7 @@ namespace wvv
                     notify("LWidth");
                     notify("RWidth");
                     notify("TWidth");
-                    notify("ScrollMargin");
+                    notify("ScrollAmount");
                 }
             }
         }
@@ -195,10 +195,20 @@ namespace wvv
                 {
                     mFrameListHeight = value;
                     notify("FrameListHeight");
+                    notify("FrameListViewHeight");
                 }
             }
         }
         private double mFrameListHeight = 0;
+
+        public double FrameListViewHeight
+        {
+            get
+            {
+                // return mListView.ActualHeight;       NG
+                return mFrameListHeight + 4;
+            }
+        }
 
         /**
          * 左トリミング部分の幅(px)
@@ -236,12 +246,11 @@ namespace wvv
         /**
          * Positionに応じたスクロール量
          */
-        public Thickness ScrollMargin
+        public double ScrollAmount
         {
             get
             {
-                double sc = ScrollableWidth * Position;
-                return new Thickness(-sc, 0, 0, 0);
+                return - ScrollableWidth * Position;
             }
         }
 
@@ -275,6 +284,7 @@ namespace wvv
          * スクロールビューアのExtentWidth, ActualHeightの変化を監視するためのリスナー登録トークン
          */
         private long mScrollViewerExtentWidthChangedToken = 0;
+        //private long mListViewActualHeifhtChangedToken = 0;
         //private long mScrollViewerActualHeightChangedToken = 0;
 
         /**
@@ -308,6 +318,7 @@ namespace wvv
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             mScrollViewerExtentWidthChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, ScrollViewer_ExtentWidthChanged);
+            //mListViewActualHeifhtChangedToken = mListView.RegisterPropertyChangedCallback(ListView.ActualHeightProperty, ListView_ActualHeightChanged);
             //mScrollViewerActualHeightChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ActualHeightProperty, ScrollViewer_ActualHeightChanged);
         }
 
@@ -317,6 +328,7 @@ namespace wvv
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, mScrollViewerExtentWidthChangedToken);
+            //mListView.UnregisterPropertyChangedCallback(ListView.ActualHeightProperty, mListViewActualHeifhtChangedToken);
             //ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ActualHeightProperty, mScrollViewerActualHeightChangedToken);
             Reset();
         }
@@ -337,6 +349,12 @@ namespace wvv
         //{
         //    FrameListHeight = ScrollViewer.ActualHeight;
         //}
+
+        //private void ListView_ActualHeightChanged(DependencyObject sender, DependencyProperty dp)
+        //{
+        //    notify("FrameListViewHeight");
+        //}
+
 
 
         #endregion

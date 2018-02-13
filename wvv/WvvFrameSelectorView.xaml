@@ -17,7 +17,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid x:Name="mPlayerContainer" Grid.Row="0" Width="400" Height="400">
+        <Grid x:Name="mPlayerContainer" Grid.Row="0">
             <local:WvvVideoPlayer
                 x:Name="mPlayer"
                 PlayerLayout="Inside"
@@ -28,15 +28,16 @@
                 />
         </Grid>
 
-        <Grid Grid.Row="1" Margin="0,0">
+        <Grid Grid.Row="1" Margin="-25,10,-25,0">
             <local:WvvTrimmingSlider
                 x:Name="mTrimmingSlider"
                 ShowTrimmingKnob="False"
                 CurrentPositionChanged="OnCurrentPositionChanged"
                 />
         </Grid>
-        <Grid Grid.Row="2" Padding="25,0"
-              Tapped="OnFrameListTapped">
+        <Grid Grid.Row="2"
+              Tapped="OnFrameListTapped"
+              Margin="0,-16,0,0">
             <local:WvvFrameListView
                 x:Name="mFrameListView"
                 ShowCurrentTick="True"/>

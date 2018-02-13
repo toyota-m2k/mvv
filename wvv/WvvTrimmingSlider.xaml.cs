@@ -124,10 +124,15 @@ namespace wvv
         private double mTotalRange = 100;
 
 
+        public double MinimumRange
+        {
+            get; set;
+        } = 100;        // 100ms 未満にはトリミングできないようにする。
+
         /**
          * トリミング後の動画の長さ
          */
-        private double TrimmedRange
+        public double TrimmedRange
         {
             get
             {
@@ -335,7 +340,7 @@ namespace wvv
         {
             ((UIElement)sender).CapturePointer(e.Pointer);
 
-            beginTracking(e, 1, LWidth, TrimStart, TotalRange-TrimEnd);
+            beginTracking(e, 1, LWidth, TrimStart, TotalRange-TrimEnd - MinimumRange);
 
             mTracking.Moved = (v, last) =>
             {
@@ -357,7 +362,7 @@ namespace wvv
         {
             ((UIElement)sender).CapturePointer(e.Pointer);
 
-            beginTracking(e, -1, RWidth, TrimEnd, TotalRange-TrimStart);
+            beginTracking(e, -1, RWidth, TrimEnd, TotalRange-TrimStart- MinimumRange);
 
             mTracking.Moved = (v, last) =>
             {

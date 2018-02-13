@@ -17,51 +17,53 @@
     
 
     <Grid x:Name="mContainerGrid" 
-          utils:WvvClip.ToBounds="True">
-        <Grid Margin="{Binding ScrollMargin}" Width="{Binding FrameListWidth}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="{Binding LWidth, Converter={StaticResource GridLengthConverter}}"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="{Binding RWidth, Converter={StaticResource GridLengthConverter}}"/>
-            </Grid.ColumnDefinitions>
-            <ListView 
-                Grid.ColumnSpan="3"
-                x:Name="mListView" 
-                Margin="0,0,0,0"
-                ItemsSource="{Binding Frames}" 
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                ScrollViewer.HorizontalScrollMode="Disabled"
-                ScrollViewer.IsHorizontalRailEnabled="True"
-                ScrollViewer.VerticalScrollMode="Disabled"
-                >
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="Padding" Value="0,0,1,0"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="MinWidth" Value="0"/>
-                    </Style>
-                </ListView.ItemContainerStyle>
-                <ListView.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ListView.ItemsPanel>
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="ImageSource">
-                        <Image Source="{Binding}"/>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-            <Rectangle
+          utils:WvvClip.ToBounds="True"
+          MinHeight="{Binding FrameListViewHeight}">
+        <Canvas HorizontalAlignment="Left" VerticalAlignment="Top">
+            <Grid Canvas.Top="0" Canvas.Left="{Binding ScrollAmount}" Width="{Binding FrameListWidth}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{Binding LWidth, Converter={StaticResource GridLengthConverter}}"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="{Binding RWidth, Converter={StaticResource GridLengthConverter}}"/>
+                </Grid.ColumnDefinitions>
+                <ListView 
+                    Grid.ColumnSpan="3"
+                    x:Name="mListView" 
+                    Margin="0,0,0,0"
+                    ItemsSource="{Binding Frames}" 
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                    ScrollViewer.HorizontalScrollMode="Disabled"
+                    ScrollViewer.IsHorizontalRailEnabled="True"
+                    ScrollViewer.VerticalScrollMode="Disabled"
+                    >
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Padding" Value="0,0,1,0"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="MinWidth" Value="0"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListView.ItemsPanel>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="ImageSource">
+                            <Image Source="{Binding}"/>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <Rectangle
                 Grid.Column="0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 x:Name="xTrimLeft"
                 Fill="#B0FFFFFF"
                 />
-            <Rectangle
+                <Rectangle
                 Grid.Column="0"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
@@ -69,20 +71,20 @@
                 Width="4"
                 Fill="#FFB0FFFF"
                 />
-            <Rectangle
+                <Rectangle
                 Grid.Column="1"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 Fill="#00000000"
                 />
-            <Rectangle
+                <Rectangle
                 Grid.Column="2"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 x:Name="xTrimRight"
                 Fill="#B0FFFFFF"
                 />
-            <Rectangle
+                <Rectangle
                 Grid.Column="2"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Left"
@@ -91,26 +93,26 @@
                 Fill="#FFB0FFFF"
                 />
 
-            <Grid Grid.ColumnSpan="3" 
+                <Grid Grid.ColumnSpan="3" 
                   HorizontalAlignment="Stretch" 
                   Visibility="{Binding ShowCurrentTick, Converter={StaticResource BoolVisibilityConverter}}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="{Binding TWidth, Converter={StaticResource GridLengthConverter}}"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Canvas VerticalAlignment="Center"
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="{Binding TWidth, Converter={StaticResource GridLengthConverter}}"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Canvas VerticalAlignment="Center"
                     Grid.Column="1"
                     Height="{Binding FrameListHeight}"
                     HorizontalAlignment="Left"
                     >
-                    <Rectangle
+                        <Rectangle
                         Canvas.Left="-3"
                         Width="6"
                         Height="{Binding FrameListHeight}"
                         Fill="#A0808080"
                         x:Name="mTickUnder"
                         />
-                    <Rectangle
+                        <Rectangle
                         Canvas.Left="-2"
                         Width="4"
                         Height="{Binding FrameListHeight}"
@@ -118,8 +120,9 @@
                         Fill="#80FFFFFF"
                         x:Name="mTick"
                     />
-                </Canvas>
+                    </Canvas>
+                </Grid>
             </Grid>
-        </Grid>
+        </Canvas>
     </Grid>
 </UserControl>

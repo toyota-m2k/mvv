@@ -419,35 +419,53 @@ namespace wvv
          */
         private async Task startPreview(bool play)
         {
-            if(mPreviewing)
+            if (mPreviewing)
             {
-                if(!IsPlaying)
+                if (!IsPlaying)
                 {
                     mPlayer.Play();
                 }
                 return;
             }
-            mPreviewing = true;
-            MediaStreamSource mediaStreamSource = mComposition.GeneratePreviewMediaStreamSource(
-                    (int)mPlayerElement.ActualWidth,
-                    (int)mPlayerElement.ActualHeight);
-
-            var loader = await WvvMediaLoader.LoadAsync(mPlayer, MediaSource.CreateFromMediaStreamSource(mediaStreamSource), this);
-            if (null != loader)
+            if (mTrimmingSlider.TrimmedRange < 100   || mComposition.Clips.Count != 1)
             {
-                if (mPreviewing)
+                return;
+            }
+            mComposition.Clips[0].TrimTimeFromStart = TimeSpan.FromMilliseconds(mTrimmingSlider.TrimStart);
+            mComposition.Clips[0].TrimTimeFromEnd = TimeSpan.FromMilliseconds(mTrimmingSlider.TrimEnd);
+
+            try
+            {
+                mPreviewing = true;
+                MediaStreamSource mediaStreamSource = mComposition.GeneratePreviewMediaStreamSource(
+                        (int)mPlayerElement.ActualWidth,
+                        (int)mPlayerElement.ActualHeight);
+
+                var loader = await WvvMediaLoader.LoadAsync(mPlayer, MediaSource.CreateFromMediaStreamSource(mediaStreamSource), this);
+                if (null != loader)
                 {
-                    mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(mTrimmingSlider.CurrentPosition);
-                    if (play)
+                    if (mPreviewing)
                     {
-                        mPlayer.Play();
+                        mPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(mTrimmingSlider.CurrentPosition);
+                        if (play)
+                        {
+                            mPlayer.Play();
+                        }
                     }
                 }
+                else
+                {
+                    mPreviewing = false;
+                }
+
             }
-            else
+            catch (Exception e)
             {
+                Debug.WriteLine(e);
+                mPlayer.Pause();
                 mPreviewing = false;
             }
+
         }
 
         enum PositionOf{ START, END, CURRENT };
@@ -514,8 +532,8 @@ namespace wvv
             {
                 return;
             }
-            var currentClip = mComposition.Clips[0];
-            currentClip.TrimTimeFromStart = TimeSpan.FromMilliseconds(position);
+            //var currentClip = mComposition.Clips[0];
+            //currentClip.TrimTimeFromStart = TimeSpan.FromMilliseconds(position);
             await stopPreview(PositionOf.START);
 
             if (ResetCurrentPositionOnTrimmed)
@@ -534,8 +552,8 @@ namespace wvv
             {
                 return;
             }
-            var currentClip = mComposition.Clips[0];
-            currentClip.TrimTimeFromEnd = TimeSpan.FromMilliseconds(position);
+            //var currentClip = mComposition.Clips[0];
+            //currentClip.TrimTimeFromEnd = TimeSpan.FromMilliseconds(position);
             await stopPreview(PositionOf.END);
 
             if (ResetCurrentPositionOnTrimmed)
