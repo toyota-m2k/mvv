@@ -53,6 +53,12 @@ namespace wvv
             Frame.Navigate(typeof(WvvVideoPlayerPage));
         }
 
+        private void FrameSelector_Click(object sender, RoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(FrameSelectionPage));
+        }
+
+
         private async void OnAddClip(object sender, TappedRoutedEventArgs e)
         {
             var picker = new FileOpenPicker();

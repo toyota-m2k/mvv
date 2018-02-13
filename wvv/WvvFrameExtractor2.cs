@@ -129,27 +129,29 @@ namespace wvv
                 var offset = span / 2;
                 for (int n = 0; n < FrameCount; n++)
                 {
-                    var imageStream = await composer.GetThumbnailAsync(TimeSpan.FromMilliseconds(offset + span * n), 0, ThumbnailHeight, VideoFramePrecision.NearestFrame);
-                    if(doing!=mDoing)
+                    using (var imageStream = await composer.GetThumbnailAsync(TimeSpan.FromMilliseconds(offset + span * n), 0, ThumbnailHeight, VideoFramePrecision.NearestFrame))
                     {
-                        // cancelling
-                        return false;
-                    }
-                    var bmp = new BitmapImage();
-                    bmp.SetSource(imageStream);
+                        if (doing != mDoing)
+                        {
+                            // cancelling
+                            return false;
+                        }
+                        var bmp = new BitmapImage();
+                        bmp.SetSource(imageStream);     // bmp.SetSourceしたら、imageStreamはすぐDisposeしても大丈夫っぽい。
 
-                    if(null!=blank && n==0)
-                    {
-                        var source = await CreateBlankBitmap(bmp.PixelWidth, bmp.PixelHeight);
+                        if (null != blank && n == 0)
+                        {
+                            var source = await CreateBlankBitmap(bmp.PixelWidth, bmp.PixelHeight);
 #if false
-                        var bb = new SoftwareBitmap(BitmapPixelFormat.Bgra8, bmp.PixelWidth, bmp.PixelHeight, BitmapAlphaMode.Ignore);
-                        var source = new SoftwareBitmapSource();
-                        await source.SetBitmapAsync(bb);
+                            var bb = new SoftwareBitmap(BitmapPixelFormat.Bgra8, bmp.PixelWidth, bmp.PixelHeight, BitmapAlphaMode.Ignore);
+                            var source = new SoftwareBitmapSource();
+                            await source.SetBitmapAsync(bb);
 #endif
-                        blank(this, source);
-                    }
+                            blank(this, source);
+                        }
 
-                    extracted(this, n, bmp);
+                        extracted(this, n, bmp);
+                    }
                 }
                 return true;
             }
@@ -180,11 +182,13 @@ namespace wvv
 
             try
             {
-                var imageStream = await composer.GetThumbnailAsync(position, 0, ThumbnailHeight, VideoFramePrecision.NearestFrame);
-                var bmp = new BitmapImage();
-                bmp.SetSource(imageStream);
-                composer.Clips.Clear();
-                return bmp;
+                using (var imageStream = await composer.GetThumbnailAsync(position, 0, ThumbnailHeight, VideoFramePrecision.NearestFrame))
+                {
+                    var bmp = new BitmapImage();
+                    bmp.SetSource(imageStream);
+                    composer.Clips.Clear();
+                    return bmp;
+                }
             }
             catch (Exception e)
             {

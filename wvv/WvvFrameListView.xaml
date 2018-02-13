@@ -64,7 +64,8 @@
             <Rectangle
                 Grid.Column="0"
                 HorizontalAlignment="Right"
-                VerticalAlignment="Stretch"
+                VerticalAlignment="Center"
+                Height="{Binding FrameListHeight}"
                 Width="4"
                 Fill="#FFB0FFFF"
                 />
@@ -83,9 +84,10 @@
                 />
             <Rectangle
                 Grid.Column="2"
-                VerticalAlignment="Stretch"
+                VerticalAlignment="Center"
                 HorizontalAlignment="Left"
                 Width="4"
+                Height="{Binding FrameListHeight}"
                 Fill="#FFB0FFFF"
                 />
 

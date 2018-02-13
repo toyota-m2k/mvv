@@ -172,6 +172,26 @@ namespace wvv
         }
         private double mCurrentPosition = 0;
 
+        /**
+         * Trim用ノブを表示する(true)か、しない(false)か？
+         */
+        public bool ShowTrimmingKnob
+        {
+            get
+            {
+                return mShowTrimmingKnob;
+            }
+            set
+            {
+                if(mShowTrimmingKnob != value)
+                {
+                    mShowTrimmingKnob = value;
+                    notify("ShowTrimingKnob");
+                }
+            }
+        }
+        private bool mShowTrimmingKnob = true;
+
         #endregion
 
         #region Private Fields
@@ -229,9 +249,26 @@ namespace wvv
             this.InitializeComponent();
         }
 
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            Reset();
+        }
+
         public void Reset()
         {
-            TotalRange = 100;
+            mTotalRange = 100;
+            mTrimStart = 0;
+            mTrimEnd = 0;
+            mCurrentPosition = 0;
+
+            notify("LWidth");
+            notify("RWidth");
+            notify("MWidth");
         }
 
         /**
@@ -358,6 +395,9 @@ namespace wvv
             Debug.WriteLine("Thumb Pressed.");
         }
 
+        /**
+         * トラッキング開始
+         */
         private void beginTracking(PointerRoutedEventArgs e, int dir, double original, double ext, double max)
         {
             var pos = e.GetCurrentPoint(mTrimmerBase);
@@ -370,6 +410,9 @@ namespace wvv
             mTracking.Max = max;
         }
 
+        /**
+         * トラッキング中/後の移動距離から新しい値を計算
+         */
         private double getNewValue(PointerRoutedEventArgs e)
         {
             var pos = e.GetCurrentPoint(mTrimmerBase);
@@ -388,6 +431,9 @@ namespace wvv
             return v;
         }
 
+        /**
+         * トラッキング中のイベントハンドラ
+         */
         private void OnKnobMoved(object sender, PointerRoutedEventArgs e)
         {
             if (!mTracking.Active)
@@ -400,7 +446,9 @@ namespace wvv
             mTracking.Moved(v, false);
         }
 
-
+        /**
+         * トラッキング終了時のハンドラ
+         */
         private void OnKnobReleased(object sender, PointerRoutedEventArgs e)
         {
             ((UIElement)sender).ReleasePointerCapture(e.Pointer);

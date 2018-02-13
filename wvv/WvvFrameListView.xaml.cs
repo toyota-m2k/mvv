@@ -98,6 +98,11 @@ namespace wvv
 
         /**
          * 再生位置マークを表示するか？
+         * 
+         * このフラグをtrueにしても、再生マークが表示されていないときは、FrameListHeight がゼロになっていないか確認すること。
+         * ListViewのコンテント（フレームサムネイルビットマップリスト）とListViewの間に、微妙なマージン（上下 2px)があり、
+         * 再生マークなどの高さをビットマップにそろえるため、FrameListHeightとして、このマージンを含まない高さを与えることにした。
+         * 初期値はゼロにしているので、プログラムから値を指定する必要がある。
          */
         public bool ShowCurrentTick
         {
@@ -193,7 +198,7 @@ namespace wvv
                 }
             }
         }
-        private double mFrameListHeight = 44;
+        private double mFrameListHeight = 0;
 
         /**
          * 左トリミング部分の幅(px)
@@ -313,7 +318,7 @@ namespace wvv
         {
             ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, mScrollViewerExtentWidthChangedToken);
             //ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ActualHeightProperty, mScrollViewerActualHeightChangedToken);
-            Frames.Clear();
+            Reset();
         }
         #endregion
 

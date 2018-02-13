@@ -6,6 +6,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
+    Loaded="OnLoaded"
+    Unloaded="OnUnloaded"
     d:DesignHeight="300"
     d:DesignWidth="400">
     <UserControl.Resources>
@@ -19,7 +21,10 @@
             <ColumnDefinition Width="{Binding RWidth, Converter={StaticResource GridLengthConverter}}"/>
         </Grid.ColumnDefinitions>
         <Rectangle Grid.ColumnSpan="3" Margin="0" Fill="DarkGray" HorizontalAlignment="Stretch" Height="2" VerticalAlignment="Center"/>
-        <Canvas Grid.Column="0" Width="0" HorizontalAlignment="Right">
+        <Canvas 
+            Grid.Column="0" 
+            Width="0" HorizontalAlignment="Right"
+            Visibility="{Binding ShowTrimmingKnob, Converter={StaticResource BoolVisibilityConverter}}">
             <Grid x:Name="mLKnob" 
                     Canvas.Left="-21"
                     Canvas.Top="20"
@@ -35,7 +40,9 @@
                 <Image Source="Assets/lsel.png"/>
             </Grid>
         </Canvas>
-        <Canvas Grid.Column="2" Width="0" HorizontalAlignment="Left">
+        <Canvas 
+            Grid.Column="2" Width="0" HorizontalAlignment="Left"
+            Visibility="{Binding ShowTrimmingKnob, Converter={StaticResource BoolVisibilityConverter}}">
 
             <Grid x:Name="mRKnob" 
                     Canvas.Top="20"

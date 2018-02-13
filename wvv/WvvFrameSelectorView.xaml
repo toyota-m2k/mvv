@@ -1,53 +1,46 @@
 ﻿<UserControl
-    x:Class="wvv.WvvTrimmingView"
+    x:Class="wvv.WvvFrameSelectorView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:wvv"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded"
-    mc:Ignorable="d"
     d:DesignHeight="300"
     d:DesignWidth="400">
-    <UserControl.Resources>
-        <ResourceDictionary Source="WvvResources.xaml"/>
-    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" Width="400" Height="400" x:Name="mPlayerContainer">
-            <MediaPlayerElement
-                x:Name="mPlayerElement" 
-                AutoPlay="False"
-                HorizontalAlignment="Stretch" 
-                VerticalAlignment="Stretch"
-                Stretch="UniformToFill"
-                AreTransportControlsEnabled="False" 
-                Width="{Binding PlayerSize.Width}"
-                Height="{Binding PlayerSize.Height}"
+        <Grid x:Name="mPlayerContainer" Grid.Row="0" Width="400" Height="400">
+            <local:WvvVideoPlayer
+                x:Name="mPlayer"
+                PlayerLayout="Inside"
+                LayoutSize="400,400"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                PlayerStateChanged="OnPlayerStateChanged"
                 />
         </Grid>
+
         <Grid Grid.Row="1" Margin="0,0">
             <local:WvvTrimmingSlider
                 x:Name="mTrimmingSlider"
-                TrimStartChanged="OnTrimStartChanged"
-                TrimEndChanged="OnTrimEndChanged"
+                ShowTrimmingKnob="False"
                 CurrentPositionChanged="OnCurrentPositionChanged"
                 />
         </Grid>
-        <Grid Grid.Row="2" Padding="25,0">
+        <Grid Grid.Row="2" Padding="25,0"
+              Tapped="OnFrameListTapped">
             <local:WvvFrameListView
                 x:Name="mFrameListView"
                 ShowCurrentTick="True"/>
         </Grid>
-        <Grid Grid.Row="3">
-            <Button Tapped="OnPlay">Play</Button>
-        </Grid>
+
     </Grid>
 </UserControl>
