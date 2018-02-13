@@ -66,7 +66,7 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Stretch"
                 Width="4"
-                Fill="Yellow"
+                Fill="#FFB0FFFF"
                 />
             <Rectangle
                 Grid.Column="1"
@@ -86,7 +86,7 @@
                 VerticalAlignment="Stretch"
                 HorizontalAlignment="Left"
                 Width="4"
-                Fill="Yellow"
+                Fill="#FFB0FFFF"
                 />
 
             <Grid Grid.ColumnSpan="3" 
@@ -96,23 +96,24 @@
                     <ColumnDefinition Width="{Binding TWidth, Converter={StaticResource GridLengthConverter}}"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Canvas VerticalAlignment="Stretch"
+                <Canvas VerticalAlignment="Center"
                     Grid.Column="1"
+                    Height="{Binding FrameListHeight}"
                     HorizontalAlignment="Left"
                     >
                     <Rectangle
                         Canvas.Left="-3"
                         Width="6"
                         Height="{Binding FrameListHeight}"
-                        Fill="#80FFFFFF"
+                        Fill="#A0808080"
                         x:Name="mTickUnder"
                         />
                     <Rectangle
-                        Canvas.Left="-1"
-                        Width="2"
+                        Canvas.Left="-2"
+                        Width="4"
                         Height="{Binding FrameListHeight}"
                         VerticalAlignment="Stretch"
-                        Fill="#A0808080"
+                        Fill="#80FFFFFF"
                         x:Name="mTick"
                     />
                 </Canvas>

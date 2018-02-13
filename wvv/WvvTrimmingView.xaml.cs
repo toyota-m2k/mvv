@@ -247,7 +247,6 @@ namespace wvv
             mTrimmingSlider.Reset();
             mFrameListView.Reset();
             mExtractor.Cancel();
-            bool showTick = mFrameListView.ShowCurrentTick;
             mFrameListView.ShowCurrentTick = false;
 
             mComposition.Clips.Clear();
@@ -275,7 +274,6 @@ namespace wvv
                     {
                         var clip = await MediaClip.CreateFromFileAsync(source);
                         mComposition.Clips.Add(clip.Clone());
-
                         await mExtractor.ExtractAsync(clip, (s, i, img) =>
                         {
                             mFrameListView.Frames[i] = img;
@@ -283,13 +281,13 @@ namespace wvv
                         },
                         (s, img) =>
                         {
+                            mFrameListView.FrameListHeight = mExtractor.ThumbnailHeight;
                             for (int i = 0; i < ThumbnailCount; i++)
                             {
                                 mFrameListView.Frames.Add(img);
                             }
-
+                            mFrameListView.ShowCurrentTick = true;
                         });
-                        mFrameListView.ShowCurrentTick = showTick;
                     }
                     catch (Exception e)
                     {
@@ -364,7 +362,7 @@ namespace wvv
 
 #endregion
 
-#region Media Player Events
+        #region Media Player Events
 
         private async void PBS_StateChanged(MediaPlaybackSession session, object args)
         {
@@ -386,9 +384,9 @@ namespace wvv
             });
         }
 
-#endregion
+        #endregion
 
-#region Public Methods
+        #region Public Methods
 
         /**
          * ソースファイル（mp4限定）をセットする。
@@ -405,9 +403,9 @@ namespace wvv
             }
         }
 
-#endregion
+        #endregion
 
-#region Preview / Trimming Mode
+        #region Preview / Trimming Mode
 
         /**
          * プレビューモードを開始する。
@@ -502,9 +500,10 @@ namespace wvv
                 }
             }
         }
-#endregion
+        
+        #endregion
 
-#region Trimming Slider Handling
+        #region Trimming Slider Handling
 
         /**
          * TrimStartが操作された
@@ -585,6 +584,6 @@ namespace wvv
             }
         }
 
-#endregion
+        #endregion
     }
 }

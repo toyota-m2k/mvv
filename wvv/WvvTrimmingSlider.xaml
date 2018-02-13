@@ -18,35 +18,37 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="{Binding RWidth, Converter={StaticResource GridLengthConverter}}"/>
         </Grid.ColumnDefinitions>
-        <Rectangle Grid.ColumnSpan="3" Margin="0" Fill="Red" HorizontalAlignment="Stretch" Height="2" VerticalAlignment="Center"/>
+        <Rectangle Grid.ColumnSpan="3" Margin="0" Fill="DarkGray" HorizontalAlignment="Stretch" Height="2" VerticalAlignment="Center"/>
         <Canvas Grid.Column="0" Width="0" HorizontalAlignment="Right">
             <Grid x:Name="mLKnob" 
-                    Canvas.Left="-25"
-                    Canvas.Top="5"
+                    Canvas.Left="-21"
+                    Canvas.Top="20"
                     Background="Transparent" 
                     PointerPressed="OnLKnobPressed"
                     PointerMoved="OnKnobMoved"
                     PointerReleased="OnKnobReleased"
                     PointerCanceled="OnKnobReleased"
                     >
-                <Polygon
+                <!--<Polygon
                     Points="0,0 0,40 25,20"
-                    Fill="Green"/>
+                    Fill="Green"/>-->
+                <Image Source="Assets/lsel.png"/>
             </Grid>
         </Canvas>
         <Canvas Grid.Column="2" Width="0" HorizontalAlignment="Left">
 
             <Grid x:Name="mRKnob" 
-                    Canvas.Top="5"
+                    Canvas.Top="20"
                     Background="Transparent"
                     PointerPressed="OnRKnobPressed"
                     PointerMoved="OnKnobMoved"
                     PointerReleased="OnKnobReleased"
                     PointerCanceled="OnKnobReleased"
                     >
-                <Polygon
+                <!--<Polygon
                     Points="25,0 25,40 0,20"
-                    Fill="Green"/>
+                    Fill="Green"/>-->
+                <Image Source="Assets/rsel.png"/>
             </Grid>
         </Canvas>
 

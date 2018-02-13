@@ -43,7 +43,8 @@
         </Grid>
         <Grid Grid.Row="2" Padding="25,0">
             <local:WvvFrameListView
-                x:Name="mFrameListView"/>
+                x:Name="mFrameListView"
+                ShowCurrentTick="True"/>
         </Grid>
         <Grid Grid.Row="3">
             <Button Tapped="OnPlay">Play</Button>

@@ -359,6 +359,7 @@ namespace wvv
                 },
                 (sender, blank) =>
                 {
+                    mFrameListView.FrameListHeight = mExtractor.ThumbnailHeight;
                     for (int i = 0; i < ThumbnailCount; i++)
                     {
                         mFrameListView.Frames.Add(blank);

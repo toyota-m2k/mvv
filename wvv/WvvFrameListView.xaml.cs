@@ -267,9 +267,10 @@ namespace wvv
 
 
         /**
-         * スクロールビューアのExtentWidthの変化を監視するためのリスナー登録トークン
+         * スクロールビューアのExtentWidth, ActualHeightの変化を監視するためのリスナー登録トークン
          */
         private long mScrollViewerExtentWidthChangedToken = 0;
+        //private long mScrollViewerActualHeightChangedToken = 0;
 
         /**
          * スクロール可能な幅
@@ -302,6 +303,7 @@ namespace wvv
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             mScrollViewerExtentWidthChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, ScrollViewer_ExtentWidthChanged);
+            //mScrollViewerActualHeightChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ActualHeightProperty, ScrollViewer_ActualHeightChanged);
         }
 
         /**
@@ -310,6 +312,7 @@ namespace wvv
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, mScrollViewerExtentWidthChangedToken);
+            //ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ActualHeightProperty, mScrollViewerActualHeightChangedToken);
             Frames.Clear();
         }
         #endregion
@@ -322,8 +325,14 @@ namespace wvv
         private void ScrollViewer_ExtentWidthChanged(DependencyObject sender, DependencyProperty dp)
         {
             FrameListWidth = ScrollViewer.ExtentWidth;
-            FrameListHeight = ScrollViewer.ActualHeight;
+            //FrameListHeight = ScrollViewer.ActualHeight;
         }
+
+        //private void ScrollViewer_ActualHeightChanged(DependencyObject sender, DependencyProperty dp)
+        //{
+        //    FrameListHeight = ScrollViewer.ActualHeight;
+        //}
+
 
         #endregion
 
