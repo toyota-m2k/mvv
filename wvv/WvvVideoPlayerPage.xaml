@@ -38,7 +38,7 @@
         <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
             <Button Tapped="OnTrimming">Trimming</Button>
             <Grid Height="30"/>
-            <local:WvvTrimmingView x:Name="mTrimmingView"/>
+            <local:WvvTrimmingView x:Name="mTrimmingView" LayoutSize="400,400"/>
         </StackPanel>
     </Grid>
 </Page>

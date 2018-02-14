@@ -129,7 +129,7 @@
     <Compile Include="WvvPinPPage.xaml.cs">
       <DependentUpon>WvvPinPPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WvvTempFile.cs" />
+    <Compile Include="utils\WvvTempFile.cs" />
     <Compile Include="WvvTranscoder.cs" />
     <Compile Include="WvvTrimmingSlider.xaml.cs">
       <DependentUpon>WvvTrimmingSlider.xaml</DependentUpon>

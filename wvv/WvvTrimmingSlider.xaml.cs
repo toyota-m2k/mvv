@@ -26,7 +26,7 @@ namespace wvv
 
         #region Events
 
-        public delegate void TrimmingEventHandler(WvvTrimmingSlider sender, double position, bool force);
+        public delegate void TrimmingEventHandler(WvvTrimmingSlider sender, double position, bool final);
 
         /**
          * トリミング開始位置が変更された
@@ -46,6 +46,11 @@ namespace wvv
          * プログラム的に、CurrentPosition, AbsoluteCurrentPositionを変更したときは呼ばれない。
          */
         public event TrimmingEventHandler CurrentPositionChanged;
+
+        /**
+         * スライダー上をタップされた
+         */
+        public event TrimmingEventHandler TappedOnSlider;
 
         #endregion
 
@@ -353,6 +358,7 @@ namespace wvv
             };
 
             Debug.WriteLine("LKnob Pressed.");
+            e.Handled = true;
         }
 
         /**
@@ -375,7 +381,7 @@ namespace wvv
             };
 
             Debug.WriteLine("RKnob Pressed.");
-
+            e.Handled = true;
         }
 
         /**
@@ -398,6 +404,7 @@ namespace wvv
             };
 
             Debug.WriteLine("Thumb Pressed.");
+            e.Handled = true;
         }
 
         /**
@@ -449,6 +456,7 @@ namespace wvv
             var v = getNewValue(e);
             mTracking.Prev = v;
             mTracking.Moved(v, false);
+            e.Handled = true;
         }
 
         /**
@@ -467,9 +475,19 @@ namespace wvv
                 mTracking.Moved = null;
             }
             Debug.WriteLine("Knob Released.");
+            e.Handled = true;
         }
 
         #endregion
+
+        private void OnSliderTapped(object sender, TappedRoutedEventArgs e)
+        {
+            var pos = e.GetPosition(mTrimmerBase);
+            var r = TotalRange * pos.X / mTrimmerBase.ActualWidth;
+
+            r = Math.Max(Math.Min(r, TotalRange), 0);
+            TappedOnSlider?.Invoke(this, r, true);
+        }
 
     }
 }

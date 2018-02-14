@@ -33,6 +33,8 @@
                 x:Name="mTrimmingSlider"
                 ShowTrimmingKnob="False"
                 CurrentPositionChanged="OnCurrentPositionChanged"
+                TappedOnSlider="OnSliderTapped"
+                IsEnabled="{Binding Path=IsEnabled, ElementName=mReadyDummy}"
                 />
         </Grid>
         <Grid Grid.Row="2"
@@ -40,8 +42,11 @@
               Margin="0,-16,0,0">
             <local:WvvFrameListView
                 x:Name="mFrameListView"
-                ShowCurrentTick="True"/>
+                ShowCurrentTick="True"
+                IsEnabled="{Binding Path=IsEnabled, ElementName=mReadyDummy}"
+                />
         </Grid>
 
+        <Button Visibility="Collapsed" IsEnabled="{Binding Ready}" x:Name="mReadyDummy"/>
     </Grid>
 </UserControl>

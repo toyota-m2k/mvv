@@ -14,13 +14,16 @@
         <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
             <Button Tapped="OnOpenFile">Select Video</Button>
             <Grid Height="30"/>
+
+            <local:WvvFrameSelectorView x:Name="mFrameSelectorView"/>
+
+            <Grid Height="30"/>
+
             <StackPanel Orientation="Horizontal">
                 <Button Margin="4" Content="Player Page" Tapped="OnPlayerPage"/>
                 <Button Margin="4" Content="Composition" Click="Composition_Click"/>
                 <Button Margin="4" Content="VideoPlayer" Click="VideoPlayer_Click"/>
             </StackPanel>
-
-            <local:WvvFrameSelectorView x:Name="mFrameSelectorView"/>
         </StackPanel>
     </Grid>
 </Page>

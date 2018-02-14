@@ -1,24 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading.Tasks;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Graphics.Imaging;
+using Windows.Media.Core;
 using Windows.Media.Editing;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Media.Imaging;
-using Windows.UI.Xaml.Navigation;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
 
@@ -300,10 +289,11 @@ namespace wvv
         /**
          * 動画ソースファイルをセットする
          */
+        private StorageFile mSourceToBeOpened;
         private StorageFile mSource;
         public void SetSource(StorageFile source)
         {
-            mSource = source;
+            mSourceToBeOpened = source;
             mMarkerView.Clear();
             mSlider.Value = 0;
             makeThumbnails();
@@ -317,9 +307,17 @@ namespace wvv
             TrackingTimer.Stop();
             TrackingTimer.Tick -= updatePlayingPosition;
             Player = null;
+            mSourceToBeOpened = null;
             mSource = null;
             mMarkerView.Clear();
             mFrameListView.Frames.Clear();
+
+            if(null!= mPinPPlayer)
+            {
+                mPinPNow = false;
+                mPinPPlayer.Closed -= OnPinPPlayerClosed;
+                mPinPPlayer.Close();
+            }
         }
 
 
@@ -348,9 +346,15 @@ namespace wvv
             mExtractor.Cancel();
             mExtractor.ThumbnailHeight = ThumbnailHeight;
             mExtractor.FrameCount = ThumbnailCount;
+            if (null == mSourceToBeOpened)
+            {
+                return;
+            }
 
             try
             {
+                mSource = mSourceToBeOpened;
+                mSourceToBeOpened = null;
                 MediaClip clip = await MediaClip.CreateFromFileAsync(mSource);
                 TotalRange = clip.OriginalDuration.TotalMilliseconds;
                 await mExtractor.ExtractAsync(clip, (s, i, img) =>
@@ -557,12 +561,33 @@ namespace wvv
             e.Handled = true;
         }
 
+        private bool mPinPNow = false;
+        private IPinPPlayer mPinPPlayer = null;
         /**
          * PinPモード切替ボタン
          */
-        private void OnPInP(object sender, TappedRoutedEventArgs e)
+        private async void OnPInP(object sender, TappedRoutedEventArgs e)
         {
-            // ToDo: not yet.
+            if(mPinPNow || null==mSource)
+            {
+                return;
+            }
+
+            mPinPNow = true;
+            if (!await WvvPinPPage.OpenPinP(MediaSource.CreateFromStorageFile(mSource), mSlider.Value, null, (pinp) =>
+            {
+                mPinPPlayer = pinp;
+                pinp.Closed += OnPinPPlayerClosed;
+            }))
+            { 
+                mPinPNow = false;
+            }
+        }
+
+        private void OnPinPPlayerClosed(IPinPPlayer player, object clientData)
+        {
+            mPinPNow = false;
+            mPinPPlayer = null;
         }
 
         private void OnShowHideFrameList(object sender, TappedRoutedEventArgs e)

@@ -22,7 +22,8 @@
         HorizontalAlignment="Left"
         Background="{StaticResource PanelColor}" 
         MinWidth="300" 
-        Width="{Binding PanelWidth}">
+        Width="{Binding PanelWidth}"
+        >
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -51,19 +52,24 @@
                     </Image>
 
                 </Button>
-                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnPrevMarker">
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnPrevMarker"
+                        IsEnabled="{Binding MoviePrepared}">
                     <Image Source="{StaticResource BackIcon}" Width="40" Height="40"/>
                 </Button>
-                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnNextMarker">
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnNextMarker"
+                        IsEnabled="{Binding MoviePrepared}">
                     <Image Source="{StaticResource ForwardIcon}" Width="40" Height="40"/>
                 </Button>
-                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnAddMarker">
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnAddMarker"
+                        IsEnabled="{Binding MoviePrepared}">
                     <Image Source="{StaticResource AddMarkerIcon}" Width="40" Height="40"/>
                 </Button>
-                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnPInP">
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnPInP"
+                        IsEnabled="{Binding MoviePrepared}">
                     <Image Source="{StaticResource PinPIcon}" Width="40" Height="40"/>
                 </Button>
-                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnFullScreen">
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnFullScreen"
+                        IsEnabled="{Binding MoviePrepared}">
                     <Image Source="{StaticResource FullScreenOpenIcon}" Width="40" Height="40"/>
                 </Button>
             </StackPanel>
@@ -90,6 +96,7 @@
             MarkerSelected="MV_MarkerSelected"
             MarkerAdded = "MV_MarkerAdded"
             MarkerRemoved = "MV_MarkerRemoved"
+            IsEnabled="{Binding MoviePrepared}"
             />
 
         <!-- スライダー＋フレームリスト -->
@@ -185,10 +192,12 @@
                 </Image>
             <Grid
                 Visibility="{Binding ShowingFrames, Converter={StaticResource BoolVisibilityConverter}}"                >
-                <wvv:WvvFrameListView
-                x:Name="mFrameListView"
-                ShowCurrentTick="False"
-                Margin="0,10,0,0"/>
+                <wvv:WvvFrameListView 
+                    x:Name="mFrameListView"
+                    ShowCurrentTick="False"
+                    Margin="0,10,0,0"
+                    IsEnabled="{Binding MoviePrepared}"
+                    />
             </Grid>
             <Slider 
                 x:Name="mSlider" HorizontalAlignment="Stretch" 
@@ -203,7 +212,9 @@
                 ValueChanged="OnSliderChanged"
                 PointerWheelChanged="OnSliderWheelChanged"
                 Tapped="OnSliderTapped"
-                Style="{StaticResource UpperSlider}"/>
+                Style="{StaticResource UpperSlider}"
+                IsEnabled="{Binding MoviePrepared}"
+                />
         </Grid>
 
         <!-- 再生時間表示 -->

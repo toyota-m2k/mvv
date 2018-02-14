@@ -1,23 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Media.Editing;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
-using Windows.UI.Xaml.Navigation;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
 
@@ -37,6 +27,7 @@ namespace wvv
         public WvvFrameSelectorView()
         {
             mExtractor = new WvvFrameExtractor2(40, 30);
+            this.DataContext = this;
             this.InitializeComponent();
         }
 
@@ -61,6 +52,16 @@ namespace wvv
         {
             mPlayer.SeekPosition = position;
             mFrameListView.TickPosition = sender.AbsoluteCurrentPosition / sender.TotalRange;
+        }
+
+        /**
+         * スライダー上がタップされた
+         */
+        private void OnSliderTapped(WvvTrimmingSlider sender, double position, bool finalize)
+        {
+            sender.AbsoluteCurrentPosition = position;
+            mPlayer.SeekPosition = position;
+            mFrameListView.TickPosition = position / sender.TotalRange;
         }
 
         /**
@@ -178,6 +179,5 @@ namespace wvv
         }
 
         #endregion
-
     }
 }

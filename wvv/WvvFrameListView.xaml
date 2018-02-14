@@ -20,7 +20,7 @@
           utils:WvvClip.ToBounds="True"
           MinHeight="{Binding FrameListViewHeight}">
         <Canvas HorizontalAlignment="Left" VerticalAlignment="Top">
-            <Grid Canvas.Top="0" Canvas.Left="{Binding ScrollAmount}" Width="{Binding FrameListWidth}">
+            <Grid Canvas.Top="0" Canvas.Left="0" Width="{Binding FrameListWidth}" x:Name="mScrollGrid">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="{Binding LWidth, Converter={StaticResource GridLengthConverter}}"/>
                     <ColumnDefinition Width="*"/>

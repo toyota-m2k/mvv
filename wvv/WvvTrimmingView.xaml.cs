@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Editing;
 using Windows.Media.Playback;
@@ -16,11 +11,8 @@ using Windows.Media.Transcoding;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
 
@@ -86,6 +78,23 @@ namespace wvv
         }
 
         /**
+         * プレイヤーの配置サイズのヒント
+         */
+        public Size LayoutSize
+        {
+            get { return mLayoutSize; }
+            set
+            {
+                if (value != mLayoutSize)
+                {
+                    mLayoutSize = value;
+                    updatePlayerSize();
+                }
+            }
+        }
+        private Size mLayoutSize = new Size(300, 300);
+
+        /**
          * 動画のサイズ
          */
         private Size VideoSize
@@ -96,18 +105,18 @@ namespace wvv
                 if (mVideoSize != value)
                 {
                     mVideoSize = value;
-                    adjustPlayerSize(mVideoSize.Width, mVideoSize.Height);
+                    updatePlayerSize();
                 }
             }
         }
-        private Size mVideoSize;
+        private Size mVideoSize = new Size(300, 300);
 
         /**
          * 動画の実サイズに合わせてプレイヤーのサイズを調整する
          */
-        private void adjustPlayerSize(double mw, double mh)
+        private void updatePlayerSize()
         {
-            PlayerSize = calcFittingSize(mw, mh, mPlayerContainer.ActualWidth, mPlayerContainer.ActualHeight);
+            PlayerSize = calcFittingSize(mVideoSize.Width, mVideoSize.Height, mLayoutSize.Width, mLayoutSize.Height);
             notify("PlayerSize");
         }
 
@@ -150,6 +159,7 @@ namespace wvv
         /**
          * 動画の再生は可能か？
          */
+#if true
         public bool Ready
         {
             get { return mReady; }
@@ -163,7 +173,24 @@ namespace wvv
             }
         }
         private bool mReady = false;
+#else
 
+        public static readonly DependencyProperty ReadyProperty =
+               DependencyProperty.Register("Ready",
+                                           typeof(bool),
+                                           typeof(WvvTrimmingView),
+                                           new PropertyMetadata(false, (d,e)=>
+                                           {
+                                               Debug.WriteLine("DP-Ready:" + ((WvvTrimmingView)d).Ready.ToString());
+                                           }));
+
+        // 2. CLI用プロパティを提供するラッパー
+        public bool Ready
+        {
+            get { return (bool)GetValue(ReadyProperty); }
+            set { SetValue(ReadyProperty, value); }
+        }
+#endif
         /**
          * 動画再生中か？
          */
@@ -199,9 +226,9 @@ namespace wvv
             get; private set;
         }
 
-        #endregion
+#endregion
 
-        #region Public Properties
+#region Public Properties
 
         /**
          * トリミングされているか？
@@ -219,9 +246,9 @@ namespace wvv
          */
         public static bool ResetCurrentPositionOnTrimmed = true;
 
-        #endregion
+#endregion
 
-        #region Initialization / Tremination
+#region Initialization / Tremination
         /**
          * コンストラクタ
          */
@@ -274,6 +301,7 @@ namespace wvv
                     {
                         var clip = await MediaClip.CreateFromFileAsync(source);
                         mComposition.Clips.Add(clip.Clone());
+                        Ready = true;
                         await mExtractor.ExtractAsync(clip, (s, i, img) =>
                         {
                             mFrameListView.Frames[i] = img;
@@ -320,6 +348,7 @@ namespace wvv
          */
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+
             TrackingTimer = new DispatcherTimer();
             TrackingTimer.Interval = TimeSpan.FromMilliseconds(10);
             TrackingTimer.Tick += (s, a) =>
@@ -338,7 +367,7 @@ namespace wvv
             mPlayer.PlaybackSession.PlaybackStateChanged += PBS_StateChanged;
             mPlayerElement.SetMediaPlayer(mPlayer);
 
-            if(null!=mSource)
+            if (null!=mSource)
             {
                 var s = mSource;
                 mSource = null;
@@ -353,6 +382,7 @@ namespace wvv
         {
             TrackingTimer.Stop();
 
+            Ready = false;
             mPlayerElement.SetMediaPlayer(null);
             mPlayer.Pause();
             mPlayer.PlaybackSession.PlaybackStateChanged -= PBS_StateChanged;
@@ -362,7 +392,7 @@ namespace wvv
 
 #endregion
 
-        #region Media Player Events
+#region Media Player Events
 
         private async void PBS_StateChanged(MediaPlaybackSession session, object args)
         {
@@ -384,9 +414,9 @@ namespace wvv
             });
         }
 
-        #endregion
+#endregion
 
-        #region Public Methods
+#region Public Methods
 
         /**
          * ソースファイル（mp4限定）をセットする。
@@ -403,9 +433,9 @@ namespace wvv
             }
         }
 
-        #endregion
+#endregion
 
-        #region Preview / Trimming Mode
+#region Preview / Trimming Mode
 
         /**
          * プレビューモードを開始する。
@@ -519,9 +549,9 @@ namespace wvv
             }
         }
         
-        #endregion
+#endregion
 
-        #region Trimming Slider Handling
+#region Trimming Slider Handling
 
         /**
          * TrimStartが操作された
@@ -602,6 +632,6 @@ namespace wvv
             }
         }
 
-        #endregion
+#endregion
     }
 }

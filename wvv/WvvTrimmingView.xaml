@@ -5,6 +5,8 @@
     xmlns:local="using:wvv"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Interactivity="using:Microsoft.Xaml.Interactivity" 
+    xmlns:Core="using:Microsoft.Xaml.Interactions.Core" 
     Loaded="OnLoaded"
     Unloaded="OnUnloaded"
     mc:Ignorable="d"
@@ -21,7 +23,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" Width="400" Height="400" x:Name="mPlayerContainer">
+        <Grid Grid.Row="0" x:Name="mPlayerContainer">
             <MediaPlayerElement
                 x:Name="mPlayerElement" 
                 AutoPlay="False"
@@ -39,15 +41,32 @@
                 TrimStartChanged="OnTrimStartChanged"
                 TrimEndChanged="OnTrimEndChanged"
                 CurrentPositionChanged="OnCurrentPositionChanged"
+                IsEnabled="{Binding Path=IsEnabled, ElementName=mPlayButton}"
                 />
         </Grid>
         <Grid Grid.Row="2" Padding="25,0">
             <local:WvvFrameListView
                 x:Name="mFrameListView"
-                ShowCurrentTick="True"/>
+                AnimationEnabled="False"
+                ShowCurrentTick="True"
+                IsEnabled="{Binding Path=IsEnabled, ElementName=mPlayButton}"
+                />
         </Grid>
         <Grid Grid.Row="3">
-            <Button Tapped="OnPlay">Play</Button>
+            <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnPlay"
+                    x:Name="mPlayButton"
+                    IsEnabled="{Binding Ready}" HorizontalAlignment="Center">
+                <Image x:Name="playButtonImage" Source="{StaticResource PlayIcon}" Width="40" Height="40">
+                    <Interactivity:Interaction.Behaviors>
+                        <Core:DataTriggerBehavior Binding="{Binding IsPlaying}" Value="True">
+                            <Core:ChangePropertyAction TargetObject="{Binding ElementName=playButtonImage}" PropertyName="Source" Value="{StaticResource StopIcon}" />
+                        </Core:DataTriggerBehavior>
+                        <Core:DataTriggerBehavior Binding="{Binding IsPlaying}" Value="False">
+                            <Core:ChangePropertyAction TargetObject="{Binding ElementName=playButtonImage}" PropertyName="Source" Value="{StaticResource PlayIcon}" />
+                        </Core:DataTriggerBehavior>
+                    </Interactivity:Interaction.Behaviors>
+                </Image>
+            </Button>
         </Grid>
     </Grid>
 </UserControl>

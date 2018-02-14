@@ -1,19 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Media.Animation;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
 
@@ -35,7 +27,7 @@ namespace wvv
                 if (mPosition != value)
                 {
                     mPosition = value;
-                    notify("ScrollAmount");
+                    scroll();
                 }
             }
         }
@@ -52,8 +44,8 @@ namespace wvv
                 if (value != mTickPosition)
                 {
                     mTickPosition = value;
-                    notify("TWidth");
                     Position = value;
+                    notify("TWidth");
                 }
             }
         }
@@ -70,8 +62,8 @@ namespace wvv
                 if (mLeftTrim != value)
                 {
                     mLeftTrim = value;
-                    notify("LWidth");
                     Position = value;
+                    notify("LWidth");
                 }
             }
 
@@ -89,8 +81,8 @@ namespace wvv
                 if (mRightTrim != value)
                 {
                     mRightTrim = value;
-                    notify("RWidth");
                     Position = 1.0 - value;
+                    notify("RWidth");
                 }
             }
         }
@@ -119,6 +111,12 @@ namespace wvv
         private bool mShowCurrentTick = true;
 
 
+        public bool AnimationEnabled
+        {
+            get; set;
+        } = true;
+
+
         /**
          * 操作情報をクリアする
          */
@@ -129,7 +127,8 @@ namespace wvv
             notify("LWidth");
             notify("RWidth");
             notify("TWidth");
-            notify("ScrollAmount");
+            //notify("ScrollAmount");
+            Canvas.SetLeft(mScrollGrid, 0);
         }
 
         /**
@@ -171,7 +170,9 @@ namespace wvv
                     notify("LWidth");
                     notify("RWidth");
                     notify("TWidth");
-                    notify("ScrollAmount");
+                    //notify("ScrollAmount");
+                    Canvas.SetLeft(mScrollGrid, 0);
+
                 }
             }
         }
@@ -246,13 +247,13 @@ namespace wvv
         /**
          * Positionに応じたスクロール量
          */
-        public double ScrollAmount
-        {
-            get
-            {
-                return - ScrollableWidth * Position;
-            }
-        }
+        //public double ScrollAmount
+        //{
+        //    get
+        //    {
+        //        return -ScrollableWidth * Position;
+        //    }
+        //}
 
         #endregion
 
@@ -299,6 +300,55 @@ namespace wvv
         }
 
 
+
+        private DoubleAnimation mAnim = null;
+        private Storyboard mStoryboard = null;
+
+        /**
+         * フレームリストをスクロールする
+         */
+        private void scroll()
+        {
+            mStoryboard.SkipToFill();
+
+            if (AnimationEnabled) {
+                var scrTo = -ScrollableWidth * Position;
+                var scrFrom = Canvas.GetLeft(mScrollGrid);
+                var duration = Math.Max(50, 500 * Math.Abs(scrTo - scrFrom) / ScrollableWidth);
+                mAnim.From = scrFrom;
+                mAnim.To = scrTo;
+                mAnim.Duration = new Duration(TimeSpan.FromMilliseconds(duration));
+                mStoryboard.Begin();
+            }
+            else
+            {
+                Canvas.SetLeft(mScrollGrid, -ScrollableWidth * Position);
+            }
+        }
+
+        private void initAnimation()
+        {
+            if (null == mStoryboard)
+            {
+                mAnim = new DoubleAnimation();
+                mAnim.EasingFunction = new CubicEase();
+                mStoryboard = new Storyboard();
+                Storyboard.SetTarget(mAnim, mScrollGrid);
+                Storyboard.SetTargetProperty(mAnim, "(Canvas.Left)");
+                mStoryboard.Children.Add(mAnim);
+            }
+        }
+
+        private void dismissAnimation()
+        {
+            if (null != mStoryboard)
+            {
+                mStoryboard.Stop();
+                mStoryboard = null;
+                mAnim = null;
+            }
+        }
+
         #endregion
 
         #region Initialzation /Termination
@@ -320,6 +370,7 @@ namespace wvv
             mScrollViewerExtentWidthChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, ScrollViewer_ExtentWidthChanged);
             //mListViewActualHeifhtChangedToken = mListView.RegisterPropertyChangedCallback(ListView.ActualHeightProperty, ListView_ActualHeightChanged);
             //mScrollViewerActualHeightChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ActualHeightProperty, ScrollViewer_ActualHeightChanged);
+            initAnimation();
         }
 
         /**
@@ -331,6 +382,7 @@ namespace wvv
             //mListView.UnregisterPropertyChangedCallback(ListView.ActualHeightProperty, mListViewActualHeifhtChangedToken);
             //ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ActualHeightProperty, mScrollViewerActualHeightChangedToken);
             Reset();
+            dismissAnimation();
         }
         #endregion
 

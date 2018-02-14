@@ -16,7 +16,14 @@ using Windows.UI.Xaml.Navigation;
 
 namespace wvv
 {
+    /**
+     * PinPウィンドウが閉じたときの通知イベントのハンドラ型
+     */
     public delegate void ClosedEventHandler(IPinPPlayer player, object clientData);
+
+    /**
+     * PinPPlayerのi/f（上のイベントハンドラで使う）
+     */
     public interface IPinPPlayer
     {
         void Close();
@@ -31,35 +38,7 @@ namespace wvv
     /// </summary>
     public sealed partial class WvvPinPPage : Page, IPinPPlayer
     {
-        #region Class Methods
-
-        /**
-         * これから開くPinPPage と呼び出し元を紐づけるための小さな仕掛け
-         */
-        private static Dictionary<int, NotifyPinPOpened> sNotifyHanders = null;
-
-        /**
-         * 開くPinPPageに渡す情報
-         */
-        private class PinPCreationInfo
-        {
-            private static int sIDGenerator = 0;
-
-            public int ID { get; private set; }
-            public MediaSource Source { get; private set; }
-            public double StartAt { get; private set; }
-            public Size? ReqSize { get; private set; }
-            public object ClientData { get; private set; }
-
-            public PinPCreationInfo(MediaSource source, double startAt, Size? reqSize, object clientData)
-            {
-                this.Source = source;
-                this.ID = ++sIDGenerator;
-                this.StartAt = startAt;
-                this.ReqSize = reqSize;
-                this.ClientData = clientData;
-            }
-        }
+        #region Public Methods
 
         /**
          * PinP モード（ApplicationViewMode.CompactOverlay)をサポートしているか？
@@ -111,13 +90,79 @@ namespace wvv
             return await ApplicationViewSwitcher.TryShowAsStandaloneAsync(newViewId);
         }
 
+        /**
+         * ×ボタンがクリックされた
+         * この方法は、Restricted Capabilities の指定が必要なので、できれば避けたい。
+         */
+        //private void OnCloseRequested(object sender, SystemNavigationCloseRequestedPreviewEventArgs e)
+        //{
+        //    Dispose();
+        //}
+
+        /**
+         * PinP Playerを閉じる (IPinPPlayerの唯一のメソッド）
+         */
+        public async void Close()
+        {
+            if (null != mInfo)
+            {
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    Window.Current.Close();     // CloseRequested は呼ばれるのだろうか？ --> 呼ばれなかったので、ここで呼ぶ。（万一、複数回呼び出しても安全なはず）
+                    Closed?.Invoke(this, mInfo.ClientData);
+                    Dispose();
+                });
+            }
+        }
+
+        /**
+         * PinP Playerが閉じたときのイベント
+         */
+        public event ClosedEventHandler Closed;
+
+        #endregion
+
+        #region Privates
+
+        /**
+         * これから開くPinPPage と呼び出し元を紐づけるための小さな仕掛け
+         */
+        private static Dictionary<int, NotifyPinPOpened> sNotifyHanders = null;
+
+        /**
+         * 開くPinPPageに渡す情報
+         */
+        private class PinPCreationInfo
+        {
+            private static int sIDGenerator = 0;
+
+            public int ID { get; private set; }
+            public MediaSource Source { get; private set; }
+            public double StartAt { get; private set; }
+            public Size? ReqSize { get; private set; }
+            public object ClientData { get; private set; }
+
+            public PinPCreationInfo(MediaSource source, double startAt, Size? reqSize, object clientData)
+            {
+                this.Source = source;
+                this.ID = ++sIDGenerator;
+                this.StartAt = startAt;
+                this.ReqSize = reqSize;
+                this.ClientData = clientData;
+            }
+        }
+
+
         private static ViewModePreferences getCompactOverlayOption(Size? reqSize)
         {
             var option = ViewModePreferences.CreateDefault(ApplicationViewMode.CompactOverlay);
             if (null != reqSize)
             {
-                // ToDo: 500 x 384 のサイズに制限する
-                option.CustomSize = reqSize.Value;
+                // 500 x 384 のサイズに制限する
+                var size = reqSize.Value;
+                size.Width = Math.Min(500, size.Width);
+                size.Height = Math.Min(384, size.Height);
+                option.CustomSize = size;
             }
             return option;
         }
@@ -135,6 +180,8 @@ namespace wvv
 
         /**
          * コンストラクタ
+         * 
+         * 意味的には private だが、Frame#Navigate()で開くために、publicでなければならない。
          */
         public WvvPinPPage()
         {
@@ -261,38 +308,6 @@ namespace wvv
                 });
             }
         }
-
-
-        /**
-         * ×ボタンがクリックされた
-         * この方法は、Restricted Capabilities の指定が必要なので、できれば避けたい。
-         */
-        //private void OnCloseRequested(object sender, SystemNavigationCloseRequestedPreviewEventArgs e)
-        //{
-        //    Dispose();
-        //}
-
-        /**
-         * PinP Playerを閉じる (IPinPPlayerの唯一のメソッド）
-         */
-        public async void Close()
-        {
-            if (null != mInfo)
-            {
-                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                {
-                    Window.Current.Close();     // CloseRequested は呼ばれるのだろうか？ --> 呼ばれなかったので、ここで呼ぶ。（万一、複数回呼び出しても安全なはず）
-                    Closed?.Invoke(this, mInfo.ClientData);
-                    Dispose();
-                });
-            }
-        }
-
-        /**
-         * PinP Playerが閉じたときのイベント
-         */
-        public event ClosedEventHandler Closed;
-
 
         #endregion
 
