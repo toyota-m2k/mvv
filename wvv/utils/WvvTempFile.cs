@@ -25,6 +25,8 @@ namespace wvv
             return Create(ApplicationData.Current.LocalCacheFolder, dirName);
         }
 
+        public static StorageFolder TempFolder { get => ApplicationData.Current.LocalCacheFolder; }
+
         /**
          * baseFolderの下にテンポラリフォルダを作成する。
          * 
@@ -68,23 +70,30 @@ namespace wvv
         {
             return await WvvTempFile.Create(Folder, prefix, suffix);
         }
+
+        public StorageFolder Detach()
+        {
+            var r = Folder;
+            Folder = null;
+            return r;
+        }
     }
 
     public class WvvTempFile : IDisposable
     {
         public StorageFile File { get; private set; }
 
-        public static async Task<WvvTempFile> Create(StorageFolder folder, string prefix, string suffix = "")
+        public static async Task<WvvTempFile> Create(StorageFolder folder, string name, string ext = "")
         {
-            if(prefix==null || prefix=="")
+            if(name==null || name=="")
             {
-                prefix = "W";
+                name = "w";
             }
-            if(suffix==null)
+            if(ext==null)
             {
-                suffix = "";
+                ext = "";
             }
-            var file = await folder.CreateFileAsync(prefix + suffix, CreationCollisionOption.GenerateUniqueName);
+            var file = await folder.CreateFileAsync(name + ext, CreationCollisionOption.GenerateUniqueName);
             return new WvvTempFile(file);
         }
 
@@ -108,6 +117,13 @@ namespace wvv
                     Debug.WriteLine(e);
                 }
             }
+        }
+
+        public StorageFile Detach()
+        {
+            var r = File;
+            File = null;
+            return r;
         }
     }
 }

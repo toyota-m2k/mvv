@@ -68,5 +68,20 @@
                 </Image>
             </Button>
         </Grid>
+        <Grid Grid.RowSpan="4"
+              Background="#80000000"
+              Visibility="{Binding Encoding, Converter={StaticResource BoolVisibilityConverter}}">
+            <StackPanel Orientation="Vertical"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Stretch">
+
+                <ProgressBar VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="20"
+                             Maximum="100" Minimum="0" Value="{Binding EncodingProgress}"/>
+                <StackPanel Orientation="Horizontal" Margin="20, 10" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding EncodingProgress}" Foreground="White"/>
+                    <TextBlock Text="%" Foreground="White" Margin="5,0,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

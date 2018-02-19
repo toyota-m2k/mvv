@@ -14,7 +14,7 @@
         <ResourceDictionary Source="WvvResources.xaml"/>
     </UserControl.Resources>
 
-    <Grid x:Name="mVideoPlayerContainer">
+    <Grid x:Name="mVideoPlayerContainer" Tapped="OnPlayerTapped">
         <Grid 
             VerticalAlignment="Top" 
             HorizontalAlignment="Left"

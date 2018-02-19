@@ -19,10 +19,10 @@
     <Grid 
         Tapped="OnContainerTapped" 
         x:Name="mVideoControlPanelContainer"
-        HorizontalAlignment="Left"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Top"
         Background="{StaticResource PanelColor}" 
-        MinWidth="300" 
-        Width="{Binding PanelWidth}"
+        MinWidth="340" 
         >
 
         <Grid.RowDefinitions>

@@ -309,6 +309,11 @@ namespace wvv
          */
         private void scroll()
         {
+            if(null== mStoryboard)
+            {
+                // Loadedイベントより前に呼び出された--> 無視
+                return;
+            }
             mStoryboard.SkipToFill();
 
             if (AnimationEnabled) {
@@ -367,10 +372,13 @@ namespace wvv
          */
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            if(null!=ScrollViewer)
+            {
             mScrollViewerExtentWidthChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, ScrollViewer_ExtentWidthChanged);
             //mListViewActualHeifhtChangedToken = mListView.RegisterPropertyChangedCallback(ListView.ActualHeightProperty, ListView_ActualHeightChanged);
             //mScrollViewerActualHeightChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ActualHeightProperty, ScrollViewer_ActualHeightChanged);
             initAnimation();
+        	}
         }
 
         /**
@@ -407,7 +415,10 @@ namespace wvv
         //    notify("FrameListViewHeight");
         //}
 
-
+        private void OnContainerSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            scroll();
+        }
 
         #endregion
 
@@ -420,5 +431,6 @@ namespace wvv
         }
 
         #endregion
+
     }
 }

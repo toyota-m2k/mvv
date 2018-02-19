@@ -128,20 +128,23 @@ namespace wvv
 
         /**
          * パネルの幅
+         * HorizontalAlignment = Stretch でレイアウトする場合は設定しないので、バインドせず、必要に応じて直接プロパティを変更することにする。
          */
-        private double mPanelWidth = 400;
         public double PanelWidth
         {
-            get { return mPanelWidth; }
+            get => mVideoControlPanelContainer.Width;
             set
             {
-                if (mPanelWidth != value)
+                mVideoControlPanelContainer.Width = value;
+                if (value == double.NaN)
                 {
-                    mPanelWidth = value;
-                    notify("PanelWidth");
+                    mVideoControlPanelContainer.HorizontalAlignment = HorizontalAlignment.Stretch;
+                }
+                else
+                {
+                    mVideoControlPanelContainer.HorizontalAlignment = HorizontalAlignment.Left;
                 }
             }
-
         }
 
         /**
@@ -244,7 +247,7 @@ namespace wvv
         /**
          * フレームサムネイルの下に表示する文字列
          */
-        private string mPositionString = null;
+        private string mPositionString = "";
         public string PositionString
         {
             get { return mPositionString; }
@@ -275,13 +278,13 @@ namespace wvv
                 if(null!=mPlayer)
                 {
                     mPlayer.PlayerStateChanged -= OnPlayerStateChanged;
-                    mPlayer.PlayerWidthChanged -= OnPlayerWidthChanged;
+                    //mPlayer.PlayerWidthChanged -= OnPlayerWidthChanged;
                 }
                 mPlayer = value;
                 if(null!=mPlayer)
                 {
                     mPlayer.PlayerStateChanged += OnPlayerStateChanged;
-                    mPlayer.PlayerWidthChanged += OnPlayerWidthChanged;
+                    //mPlayer.PlayerWidthChanged += OnPlayerWidthChanged;
                 }
             }
         }
@@ -289,11 +292,10 @@ namespace wvv
         /**
          * 動画ソースファイルをセットする
          */
-        private StorageFile mSourceToBeOpened;
         private StorageFile mSource;
         public void SetSource(StorageFile source)
         {
-            mSourceToBeOpened = source;
+            mSource = source;
             mMarkerView.Clear();
             mSlider.Value = 0;
             makeThumbnails();
@@ -307,7 +309,6 @@ namespace wvv
             TrackingTimer.Stop();
             TrackingTimer.Tick -= updatePlayingPosition;
             Player = null;
-            mSourceToBeOpened = null;
             mSource = null;
             mMarkerView.Clear();
             mFrameListView.Frames.Clear();
@@ -346,15 +347,9 @@ namespace wvv
             mExtractor.Cancel();
             mExtractor.ThumbnailHeight = ThumbnailHeight;
             mExtractor.FrameCount = ThumbnailCount;
-            if (null == mSourceToBeOpened)
-            {
-                return;
-            }
 
             try
             {
-                mSource = mSourceToBeOpened;
-                mSourceToBeOpened = null;
                 MediaClip clip = await MediaClip.CreateFromFileAsync(mSource);
                 TotalRange = clip.OriginalDuration.TotalMilliseconds;
                 await mExtractor.ExtractAsync(clip, (s, i, img) =>
@@ -472,10 +467,10 @@ namespace wvv
             notify("IsPlaying");
         }
 
-        private void OnPlayerWidthChanged(IWvvVideoPlayer player, double width)
-        {
-            PanelWidth = width;
-        }
+        //private void OnPlayerWidthChanged(IWvvVideoPlayer player, double width)
+        //{
+        //    PanelWidth = width;
+        //}
 
 
         /**
@@ -586,6 +581,7 @@ namespace wvv
 
         private void OnPinPPlayerClosed(IPinPPlayer player, object clientData)
         {
+            player.Closed -= OnPinPPlayerClosed;
             mPinPNow = false;
             mPinPPlayer = null;
         }

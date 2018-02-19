@@ -18,7 +18,8 @@
 
     <Grid x:Name="mContainerGrid" 
           utils:WvvClip.ToBounds="True"
-          MinHeight="{Binding FrameListViewHeight}">
+          MinHeight="{Binding FrameListViewHeight}"
+          SizeChanged="OnContainerSizeChanged">
         <Canvas HorizontalAlignment="Left" VerticalAlignment="Top">
             <Grid Canvas.Top="0" Canvas.Left="0" Width="{Binding FrameListWidth}" x:Name="mScrollGrid">
                 <Grid.ColumnDefinitions>

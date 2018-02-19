@@ -20,14 +20,7 @@
         <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
             <Button Tapped="OnOpenFile">Select Video</Button>
             <Grid Height="30"/>
-            <local:WvvVideoPlayer
-                x:Name="mPlayer"
-                PlayerLayout="Height"
-            />
-            <Grid Height="5"/>
-            <local:WvvVideoControlPanel
-            x:Name="mPanel"
-            />
+            <local:WvvVideoUnitPlayer x:Name="mPlayer"/>
             <Grid Height="30"/>
             <StackPanel Orientation="Horizontal">
                 <Button Margin="4" Content="Player Page" Tapped="OnPlayerPage"/>
@@ -36,7 +29,10 @@
         </StackPanel>
 
         <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
-            <Button Tapped="OnTrimming">Trimming</Button>
+            <StackPanel Orientation="Horizontal">
+                <Button Tapped="OnTrimming">Trimming</Button>
+                <Button Tapped="DoTrim">Do it now!</Button>
+            </StackPanel>
             <Grid Height="30"/>
             <local:WvvTrimmingView x:Name="mTrimmingView" LayoutSize="400,400"/>
         </StackPanel>

@@ -149,6 +149,9 @@
     <Compile Include="WvvVideoPlayerPage.xaml.cs">
       <DependentUpon>WvvVideoPlayerPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WvvVideoUnitPlayer.xaml.cs">
+      <DependentUpon>WvvVideoUnitPlayer.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -164,8 +167,8 @@
     <Content Include="Assets\current_bar_min.png" />
     <Content Include="Assets\fullscreen.png" />
     <Content Include="Assets\fullscreen_close.png" />
-    <Content Include="Assets\forward.png" />
     <Content Include="Assets\frame_slider_handle.png" />
+    <Content Include="Assets\forward.png" />
     <Content Include="Assets\marker.png" />
     <Content Include="Assets\play.png" />
     <Content Include="Assets\play_button.png" />
@@ -265,6 +268,10 @@
     <Page Include="WvvVideoPlayerPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WvvVideoUnitPlayer.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>

@@ -315,6 +315,15 @@ namespace wvv
             }
         }
 
+        private void OnSliderTapped(object sender, TappedRoutedEventArgs e)
+        {
+            var pos = e.GetPosition(mTrimmerBase);
+            var r = TotalRange * pos.X / mTrimmerBase.ActualWidth;
+
+            r = Math.Max(Math.Min(r, TotalRange), 0);
+            TappedOnSlider?.Invoke(this, r, true);
+        }
+
         #endregion
 
         #region Tracking Knobs
@@ -479,15 +488,5 @@ namespace wvv
         }
 
         #endregion
-
-        private void OnSliderTapped(object sender, TappedRoutedEventArgs e)
-        {
-            var pos = e.GetPosition(mTrimmerBase);
-            var r = TotalRange * pos.X / mTrimmerBase.ActualWidth;
-
-            r = Math.Max(Math.Min(r, TotalRange), 0);
-            TappedOnSlider?.Invoke(this, r, true);
-        }
-
     }
 }

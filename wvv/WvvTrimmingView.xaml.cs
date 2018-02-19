@@ -38,7 +38,7 @@ namespace wvv
 
         #endregion
 
-        #region IWvvSaveAs i/f
+        //#region IWvvSaveAs i/f
 
         /**
          * トリミング結果をファイルに保存
@@ -48,7 +48,7 @@ namespace wvv
             return mComposition.RenderToFileAsync(toFile);
         }
 
-        #endregion
+        //#endregion
 
         #region Private Fields / Properties
 
@@ -57,7 +57,7 @@ namespace wvv
 
         // 再生中のトラッキングサムを移動させるためのタイマー
         private DispatcherTimer TrackingTimer { get; set; }
-        
+
         // 動画表示用コントロール
         private MediaPlayer mPlayer;
 
@@ -165,7 +165,7 @@ namespace wvv
             get { return mReady; }
             private set
             {
-                if(value!=mReady)
+                if (value != mReady)
                 {
                     mReady = value;
                     notify("Ready");
@@ -203,7 +203,7 @@ namespace wvv
                 {
                     mIsPlaying = value;
 
-                    if(value)
+                    if (value)
                     {
                         TrackingTimer.Start();
                     }
@@ -226,9 +226,40 @@ namespace wvv
             get; private set;
         }
 
-#endregion
+        /**
+         * エンコード中か？
+         */
+        public bool Encoding
+        {
+            get { return mEncoding; }
+            set
+            {
+                if (mEncoding != value)
+                {
+                    mEncoding = value;
+                    notify("Encoding");
+                }
+            }
+        }
+        private bool mEncoding = false;
 
-#region Public Properties
+        public int EncodingProgress
+        {
+            get { return mEncodingProgress; }
+            set
+            {
+                if (mEncodingProgress != value)
+                {
+                    mEncodingProgress = value;
+                    notify("EncodingProgress");
+                }
+            }
+        }
+        private int mEncodingProgress = 0;
+
+        #endregion
+
+        #region Public Properties
 
         /**
          * トリミングされているか？
@@ -246,9 +277,10 @@ namespace wvv
          */
         public static bool ResetCurrentPositionOnTrimmed = true;
 
-#endregion
+        #endregion
 
-#region Initialization / Tremination
+        #region Initialization / Tremination
+
         /**
          * コンストラクタ
          */
@@ -390,9 +422,9 @@ namespace wvv
             mPlayer = null;
         }
 
-#endregion
+        #endregion
 
-#region Media Player Events
+        #region Media Player Events
 
         private async void PBS_StateChanged(MediaPlaybackSession session, object args)
         {
@@ -416,7 +448,7 @@ namespace wvv
 
 #endregion
 
-#region Public Methods
+        #region Public Methods
 
         /**
          * ソースファイル（mp4限定）をセットする。
@@ -433,9 +465,49 @@ namespace wvv
             }
         }
 
-#endregion
+        #region IWvvSaveAs i/f
 
-#region Preview / Trimming Mode
+        public delegate void TrimmingCompleted(WvvTrimmingView sender, bool succeeded);
+        private IAsyncOperationWithProgress<TranscodeFailureReason, double> mTrimmingTask;
+
+        /**
+         * トリミング結果をファイルに保存
+         */
+        public void SaveAs(StorageFile toFile, TrimmingCompleted completed)
+        {
+            if(mComposition.Clips.Count==0)
+            {
+                return;
+            }
+
+            IsPlaying = false;
+
+            Encoding = true;
+            mTrimmingTask = mComposition.RenderToFileAsync(toFile, MediaTrimmingPreference.Precise);
+            mTrimmingTask.Progress = async (ai, pi) =>
+            {
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    EncodingProgress = (int)Math.Ceiling(pi);
+                });
+            };
+            mTrimmingTask.Completed = async (info, status) =>
+            {
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    completed(this, status== AsyncStatus.Completed);
+                    Encoding = false;
+                });
+            };
+
+        }
+
+        #endregion
+
+
+        #endregion
+
+        #region Preview / Trimming Mode
 
         /**
          * プレビューモードを開始する。
@@ -548,10 +620,10 @@ namespace wvv
                 }
             }
         }
-        
-#endregion
 
-#region Trimming Slider Handling
+        #endregion
+
+        #region Trimming Slider Handling
 
         /**
          * TrimStartが操作された
@@ -632,6 +704,6 @@ namespace wvv
             }
         }
 
-#endregion
+        #endregion
     }
 }

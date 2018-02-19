@@ -117,6 +117,13 @@ namespace wvv
             get { return PlayerSize.Width; }
         }
 
+        public StorageFile Source
+        {
+            get { return mSource; }
+            set { SetSource(value); }
+        }
+        private StorageFile mSource;
+
         /**
          * Videoの総再生時間
          * MediaClipから取り出した値と、MediaPlaybackSessionから取り出した値が異なるようなので、Playerからもらうことにする。
@@ -306,7 +313,11 @@ namespace wvv
 
         private MediaPlayer mInternalPlayer = null;
         private StorageFile mTempSource;
+        private long mFullWindowListenerToken = 0;
 
+        /**
+         * MediaPlayerElementに接続されたMediaPlayer 
+         */
         private MediaPlayer Player
         {
             get { return mPlayerElement?.MediaPlayer; }
@@ -317,7 +328,7 @@ namespace wvv
             get { return mInternalPlayer?.PlaybackSession; }
         }
 
-        private long mFullWindowListenerToken = 0;
+
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             if(null==mInternalPlayer)
@@ -335,6 +346,31 @@ namespace wvv
             }
         }
 
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            Session.PlaybackStateChanged -= PBS_PlaybackStateChanged;
+            mPlayerElement.UnregisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, mFullWindowListenerToken);
+            mPlayerElement.SetMediaPlayer(null);
+        }
+
+        public void Dispose()
+        {
+            if(null!=mInternalPlayer)
+            {
+                mInternalPlayer.Pause();
+                mInternalPlayer.Source = null;
+                mPlayerElement.SetMediaPlayer(null);
+                mInternalPlayer.Dispose();
+                mInternalPlayer = null;
+                mSource = null;
+            }
+        }
+
+        public void Reset()
+        {
+            SetSource(null);
+        }
+
         private void MPE_FullWindowChanged(DependencyObject sender, DependencyProperty dp)
         {
             var mpe = sender as MediaPlayerElement;
@@ -348,25 +384,6 @@ namespace wvv
                 {
                     mPlayerElement.AreTransportControlsEnabled = true;
                 }
-            }
-        }
-
-        private void OnUnloaded(object sender, RoutedEventArgs e)
-        {
-            Player.Pause();
-            Session.PlaybackStateChanged -= PBS_PlaybackStateChanged;
-            mPlayerElement.UnregisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, mFullWindowListenerToken);
-            mPlayerElement.SetMediaPlayer(null);
-            mInternalPlayer.Source = null;
-        }
-
-        public void Dispose()
-        {
-            if(null!=mInternalPlayer)
-            {
-                mPlayerElement.SetMediaPlayer(null);
-                mInternalPlayer.Dispose();
-                mInternalPlayer = null;
             }
         }
 
@@ -392,12 +409,20 @@ namespace wvv
                 }
             });
         }
+
+        private void OnPlayerTapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            IsPlaying = !IsPlaying;
+            e.Handled = true;
+        }
+
         #endregion
 
         #region Public APIs
 
         public async void SetSource(StorageFile source)
         {
+            mSource = source;
             if(null==mInternalPlayer)
             {
                 mTempSource = source;
@@ -405,9 +430,10 @@ namespace wvv
             }
             mTempSource = null;
 
+            mInternalPlayer.Pause();
+            mInternalPlayer.Source = null;
             MovieError = false;
             PlayerState = PlayerState.NONE;
-            mInternalPlayer.Source = null;
 
             if (source==null)
             {
@@ -428,5 +454,6 @@ namespace wvv
         }
 
         #endregion
+
     }
 }

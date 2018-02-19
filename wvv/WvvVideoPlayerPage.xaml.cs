@@ -37,17 +37,19 @@ namespace wvv
                 return;
             }
             mPlayer.SetSource(mSource);
-            mPanel.SetSource(mSource);
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            mPanel.Player = mPlayer;
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            mPanel.Player = null;
+            if(null!=mTempFolder)
+            {
+                mTempFolder.Dispose();
+                mTempFolder = null;
+            }
         }
 
         private void OnPlayerPage(object sender, TappedRoutedEventArgs e)
@@ -63,6 +65,27 @@ namespace wvv
         private void OnTrimming(object sender, TappedRoutedEventArgs e)
         {
             mTrimmingView.SetSource(mSource);
+        }
+
+        WvvTempFolder mTempFolder;
+
+        private async void DoTrim(object sender, TappedRoutedEventArgs e)
+        {
+            if(null==mTempFolder)
+            {
+                mTempFolder = await WvvTempFolder.Create("trimming");
+            }
+            mTrimmingView.SaveAs((await mTempFolder.CreateTempFile("m", ".mp4")).File, (trimmer, succeeded) =>
+            {
+                if(succeeded)
+                {
+                    Debug.WriteLine("Encoded successfully.");
+                }
+                else
+                {
+                    Debug.WriteLine("Encoding error.");
+                }
+            });
         }
     }
 }
