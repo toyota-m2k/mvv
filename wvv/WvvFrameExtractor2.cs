@@ -20,17 +20,17 @@ namespace wvv
         public delegate void OnBlankThumbnailHandler(WvvFrameExtractor2 sender, ImageSource frameImage);
         public delegate void OnThumbnailExtractedHandler(WvvFrameExtractor2 sender, int frameIndex, ImageSource frameImage);
 
-        public static Task<bool> ExtractAsync(int frameHeight, int frameCount, StorageFile source, OnThumbnailExtractedHandler extracted, OnBlankThumbnailHandler blank=null)
-        {
-            var ex = new WvvFrameExtractor2(frameHeight, frameCount);
-            return ex.ExtractAsync(source, extracted, blank);
-        }
+        //public static Task<bool> ExtractAsync(int frameHeight, int frameCount, StorageFile source, OnThumbnailExtractedHandler extracted, OnBlankThumbnailHandler blank=null)
+        //{
+        //    var ex = new WvvFrameExtractor2(frameHeight, frameCount);
+        //    return ex.ExtractAsync(source, extracted, blank);
+        //}
 
-        public static Task<bool> ExtractAsync(int frameHeight, int frameCount, MediaClip clip, OnThumbnailExtractedHandler extracted, OnBlankThumbnailHandler blank=null)
-        {
-            var ex = new WvvFrameExtractor2(frameHeight, frameCount);
-            return ex.ExtractAsync(clip, extracted, blank);
-        }
+        //public static Task<bool> ExtractAsync(int frameHeight, int frameCount, MediaClip clip, OnThumbnailExtractedHandler extracted, OnBlankThumbnailHandler blank=null)
+        //{
+        //    var ex = new WvvFrameExtractor2(frameHeight, frameCount);
+        //    return ex.ExtractAsync(clip, extracted, blank);
+        //}
 
         public int ThumbnailHeight
         {

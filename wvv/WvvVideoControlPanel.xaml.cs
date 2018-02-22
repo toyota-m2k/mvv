@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using Windows.Foundation;
 using Windows.Media.Core;
 using Windows.Media.Editing;
 using Windows.Storage;
@@ -278,15 +279,50 @@ namespace wvv
                 if(null!=mPlayer)
                 {
                     mPlayer.PlayerStateChanged -= OnPlayerStateChanged;
+                    mPlayer.PlayerInitialized -= OnPlayerInitialized;
                     //mPlayer.PlayerWidthChanged -= OnPlayerWidthChanged;
                 }
                 mPlayer = value;
                 if(null!=mPlayer)
                 {
                     mPlayer.PlayerStateChanged += OnPlayerStateChanged;
+                    mPlayer.PlayerInitialized += OnPlayerInitialized;
                     //mPlayer.PlayerWidthChanged += OnPlayerWidthChanged;
                 }
             }
+        }
+
+        public void SetUriSource(Uri uri)
+        {
+            SetSource(null);
+
+        }
+
+        private IWvvCache mCache = null;
+
+        public async void SetUri(Uri uri)
+        {
+            SetSource(null);
+
+            await WvvCacheManager.Init();
+            mCache = await WvvCacheManager.Instance.GetCache(uri);
+            if(null==mCache)
+            {
+                return;
+            }
+
+            mCache.GetFile( async (s, file) =>
+            {
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    if (s == mCache)
+                    {
+                        mCache = null;  // SetSource()でReleaseされないように。
+                        SetSource(file);
+                        mCache = s;
+                    }
+                });
+            });
         }
 
         /**
@@ -295,6 +331,12 @@ namespace wvv
         private StorageFile mSource;
         public void SetSource(StorageFile source)
         {
+            if (null != mCache)
+            {
+                mCache.Release();
+                mCache = null;
+            }
+
             mSource = source;
             mMarkerView.Clear();
             mSlider.Value = 0;
@@ -312,6 +354,11 @@ namespace wvv
             mSource = null;
             mMarkerView.Clear();
             mFrameListView.Frames.Clear();
+            if(null!=mCache)
+            {
+                mCache.Release();
+                mCache = null;
+            }
 
             if(null!= mPinPPlayer)
             {
@@ -343,8 +390,13 @@ namespace wvv
         {
             FramesLoaded = false;
             mFrameListView.Reset();
-
             mExtractor.Cancel();
+
+            if(null==mSource)
+            {
+                return;
+            }
+
             mExtractor.ThumbnailHeight = ThumbnailHeight;
             mExtractor.FrameCount = ThumbnailCount;
 
@@ -467,6 +519,12 @@ namespace wvv
             notify("IsPlaying");
         }
 
+        private void OnPlayerInitialized(IWvvVideoPlayer player, double totalRange, Size videoSize)
+        {
+            TotalRange = totalRange;
+        }
+
+
         //private void OnPlayerWidthChanged(IWvvVideoPlayer player, double width)
         //{
         //    PanelWidth = width;
@@ -487,6 +545,10 @@ namespace wvv
         private void MV_MarkerSelected(double value, object clientData)
         {
             mSlider.Value = value;
+            if (Player.IsPlaying)
+            {
+                Player.SeekPosition = value;
+            }
         }
 
         /**
@@ -612,6 +674,11 @@ namespace wvv
          */
         private void OnSliderChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
+            if(Player.IsPlaying)
+            {
+                return;
+            }
+
             var slider = sender as Slider;
 
             if (null!=slider && MoviePrepared)

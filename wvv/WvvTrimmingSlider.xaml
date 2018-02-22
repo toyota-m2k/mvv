@@ -39,7 +39,7 @@
                 <!--<Polygon
                     Points="0,0 0,40 25,20"
                     Fill="Green"/>-->
-                <Image Source="Assets/lsel.png"/>
+                <Image Source="{StaticResource TrimLeftIcon}"/>
             </Grid>
         </Canvas>
         <Canvas 
@@ -57,7 +57,7 @@
                 <!--<Polygon
                     Points="25,0 25,40 0,20"
                     Fill="Green"/>-->
-                <Image Source="Assets/rsel.png"/>
+                <Image Source="{StaticResource TrimRightIcon}"/>
             </Grid>
         </Canvas>
 

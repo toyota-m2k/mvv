@@ -23,7 +23,7 @@ namespace wvv
 
         public Format OutputFormat { get; private set; }
 
-        public WvvTranscoder(Format outFormat= Format.MP4, VideoEncodingQuality quality= VideoEncodingQuality.Auto)
+        public WvvTranscoder(Format outFormat= Format.MP4, VideoEncodingQuality quality= VideoEncodingQuality.HD720p)
         {
             OutputFormat = outFormat;
             switch(outFormat)
@@ -71,12 +71,21 @@ namespace wvv
                 {
                     return false;
                 }
+                finally
+                {
+                    mTask = null;
+                }
             }
             else
             {
                 Error = op.FailureReason;
                 return false;
             }
+        }
+
+        public void Cancel()
+        {
+            mTask?.Cancel();
         }
     }
 }

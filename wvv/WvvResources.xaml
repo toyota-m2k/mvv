@@ -24,6 +24,8 @@
     <BitmapImage x:Key="ThumbIcon" UriSource="Assets/current_bar.png"/>
     <BitmapImage x:Key="ThumbMinIcon" UriSource="Assets/current_bar_min.png"/>
     <BitmapImage x:Key="ThumbLongIcon" UriSource="Assets/current_bar_fullscreen.png"/>
+    <BitmapImage x:Key="TrimLeftIcon" UriSource="Assets/lsel.png"/>
+    <BitmapImage x:Key="TrimRightIcon" UriSource="Assets/rsel.png"/>
 
     <!-- Color -->
     <SolidColorBrush x:Key="ButtonFaceColor" Color="LightGray"/>

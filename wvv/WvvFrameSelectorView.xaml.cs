@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Windows.Media.Core;
 using Windows.Media.Editing;
 using Windows.Storage;
 using Windows.UI.Xaml;
@@ -93,7 +94,7 @@ namespace wvv
             Ready = false;
             Error = null;
 
-            mPlayer.SetSource(source);
+            mPlayer.SetSource(MediaSource.CreateFromStorageFile(source));
 
             mFrameListView.Reset();
             mTrimmingSlider.Reset();
@@ -134,6 +135,7 @@ namespace wvv
             }
             catch (Exception e)
             {
+                Error = e;
                 Debug.WriteLine(e);
                 return null;
             }

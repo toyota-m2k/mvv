@@ -64,13 +64,16 @@ namespace wvv
             get { return mPlayerState == PlayerState.PLAYING; }
             set
             {
-                if(mPlayerState == PlayerState.PLAYING)
+                if (null != Player)
                 {
-                    Player.Pause();
-                }
-                else
-                {
-                    Player.Play();
+                    if (mPlayerState == PlayerState.PLAYING)
+                    {
+                        Player.Pause();
+                    }
+                    else
+                    {
+                        Player.Play();
+                    }
                 }
             }
         }
@@ -117,12 +120,10 @@ namespace wvv
             get { return PlayerSize.Width; }
         }
 
-        public StorageFile Source
+        public MediaSource Source
         {
-            get { return mSource; }
             set { SetSource(value); }
         }
-        private StorageFile mSource;
 
         /**
          * Videoの総再生時間
@@ -145,7 +146,12 @@ namespace wvv
         /**
          * VideoPlayerのサイズ変更通知イベント
          */
-        public event WvvPlayerWidthChanged PlayerWidthChanged;
+        public event WvvPlayerValueChanged PlayerWidthChanged;
+
+        /**
+         * TotalRange / VideoSize が取得できた
+         */
+        public event WvvPlayerInitialized PlayerInitialized;
 
         #endregion
 
@@ -312,7 +318,7 @@ namespace wvv
         #region Privates
 
         private MediaPlayer mInternalPlayer = null;
-        private StorageFile mTempSource;
+        private MediaSource mTempSource;
         private long mFullWindowListenerToken = 0;
 
         /**
@@ -362,7 +368,6 @@ namespace wvv
                 mPlayerElement.SetMediaPlayer(null);
                 mInternalPlayer.Dispose();
                 mInternalPlayer = null;
-                mSource = null;
             }
         }
 
@@ -420,9 +425,20 @@ namespace wvv
 
         #region Public APIs
 
-        public async void SetSource(StorageFile source)
+        public void SetSourceUri(Uri uri)
         {
-            mSource = source;
+            SetSource(null);     // uriからの読み込みは時間がかかるかもしれないので、先に一度クリアしておく
+            SetSource(MediaSource.CreateFromUri(uri));
+        }
+
+        public void SetSourceFile(StorageFile file)
+        {
+            SetSource(MediaSource.CreateFromStorageFile(file));
+        }
+
+
+        public async void SetSource(MediaSource source)
+        {
             if(null==mInternalPlayer)
             {
                 mTempSource = source;
@@ -440,11 +456,12 @@ namespace wvv
                 return;
             }
             MovieLoading = true;
-            var loader = await WvvMediaLoader.LoadAsync(mInternalPlayer, MediaSource.CreateFromStorageFile(source), this);
+            var loader = await WvvMediaLoader.LoadAsync(mInternalPlayer, source, this);
             if (loader.Opened)
             {
-                VideoSize = new Size(mInternalPlayer.PlaybackSession.NaturalVideoWidth, mInternalPlayer.PlaybackSession.NaturalVideoHeight);
+                VideoSize = loader.VideoSize;
                 mInternalPlayer.PlaybackSession.Position = TimeSpan.FromMilliseconds(0);
+                PlayerInitialized?.Invoke(this, loader.TotalRange, VideoSize);
             }
             else
             {

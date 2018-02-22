@@ -53,7 +53,6 @@ namespace wvv
 
         private WeakReference<MediaPlayer> mPlayer = new WeakReference<MediaPlayer>(null);
         private WeakReference<DependencyObject> mOwnerView = new WeakReference<DependencyObject>(null);
-        private WeakReference<OnLoadedHandler> mLoaded = new WeakReference<OnLoadedHandler>(null);
 
         private MediaPlayer Player
         {
@@ -79,18 +78,7 @@ namespace wvv
                 mOwnerView.SetTarget(value);
             }
         }
-        private OnLoadedHandler Loaded
-        {
-            get
-            {
-                OnLoadedHandler v;
-                return mLoaded.TryGetTarget(out v) ? v : null;
-            }
-            set
-            {
-                mLoaded.SetTarget(value);
-            }
-        }
+        private OnLoadedHandler Loaded { get; set; } = null;
         private bool Loading { get; set; } = false;
 
         #endregion
@@ -153,40 +141,18 @@ namespace wvv
         }
 
         /**
-         * ソースをロードする
+         * ソースをMediaPlayerにロードする(非同期版）
          */
         public Task<bool> LoadAsync(MediaSource source, DependencyObject ownerView)
         {
             Debug.WriteLine("LoadAsync: async operation started.");
-            return Task.Run<bool>( async () => {
-                var player = Player;
-                if(null==player)
-                {
-                    return false;
-                }
-                using (var ev = new ManualResetEvent(false))
-                {
-                    await ownerView.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            var task = new TaskCompletionSource<bool>();
+            Load(source, ownerView, (loader) =>
                     {
-                        Load(source, ownerView, (s) =>
-                        {
-                            ev.Set();
-                        });
-                    });
-                    try
-                    {
-                        ev.WaitOne();
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine(e);
-                        await terminate(player);
-                        //return false;
-                    }
-                }
                 Debug.WriteLine("LoadAsync: async operation finished.");
-                return Opened;
+                task.TrySetResult(Opened);
             });
+            return task.Task;
         }
 
         /**
@@ -194,8 +160,10 @@ namespace wvv
          */
         private async Task terminate(MediaPlayer mediaPlayer)
         {
+            Debug.WriteLine("WvvMediaLoader: terminate (Loading={0})", Loading);
             await OwnerView.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
+                Debug.WriteLine("WvvMediaLoader: terminate inner (Loading={0}, Callback={0})", Loading, Loaded!=null);
                 if (Loading)
                 {
                     Loading = false;
@@ -207,6 +175,7 @@ namespace wvv
                         {
                             TotalRange = Player.PlaybackSession.NaturalDuration.TotalMilliseconds;
                             VideoSize = new Size(Player.PlaybackSession.NaturalVideoWidth, Player.PlaybackSession.NaturalVideoHeight);
+                            Debug.WriteLine("WvvMediaLoader: properties ok");
                         }
                         catch (Exception e)
                         {
@@ -221,6 +190,7 @@ namespace wvv
                     {
                         mediaPlayer.Source = null;
                     }
+                    Debug.WriteLine("WvvMediaLoader: invoking loaded handler");
                     Loaded?.Invoke(this);
                     Loaded = null;
                     OwnerView = null;

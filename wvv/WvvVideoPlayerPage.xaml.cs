@@ -41,6 +41,7 @@ namespace wvv
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            mPlayer.SetUri(new Uri("https://video.twimg.com/ext_tw_video/965217837219381248/pu/vid/640x360/2iECofDRubgGIAcg.mp4"));
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -86,6 +87,15 @@ namespace wvv
                     Debug.WriteLine("Encoding error.");
                 }
             });
+        }
+
+        private void Open_URL(object sender, RoutedEventArgs e)
+        {
+            var text = mMovieURL.Text;
+            if (null != text && text.Length > 0)
+            {
+                mPlayer.SetUri(new Uri(text));
+            }
         }
     }
 }

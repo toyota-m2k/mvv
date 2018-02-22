@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Media.Core;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -47,9 +48,15 @@ namespace wvv
             set { mPlayer.LayoutSize = value; }
         }
 
+        public async void SetUri(Uri uri)
+        {
+            mPlayer.SetSource(MediaSource.CreateFromUri(uri));
+            mPanel.SetUri(uri);
+        }
+
         public void SetSource(StorageFile source)
         {
-            mPlayer.SetSource(source);
+            mPlayer.SetSource(MediaSource.CreateFromStorageFile(source));
             mPanel.SetSource(source);
         }
 

@@ -22,10 +22,13 @@
             <Grid Height="30"/>
             <local:WvvVideoUnitPlayer x:Name="mPlayer"/>
             <Grid Height="30"/>
+            <Button Margin="4" Click="Open_URL" Content="Open URL"/>
+            <TextBox Margin="4" PlaceholderText="Movie URL" x:Name="mMovieURL" HorizontalAlignment="Stretch"/>
             <StackPanel Orientation="Horizontal">
                 <Button Margin="4" Content="Player Page" Tapped="OnPlayerPage"/>
                 <Button Margin="4" Content="Composition" Click="Composition_Click"/>
             </StackPanel>
+
         </StackPanel>
 
         <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">

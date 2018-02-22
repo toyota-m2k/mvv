@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Foundation;
 
 namespace wvv
 {
@@ -20,7 +21,10 @@ namespace wvv
      */
     public delegate void WvvPlayerStateChanged(IWvvVideoPlayer player, PlayerState state);
 
-    public delegate void WvvPlayerWidthChanged(IWvvVideoPlayer player, double width);
+    public delegate void WvvPlayerValueChanged(IWvvVideoPlayer player, double value);
+
+    public delegate void WvvPlayerInitialized(IWvvVideoPlayer player, double totalRange, Size videoSize);
+
     /**
      * VideoPlayerのi/f定義
      */
@@ -52,12 +56,16 @@ namespace wvv
          */
         double PlayerWidth { get; }
 
-        /**
-         * Videoの総再生時間
-         * MediaClipから取り出した値と、MediaPlaybackSessionから取り出した値が異なるようなので、Playerからもらうことにする。
-         * ... と思ったが気のせいかも。
-         */
+        ///**
+        // * Videoの総再生時間
+        // * MediaClipより前にPlayerが再生可能になることがあるので、PlayerからもTotalRangeが取得できるようにしておく。
+        // */
         //double TotalRange { get; }
+
+        ///**
+        // * 動画の表示サイズ
+        // */
+        //Size VideoSize { get; }
 
         /**
          * VideoPlayerの状態変更通知イベント
@@ -67,7 +75,12 @@ namespace wvv
         /**
          * VideoPlayerのサイズ変更通知イベント
          */
-        event WvvPlayerWidthChanged PlayerWidthChanged;
+        event WvvPlayerValueChanged PlayerWidthChanged;
+
+        /**
+         * TotalRange / VideoSize が取得できた
+         */
+        event WvvPlayerInitialized PlayerInitialized;
     }
 
     /**

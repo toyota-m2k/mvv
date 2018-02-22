@@ -9,6 +9,7 @@ using Windows.Foundation.Collections;
 using Windows.Media.Capture;
 using Windows.Media.Core;
 using Windows.Media.Editing;
+using Windows.Media.Playback;
 using Windows.Media.Transcoding;
 using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
@@ -20,6 +21,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using Windows.Web.Http;
 
 // 空白ページの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234238 を参照してください
 
