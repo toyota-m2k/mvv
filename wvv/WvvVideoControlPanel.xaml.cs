@@ -304,8 +304,8 @@ namespace wvv
         {
             SetSource(null);
 
-            await WvvCacheManager.Init();
-            mCache = await WvvCacheManager.Instance.GetCache(uri);
+            await WvvCacheManager.InitializeAsync();
+            mCache = await WvvCacheManager.Instance.GetCacheAsync(uri);
             if(null==mCache)
             {
                 return;
@@ -419,6 +419,10 @@ namespace wvv
             }
             catch (Exception ex)
             {
+                if(null!=mCache)
+                {
+                    mCache.Invalidate();
+                }
                 TotalRange = 1000;
                 Debug.WriteLine(ex);
             }

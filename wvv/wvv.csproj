@@ -127,6 +127,7 @@
     <Compile Include="WvvMoviePlayer.xaml.cs">
       <DependentUpon>WvvMoviePlayer.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WvvMutex.cs" />
     <Compile Include="WvvPinPPage.xaml.cs">
       <DependentUpon>WvvPinPPage.xaml</DependentUpon>
     </Compile>

@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.Storage;
 
 namespace wvv
 {
+    #region VideoPlayer/ControllerPanel
+
     /**
      * VideoPlayerの状態
      */
@@ -105,9 +108,59 @@ namespace wvv
         event WvvMarkerEvent MarkerRemoved;
     }
 
+    #endregion
+
+
+    #region Transcoder
 
     /**
      * 進捗通知用デリゲート型 （Transcoderで試用）
      */
     public delegate bool IWvvProgress<SenderType>(SenderType sender, double percent);
+
+    #endregion
+
+    #region Cache Manager
+
+    /**
+     * @param sender    IWvvCacheオブジェクト
+     * @param file      キャッシュファイル (エラーが発生していれば、null: エラー情報は、sender.Errorで取得）
+     */
+    public delegate void WvvDownloadedHandler(IWvvCache sender, StorageFile file);
+
+    /**
+     * キャッシュマネージャが管理するキャッシュクラスのi/f定義
+     */
+    public interface IWvvCache
+    {
+        /**
+         * キャッシュファイルを取得する。
+         * @param callback  結果を返すコールバック
+         */
+        void GetFile(WvvDownloadedHandler callback);
+        /**
+         * キャッシュファイルを取得する。（非同期版）
+         * 
+         * @return キャッシュファイル (エラーが発生していれば、null: エラー情報は、Errorプロパティで取得）
+         */
+        Task<StorageFile> GetFileAsync();
+
+        /**
+         * エラー情報
+         */
+        Exception Error { get; }
+
+        /**
+         * キャッシュを解放する（CacheManagerによって削除可能な状態にする）
+         */
+        void Release();
+
+        /**
+         * キャッシュを無効化する
+         */
+        void Invalidate();
+    }
+
+    #endregion
+
 }

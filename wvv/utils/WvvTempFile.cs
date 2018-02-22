@@ -48,7 +48,6 @@ namespace wvv
             Folder = folder;
         }
 
-
         public async void Dispose()
         {
             if(null!=Folder)
