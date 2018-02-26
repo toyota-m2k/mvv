@@ -89,12 +89,12 @@ namespace wvv
     /**
      * マーク変更通知イベントの型
      */
-    public delegate void WvvMarkerEvent(IWvvVideoControlPanel sender, double position, object requester);
+    public delegate void WvvMarkerEvent(IWvvMarkerEditor sender, double position, object requester);
 
     /**
      * VideoControlPanel の i/f 定義
      */
-    public interface IWvvVideoControlPanel
+    public interface IWvvMarkerEditor
     {
         /**
          * マーカーの追加/削除の通知イベント
@@ -106,6 +106,11 @@ namespace wvv
          */
         event WvvMarkerEvent MarkerAdded;
         event WvvMarkerEvent MarkerRemoved;
+
+        void AddMarker(double position, object requester);
+        void RemoveMarker(double position, object requester);
+
+        void SetMarkers(IEnumerable<double> markers);
     }
 
     #endregion
@@ -151,14 +156,30 @@ namespace wvv
         Exception Error { get; }
 
         /**
-         * キャッシュを解放する（CacheManagerによって削除可能な状態にする）
+         * 参照カウンタを下げる・・・キャッシュを解放（CacheManagerによる削除）可能な状態にする
          */
         void Release();
+
+        /**
+         * 参照カウンタを上げる
+         */
+        void AddRef();
 
         /**
          * キャッシュを無効化する
          */
         void Invalidate();
+
+        /**
+         * 呼び出し時点で取得しているキャッシュファイルを取得
+         * ダウンロード中、または、Invalidateされているときは、nullを返す。
+         */
+        StorageFile CacheFile { get; }
+
+        /**
+         * ターゲットの URI を取得
+         */
+        Uri URI{ get; }
     }
 
     #endregion

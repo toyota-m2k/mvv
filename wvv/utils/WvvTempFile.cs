@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Storage;
+using wvv.utils;
 
 namespace wvv
 {
@@ -60,7 +61,7 @@ namespace wvv
                 }
                 catch(Exception e)
                 {
-                    Debug.WriteLine(e);
+                    CmLog.error(e, "WvvTempFolder.Dispose");
                 }
             }
         }
@@ -113,7 +114,7 @@ namespace wvv
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine(e);
+                    CmLog.error(e, "WvvTempFile.Dispose");
                 }
             }
         }

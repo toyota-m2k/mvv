@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using Windows.Foundation;
@@ -9,6 +10,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
+using wvv.utils;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
 
@@ -17,7 +19,7 @@ namespace wvv
     /**
      * VideoControlPanelクラス
      */
-    public sealed partial class WvvVideoControlPanel : UserControl, INotifyPropertyChanged, IWvvVideoControlPanel, IDisposable
+    public sealed partial class WvvVideoControlPanel : UserControl, INotifyPropertyChanged, IWvvMarkerEditor, IDisposable
     {
         #region INotifyPropertyChanged i/f
 
@@ -63,8 +65,9 @@ namespace wvv
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            mExtractor.Cancel();
-            TrackingTimer.Stop();
+            // mExtractor.Cancel(); ... Reset()でやる
+            // TrackingTimer.Stop();
+            Reset();
         }
 
         #endregion
@@ -292,55 +295,94 @@ namespace wvv
             }
         }
 
-        public void SetUriSource(Uri uri)
+        /**
+         * IWvvCacheオブジェクトを動画ソースとしてセット。
+         * （AddRefして保持する。）
+         */
+        public void SetSource(IWvvCache source)
         {
-            SetSource(null);
-
-        }
-
-        private IWvvCache mCache = null;
-
-        public async void SetUri(Uri uri)
-        {
-            SetSource(null);
-
-            await WvvCacheManager.InitializeAsync();
-            mCache = await WvvCacheManager.Instance.GetCacheAsync(uri);
-            if(null==mCache)
+            Reset();
+            if(null==source)
             {
                 return;
             }
 
+            source.AddRef();
+            mCache = source;
+            
             mCache.GetFile( async (s, file) =>
             {
                 await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                 {
                     if (s == mCache)
                     {
-                        mCache = null;  // SetSource()でReleaseされないように。
-                        SetSource(file);
-                        mCache = s;
+                        SetSourceInternal(file);
                     }
                 });
             });
         }
 
         /**
-         * 動画ソースファイルをセットする
+         * 動画ソースとしてURIをセットする。
          */
-        private StorageFile mSource;
+        public async void SetSource(Uri uri)
+        {
+            Reset();
+            if (null == uri)
+            {
+                return;
+            }
+
+            await WvvCacheManager.InitializeAsync();
+            var cache = await WvvCacheManager.Instance.GetCacheAsync(uri);
+            if (null == cache)
+            {
+                CmLog.error("WvvVideoControlPanel: WvvCacheManager GetCacheAsync Error.");
+                return;
+            }
+            SetSource(cache);
+            cache.Release();
+        }
+
+        /**
+         * StorageFileを動画ソースとしてセットする
+         */
         public void SetSource(StorageFile source)
+        {
+            Reset();
+            if (null == source)
+            {
+                return;
+            }
+
+            SetSourceInternal(source);
+        }
+
+        /**
+         * 動画ソースをセットする
+         * （内部でResetしない）
+         */
+        private void SetSourceInternal(StorageFile source)
+        {
+            mSource = source;
+            makeThumbnails();
+        }
+
+        public void Reset()
         {
             if (null != mCache)
             {
                 mCache.Release();
                 mCache = null;
             }
-
-            mSource = source;
+            mSource = null;
             mMarkerView.Clear();
             mSlider.Value = 0;
-            makeThumbnails();
+
+            TrackingTimer.Stop();
+            FramesLoaded = false;
+            mFrameListView.Reset();
+            mExtractor.Cancel();
         }
 
         /**
@@ -368,10 +410,13 @@ namespace wvv
             }
         }
 
-
         #endregion
 
         #region Privates
+
+        private WvvFrameExtractor2 mExtractor = null;
+        private IWvvCache mCache = null;
+        private StorageFile mSource = null;
 
         private PlayerState PlayerState
         {
@@ -381,17 +426,12 @@ namespace wvv
             }
         }
 
-        private WvvFrameExtractor2 mExtractor;
 
         /**
          * サムネイルを作成する
          */
         private async void makeThumbnails()
         {
-            FramesLoaded = false;
-            mFrameListView.Reset();
-            mExtractor.Cancel();
-
             if(null==mSource)
             {
                 return;
@@ -424,7 +464,7 @@ namespace wvv
                     mCache.Invalidate();
                 }
                 TotalRange = 1000;
-                Debug.WriteLine(ex);
+                CmLog.error(ex, "WvvVideoControlPanel.makeThumbnails: Error");
             }
             finally
             {
@@ -484,7 +524,7 @@ namespace wvv
 
         #endregion
 
-        #region Events
+        #region IWvvMarkerEditor i/f
 
         /**
          * マーカーの追加/削除の通知イベント
@@ -496,6 +536,21 @@ namespace wvv
          */
         public event WvvMarkerEvent MarkerAdded;
         public event WvvMarkerEvent MarkerRemoved;
+
+        public void AddMarker(double position, object requester)
+        {
+            mMarkerView.AddMarker(position, requester);
+        }
+
+        public void RemoveMarker(double position, object requester)
+        {
+            mMarkerView.RemoveMarker(position, requester);
+        }
+
+        public void SetMarkers(IEnumerable<double> markers)
+        {
+            mMarkerView.SetMarkers(markers);
+        }
 
         #endregion
 

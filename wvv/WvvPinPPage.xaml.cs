@@ -11,6 +11,7 @@ using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+using wvv.utils;
 
 // 空白ページの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234238 を参照してください
 
@@ -255,7 +256,7 @@ namespace wvv
          */
         private void OnConsolidated(ApplicationView sender, ApplicationViewConsolidatedEventArgs args)
         {
-            Debug.WriteLine("MediaPage Closed.");
+            CmLog.debug("WvvPinPPage.OnConsolidated: PinP Player Closed.)");
             ApplicationView.GetForCurrentView().Consolidated -= OnConsolidated;
             Close();
         }
@@ -282,7 +283,9 @@ namespace wvv
             }
             Closed = null;
             mInfo = null;
-            Debug.WriteLine("PinP Player Disposed.");
+
+
+            CmLog.debug("WvvPinPPage.Dispose: PinP Player Disposed.)");
         }
 
         #endregion

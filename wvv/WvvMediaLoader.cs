@@ -6,6 +6,7 @@ using Windows.Foundation;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.UI.Xaml;
+using wvv.utils;
 
 namespace wvv
 {
@@ -145,11 +146,12 @@ namespace wvv
          */
         public Task<bool> LoadAsync(MediaSource source, DependencyObject ownerView)
         {
-            Debug.WriteLine("LoadAsync: async operation started.");
+            CmLog.debug("WvvMediaLoader.LoadAsync: async operation started...");
+
             var task = new TaskCompletionSource<bool>();
             Load(source, ownerView, (loader) =>
-                    {
-                Debug.WriteLine("LoadAsync: async operation finished.");
+            {
+                CmLog.debug("WvvMediaLoader.LoadAsync: ... async operation finished.");
                 task.TrySetResult(Opened);
             });
             return task.Task;
@@ -160,10 +162,11 @@ namespace wvv
          */
         private async Task terminate(MediaPlayer mediaPlayer)
         {
-            Debug.WriteLine("WvvMediaLoader: terminate (Loading={0})", Loading);
+            CmLog.debug("WvvMediaLoader.terminate: (Loading={0})", Loading);
+
             await OwnerView.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
-                Debug.WriteLine("WvvMediaLoader: terminate inner (Loading={0}, Callback={0})", Loading, Loaded!=null);
+                CmLog.debug("WvvMediaLoader.terminate (inner): Loading={0}, hasCallback={0}", Loading, Loaded != null);
                 if (Loading)
                 {
                     Loading = false;
@@ -175,13 +178,13 @@ namespace wvv
                         {
                             TotalRange = Player.PlaybackSession.NaturalDuration.TotalMilliseconds;
                             VideoSize = new Size(Player.PlaybackSession.NaturalVideoWidth, Player.PlaybackSession.NaturalVideoHeight);
-                            Debug.WriteLine("WvvMediaLoader: properties ok");
+                            CmLog.debug("WvvMediaLoader.terminate (inner): Loaded");
                         }
                         catch (Exception e)
                         {
                             // MediaOpenedが返ってきても、その後、プロパティを参照しようとすると Shutdown済み、みたいな例外が出ることがあって、
                             // このような場合は、ステータスも Closedになっているので、オープン失敗として扱う。
-                            Debug.WriteLine(e);
+                            CmLog.error(e, "WvvMediaLoader.terminate (inner): Error");
                             Opened = false;
                             mediaPlayer.Source = null;
                         }
@@ -190,7 +193,6 @@ namespace wvv
                     {
                         mediaPlayer.Source = null;
                     }
-                    Debug.WriteLine("WvvMediaLoader: invoking loaded handler");
                     Loaded?.Invoke(this);
                     Loaded = null;
                     OwnerView = null;
@@ -210,7 +212,7 @@ namespace wvv
             Opened = true;
             if(null!=OwnerView)
             {
-                Debug.WriteLine("Loader(Opened): player={0}, session={1}", Player.CurrentState.ToString(), Player.PlaybackSession.PlaybackState.ToString());
+                CmLog.debug("WvvMediaLoader.OnOpened: MediaOpened");
                 await terminate(sender);
             }
         }
@@ -220,12 +222,19 @@ namespace wvv
          */
         private async void OnFailed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
         {
-            Debug.WriteLine(args.ErrorMessage);
+            CmLog.debug("WvvMediaLoader.OnFailed: MediaFailed");
+            if (null != args.ErrorMessage && args.ErrorMessage.Length > 0)
+            {
+                CmLog.debug(args.ErrorMessage);
+            }
+            if (null != args.ExtendedErrorCode)
+            {
+                CmLog.error(args.ExtendedErrorCode.Message);
+            }
+
             Opened = false;
             await terminate(sender);
         }
-
-
 
         #endregion
 

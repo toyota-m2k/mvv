@@ -285,12 +285,19 @@ namespace wvv
          * 設定されているマーカーをすべてクリアしてから、新しいマーカーを設定する。
          * 動画ファイル読み直し時の処理を想定しているので、MarkerRemoved/MarkerAddedイベントは発行しない。
          */
-        public void SetMarkers(IEnumerable<double> markers, object clientData)
+        public void SetMarkers(IEnumerable<double> markers)
         {
             Clear();
-            foreach (var v in markers)
+            foreach (var value in markers)
             {
-                AddMarker(v, clientData);
+                Image img;
+                if (mMarkers.TryGetValue(value, out img))
+                {
+                    continue;
+                }
+                img = createMarkerIcon(value);
+                mMarkerContainer.Children.Add(img);
+                mMarkers[value] = img;
             }
         }
 

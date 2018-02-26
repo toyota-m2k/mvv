@@ -2,13 +2,14 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Windows.Media.Core;
+using Windows.Graphics.Imaging;
 using Windows.Media.Editing;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
+using wvv.utils;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
 
@@ -39,7 +40,7 @@ namespace wvv
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             mExtractor.Cancel();
-            mClip = null;
+            Reset();
         }
 
         #endregion
@@ -86,18 +87,41 @@ namespace wvv
 
         #region Public APIs
 
+
+        public void Reset()
+        {
+            Ready = false;
+            Error = null;
+
+            mFrameListView.Reset();
+            mTrimmingSlider.Reset();
+
+            mPlayer.Reset();
+            mClip = null;
+        }
+
+        /**
+         * SetSource()より前に、グルグルを回し始める。
+         * この後、SetSource()を呼ばないと、いつまでもグルグルしたままになる。
+         */
+        public void Standby()
+        {
+            mPlayer.MovieLoading = true;
+        }
+
         /**
          * ターゲットの動画ファイルをセットする
          */
         public async void SetSource(StorageFile source)
         {
-            Ready = false;
-            Error = null;
+            Reset();
 
-            mPlayer.SetSource(MediaSource.CreateFromStorageFile(source));
+            if(null==source)
+            {
+                return;
+            }
+            mPlayer.SetSource(source);
 
-            mFrameListView.Reset();
-            mTrimmingSlider.Reset();
 
             try
             {
@@ -118,10 +142,15 @@ namespace wvv
             }
             catch ( Exception e)
             {
-                Debug.WriteLine(e);
+                CmLog.error("WvvFrameSelectorView.SetSource", e);
                 Error = e;
             }
         }
+
+        /**
+         * サムネイルを取得する（した）シーク位置
+         */
+        public double ThumbmailPosition { get { return mTrimmingSlider.CurrentPosition; } }
 
         /**
          * 選択されたフレームを画像として取得
@@ -136,7 +165,22 @@ namespace wvv
             catch (Exception e)
             {
                 Error = e;
-                Debug.WriteLine(e);
+                CmLog.error("WvvFrameSelectorView.GetResultImage", e);
+                return null;
+            }
+        }
+
+        public async Task<ImageStream> GetResultImageStream(int height)
+        {
+            try
+            {
+                var extractor = new WvvFrameExtractor2(height, 1);
+                return await extractor.ExtractSingleFrameStreamAsync(mClip, TimeSpan.FromMilliseconds(mTrimmingSlider.CurrentPosition));
+            }
+            catch (Exception e)
+            {
+                Error = e;
+                CmLog.error("WvvFrameSelectorView.GetResultImageStream", e);
                 return null;
             }
         }

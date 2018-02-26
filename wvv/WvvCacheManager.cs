@@ -8,6 +8,7 @@ using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
 using Windows.Storage;
 using Windows.Web.Http;
+using wvv.utils;
 
 namespace wvv
 {
@@ -165,7 +166,7 @@ namespace wvv
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e);
+                CmLog.error(e, "WvvCacheManager.Sweep");
             }
             finally
             {
@@ -187,7 +188,7 @@ namespace wvv
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e);
+                CmLog.error(e, "WvvCacheManager.ClearAllAsync");
             }
             finally
             {
@@ -237,7 +238,14 @@ namespace wvv
             // - file.OpenAsync(ReadWrite)/Dispose しても、ModifiedDateもAccessedDateも変わらない。
             // - OpenAsyncした後、１バイト読み込んで１バイト書き込む、のような操作をすることも考えたが、気落ち悪い。
             // で、この技・・・０行の文字列を追加する。
-            await FileIO.AppendLinesAsync(file, new string[0]);
+            try
+            {
+                await FileIO.AppendLinesAsync(file, new string[0]);
+            }
+            catch (Exception e)
+            {
+                CmLog.error(e, "WvvCacheManager.TouchFileAsync: Error");
+            }
         }
 
         /**
@@ -281,26 +289,32 @@ namespace wvv
                     try
                     {
                         var file = await mFolder.Folder.GetFileAsync(key);
+                        await TouchFileAsync(file);
                         cache = new WvvCache(key, uri, file);
                         mCacheList[key] = cache;
-                        Debug.WriteLine(string.Format("WvvCacheManager.GetCache(): Use cold cache: {0}", uri.ToString()));
+                        CmLog.debug("WvvCacheManager.GetCacheAsync: Use cold cache: {0}", uri.ToString());
                     }
                     catch (FileNotFoundException)
                     {
                         // target is not found in cache
                         cache = new WvvCache(key, uri, null);
                         mCacheList[key] = cache;
-                        Debug.WriteLine(string.Format("WvvCacheManager.GetCache(): Use new cache: {0}", uri.ToString()));
+                        CmLog.debug("WvvCacheManager.GetCacheAsync: Use new cache: {0}", uri.ToString());
                     }
                     catch (Exception e2)
                     {
-                        Debug.WriteLine(e2);
+                        CmLog.error(e2, "WvvCacheManager.GetCacheAsync");
                         return null;
                     }
                 }
                 else
                 {
-                    Debug.WriteLine(string.Format("WvvCacheManager.GetCache(): Use hot cache: {0}", uri.ToString()));
+                    CmLog.debug("WvvCacheManager.GetCacheAsync: Use hot cache: {0}", uri.ToString());
+                    var file = cache.CacheFile;
+                    if(null!=file && cache.RefCount==0)
+                    {
+                        await TouchFileAsync(file);
+                    }
                 }
             }
             cache.AddRef();
@@ -375,16 +389,14 @@ namespace wvv
                         {
                             Download();
                         }
-                        Debug.WriteLine("WvvCacheManager: GetFile() ... Downloading");
+                        CmLog.debug("WvvCache.GetFile: Downloading ...");
                         Downloaded += callback;
                         return;
                     }
                 }
-                TouchFileAsync(mFile).ContinueWith((t) =>
-                {
-                    Debug.WriteLine("WvvCacheManager: GetFile() ... Cache File Available");
-                    callback(this, mFile);
-                });
+                // ファイルはキャッシュされている
+                CmLog.debug("WvvCache.GetFile: Cache File Available");
+                callback(this, mFile);
             }
 
             /**
@@ -399,6 +411,29 @@ namespace wvv
                     task.TrySetResult(file);
                 });
                 return task.Task;
+            }
+
+            /**
+             * キャッシュファイルを返す。
+             * 呼び出し時点でキャッシュされていなければ null
+             */
+            public StorageFile CacheFile
+            {
+                get
+                {
+                    lock(mLock)
+                    {
+                        return mFile;
+                    }
+                }
+            }
+
+            /**
+             * ターゲットURIを返す
+             */
+            public Uri URI
+            {
+                get { return mUri; }
             }
 
             /**
@@ -430,7 +465,7 @@ namespace wvv
                         }
                         catch(Exception e)
                         {
-                            Debug.WriteLine(e);
+                            CmLog.error(e, "WvvCache.Release (deleting file).");
                         }
                     }
                 }
@@ -467,7 +502,7 @@ namespace wvv
                     catch (Exception e)
                     {
                         // コールバック中のエラーは無視する
-                        Debug.WriteLine(e);
+                        CmLog.error(e, "WvvCache.onDownloadCompleted (error occurred in downloaded-callback(s)... ignored.)");
                     }
                 }
             }
@@ -489,7 +524,7 @@ namespace wvv
                     catch (Exception e)
                     {
                         // コールバック中のエラーは無視する
-                        Debug.WriteLine(e);
+                        CmLog.error(e, "WvvCache.onDownloadError (error occurred in downloaded-callback(s)... ignored.)");
                     }
                 }
             }

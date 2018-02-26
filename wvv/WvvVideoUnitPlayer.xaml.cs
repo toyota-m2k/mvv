@@ -50,13 +50,15 @@ namespace wvv
 
         public async void SetUri(Uri uri)
         {
-            mPlayer.SetSource(MediaSource.CreateFromUri(uri));
-            mPanel.SetUri(uri);
+            IWvvCache cache = await (await WvvCacheManager.GetInstanceAsync()).GetCacheAsync(uri);
+            mPlayer.SetSource(cache);
+            mPanel.SetSource(cache);
+            cache.Release();
         }
 
         public void SetSource(StorageFile source)
         {
-            mPlayer.SetSource(MediaSource.CreateFromStorageFile(source));
+            mPlayer.SetSource(source);
             mPanel.SetSource(source);
         }
 

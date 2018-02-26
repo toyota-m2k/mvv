@@ -10,6 +10,7 @@ using Windows.Graphics.Imaging;
 using Windows.Media.Playback;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
+using wvv.utils;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
 
@@ -133,7 +134,7 @@ namespace wvv
             OwnerView = ownerView;
             OnExtracted = extracted;
 
-            Debug.WriteLine("Extract: player={0}, session={1}", player.CurrentState.ToString(), player.PlaybackSession.PlaybackState.ToString());
+            //Debug.WriteLine("Extract: player={0}, session={1}", player.CurrentState.ToString(), player.PlaybackSession.PlaybackState.ToString());
 
             mIsVideoFrameServerEnabled = player.IsVideoFrameServerEnabled;
             mOriginalSeekPosition = player.PlaybackSession.Position.TotalMilliseconds;
@@ -265,7 +266,7 @@ namespace wvv
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e);
+                CmLog.error(e, "WvvFrameExtractor.finish");
             }
 
             // Last callback.
@@ -288,8 +289,8 @@ namespace wvv
          */
         private async void PBS_SeekCompleted(MediaPlaybackSession session, object args)
         {
-            Debug.WriteLine(string.Format("SeekCompleted : Position:{0}", session.Position));
-            Debug.WriteLine("SeekCompleted: player={0}, session={1}", Player.CurrentState.ToString(), Player.PlaybackSession.PlaybackState.ToString());
+            CmLog.debug("WvvFrameExtractor.PBS_SeekCompleted : Position:{0}", session.Position);
+            //CmLog.debug("SeekCompleted: player={0}, session={1}", Player.CurrentState.ToString(), Player.PlaybackSession.PlaybackState.ToString());
 
             await OwnerView?.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
@@ -308,14 +309,14 @@ namespace wvv
 
                         mFrame++;
                         mNextPosition = mOffset + mSpan * mFrame;
-                        Debug.WriteLine(string.Format("...Seek to Frame:{0} / Position:{1}", mFrame, mNextPosition));
+                        CmLog.debug(string.Format("WvvFrameExtractor.PBS_SeekCompleted ...Seek to Frame:{0} / Position:{1}", mFrame, mNextPosition));
                         session.Position = TimeSpan.FromMilliseconds(mNextPosition);
                         return;
                     }
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine(e);
+                    CmLog.error(e, "WvvFrameExtractor.PBS_SeekCompleted");
                 }
 
                 // Clean up
@@ -328,7 +329,7 @@ namespace wvv
          */
         private void extractFrame(MediaPlayer mediaPlayer)
         {
-            Debug.WriteLine("extractFrame: player={0}, session={1}", Player.CurrentState.ToString(), Player.PlaybackSession.PlaybackState.ToString());
+            CmLog.debug("WvvFrameExtractor.extractFrame: State={0}", Player.PlaybackSession.PlaybackState.ToString());
 
             CanvasDevice canvasDevice = CanvasDevice.GetSharedDevice();
             var canvasImageSrc = new CanvasImageSource(canvasDevice, (int)mThumbnailSize.Width, (int)mThumbnailSize.Height, 96/*DisplayInformation.GetForCurrentView().LogicalDpi*/);
@@ -336,7 +337,7 @@ namespace wvv
             using (CanvasBitmap inputBitmap = CanvasBitmap.CreateFromSoftwareBitmap(canvasDevice, softwareBitmap))
             using (CanvasDrawingSession ds = canvasImageSrc.CreateDrawingSession(Windows.UI.Colors.Black))
             {
-                Debug.WriteLine(string.Format("...Extract Position:{0} (State={1})", mediaPlayer.PlaybackSession.Position, mediaPlayer.PlaybackSession.PlaybackState.ToString()));
+                CmLog.debug("WvvFrameExtractor.extractFrame: ...Extract Position:{0} (State={1})", mediaPlayer.PlaybackSession.Position, mediaPlayer.PlaybackSession.PlaybackState.ToString());
                 mediaPlayer.CopyFrameToVideoSurface(inputBitmap);
                 ds.DrawImage(inputBitmap);
                 OnExtracted?.Invoke(this, mFrame, canvasImageSrc);

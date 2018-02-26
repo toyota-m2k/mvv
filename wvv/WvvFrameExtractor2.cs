@@ -2,11 +2,13 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using Windows.Graphics.Imaging;
 using Windows.Media.Editing;
 using Windows.Storage;
 using Windows.UI;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
+using wvv.utils;
 
 namespace wvv
 {
@@ -151,7 +153,7 @@ namespace wvv
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e);
+                CmLog.error("WvvFrameExtractor2.ExtractAsync", e);
                 Error = e;
                 return false;
             }
@@ -163,11 +165,43 @@ namespace wvv
 
         public async Task<BitmapImage> ExtractSingleFrameAsync(StorageFile source, TimeSpan position)
         {
-            var clip = await MediaClip.CreateFromFileAsync(source);
-            return await ExtractSingleFrameAsync(clip, position);
+            try
+            {
+                var clip = await MediaClip.CreateFromFileAsync(source);
+                return await ExtractSingleFrameAsync(clip, position);
+            }
+            catch (Exception e)
+            {
+                CmLog.error("WvvFrameExtractor2.ExtractSingleFrameAsync(StorageFile)", e);
+                return null;
+            }
         }
 
         public async Task<BitmapImage> ExtractSingleFrameAsync(MediaClip clip, TimeSpan position)
+        {
+            using (var imageStream = await ExtractSingleFrameStreamAsync(clip, position))
+            {
+                var bmp = new BitmapImage();
+                bmp.SetSource(imageStream);
+                return bmp;
+            }
+        }
+
+        public async Task<ImageStream> ExtractSingleFrameStreamAsync(StorageFile source, TimeSpan position)
+        {
+            try
+            {
+                var clip = await MediaClip.CreateFromFileAsync(source);
+                return await ExtractSingleFrameStreamAsync(clip, position);
+            }
+            catch (Exception e)
+            {
+                CmLog.error("WvvFrameExtractor2.ExtractSingleFrameStreamAsync(StorageFile)", e);
+                return null;
+            }
+        }
+
+        public async Task<ImageStream> ExtractSingleFrameStreamAsync(MediaClip clip, TimeSpan position)
         {
             Error = null;
 
@@ -176,17 +210,11 @@ namespace wvv
 
             try
             {
-                using (var imageStream = await composer.GetThumbnailAsync(position, 0, ThumbnailHeight, VideoFramePrecision.NearestFrame))
-                {
-                    var bmp = new BitmapImage();
-                    bmp.SetSource(imageStream);
-                    composer.Clips.Clear();
-                    return bmp;
-                }
+                return await composer.GetThumbnailAsync(position, 0, ThumbnailHeight, VideoFramePrecision.NearestFrame);
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e);
+                CmLog.error("WvvFrameExtractor2.ExtractSingleFrameStreamAsync(MediaClip)", e);
                 Error = e;
                 return null;
             }
@@ -195,5 +223,6 @@ namespace wvv
                 composer.Clips.Clear();
             }
         }
+
     }
 }

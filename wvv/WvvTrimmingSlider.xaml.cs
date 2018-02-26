@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using wvv.utils;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
 
@@ -366,7 +367,7 @@ namespace wvv
                 }
             };
 
-            Debug.WriteLine("LKnob Pressed.");
+            CmLog.debug("WvvTrimmingSlider.OnLKnobPressed");
             e.Handled = true;
         }
 
@@ -389,7 +390,7 @@ namespace wvv
                 }
             };
 
-            Debug.WriteLine("RKnob Pressed.");
+            CmLog.debug("WvvTrimmingSlider.OnRKnobPressed");
             e.Handled = true;
         }
 
@@ -412,7 +413,7 @@ namespace wvv
                 }
             };
 
-            Debug.WriteLine("Thumb Pressed.");
+            CmLog.debug("WvvTrimmingSlider.OnThumbPressed");
             e.Handled = true;
         }
 
@@ -437,7 +438,7 @@ namespace wvv
         private double getNewValue(PointerRoutedEventArgs e)
         {
             var pos = e.GetCurrentPoint(mTrimmerBase);
-            Debug.WriteLine("Knob Moving. {0}", pos.Position.X - mTracking.Start);
+            // CmLog.debug("WvvTrimmingSlider.getNewValue: Knob Moving. {0}", pos.Position.X - mTracking.Start);
 
             double x = mTracking.Orginal + (pos.Position.X - mTracking.Start) * mTracking.Dir;
             double v = x * TotalRange / mTrimmerWidth;
@@ -483,7 +484,7 @@ namespace wvv
                 mTracking.Moved(v, true);
                 mTracking.Moved = null;
             }
-            Debug.WriteLine("Knob Released.");
+            CmLog.debug("WvvTrimmingSlider.OnKnobReleased");
             e.Handled = true;
         }
 

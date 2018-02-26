@@ -120,9 +120,23 @@ namespace wvv
             get { return PlayerSize.Width; }
         }
 
-        public MediaSource Source
+        public object Source
         {
-            set { SetSource(value); }
+            set
+            {
+                if (value is StorageFile)
+                {
+                    SetSource((StorageFile)value);
+                }
+                else if (value is IWvvCache)
+                {
+                    SetSource((IWvvCache)value);
+                }
+                else
+                {
+                    throw new ArgumentException("invalid source type.");
+                }
+            }
         }
 
         /**
@@ -348,7 +362,7 @@ namespace wvv
 
             if (null != mTempSource)
             {
-                SetSource(mTempSource);
+                SetSourceInternal(mTempSource);
             }
         }
 
@@ -357,6 +371,7 @@ namespace wvv
             Session.PlaybackStateChanged -= PBS_PlaybackStateChanged;
             mPlayerElement.UnregisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, mFullWindowListenerToken);
             mPlayerElement.SetMediaPlayer(null);
+            Reset();
         }
 
         public void Dispose()
@@ -368,12 +383,12 @@ namespace wvv
                 mPlayerElement.SetMediaPlayer(null);
                 mInternalPlayer.Dispose();
                 mInternalPlayer = null;
+                if (null != mCache)
+                {
+                    mCache.Release();
+                    mCache = null;
+                }
             }
-        }
-
-        public void Reset()
-        {
-            SetSource(null);
         }
 
         private void MPE_FullWindowChanged(DependencyObject sender, DependencyProperty dp)
@@ -425,32 +440,87 @@ namespace wvv
 
         #region Public APIs
 
-        public void SetSourceUri(Uri uri)
+        IWvvCache mCache = null;
+        /**
+         * キャッシュオブジェクトをソースとしてセット
+         */
+        public void SetSource(IWvvCache cache)
         {
-            SetSource(null);     // uriからの読み込みは時間がかかるかもしれないので、先に一度クリアしておく
-            SetSource(MediaSource.CreateFromUri(uri));
+            Reset();
+            if (null == cache)
+            {
+                return;
+            }
+
+            var file = cache.CacheFile;
+            if (null != file)
+            {
+                // キャッシュファイルがあればそれを使用
+                mCache = cache;
+                mCache.AddRef();
+                SetSourceInternal(MediaSource.CreateFromStorageFile(file));
+            }
+            else
+            {
+                // なければ直接URIをロード
+                SetSourceInternal(MediaSource.CreateFromUri(cache.URI));
+            }
         }
 
-        public void SetSourceFile(StorageFile file)
+        /**
+         * URIをキャッシュしないでソースにセット
+         */
+        public void SetSource(Uri uri)
         {
-            SetSource(MediaSource.CreateFromStorageFile(file));
+            Reset();
+            if (null != uri)
+            {
+                SetSourceInternal(MediaSource.CreateFromUri(uri));
+            }
         }
 
-
-        public async void SetSource(MediaSource source)
+        /**
+         * StorageFileをソースにセット
+         */
+        public void SetSource(StorageFile file)
         {
-            if(null==mInternalPlayer)
+            Reset();
+            if (null != file)
+            {
+                SetSourceInternal(MediaSource.CreateFromStorageFile(file));
+            }
+        }
+
+        /**
+         * Playerの状態を再初期化する
+         */
+        public void Reset()
+        {
+            if (null != mCache)
+            {
+                mCache.Release();
+                mCache = null;
+            }
+            mTempSource = null;
+            if (null != mInternalPlayer)
+            {
+                mInternalPlayer.Pause();
+                mInternalPlayer.Source = null;
+            }
+            MovieError = false;
+            PlayerState = PlayerState.NONE;
+        }
+
+        /**
+         * MediaSourceをセット
+         */
+        private async void SetSourceInternal(MediaSource source)
+        {
+            if (null==mInternalPlayer)
             {
                 mTempSource = source;
                 return;
             }
-            mTempSource = null;
-
-            mInternalPlayer.Pause();
-            mInternalPlayer.Source = null;
-            MovieError = false;
-            PlayerState = PlayerState.NONE;
-
             if (source==null)
             {
                 return;
