@@ -215,5 +215,12 @@ namespace wvv.utils
         //    return space + 2;
         //}
 
+        public static T GetTarget<T>(this WeakReference<T> wr)
+            where T : class
+        {
+            T o;
+            return (wr.TryGetTarget(out o)) ? o : null;
+        }
+
     }
 }

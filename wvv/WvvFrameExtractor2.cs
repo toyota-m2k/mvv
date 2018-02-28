@@ -12,6 +12,12 @@ using wvv.utils;
 
 namespace wvv
 {
+    /**
+     * 動画ファイルからフレームサムネイルを取り出すヘルパークラス
+     * 
+     * 内部で利用している MediaClip が、ソースとして StorageFileしか扱えないため、Uriからサムネイルを生成するには、
+     * あらかじめDLしておく必要がある。
+     */
     public class WvvFrameExtractor2
     {
         /**

@@ -15,6 +15,13 @@ using wvv.utils;
 
 namespace wvv
 {
+    /**
+     * 動画から、フレームを選択して、フレームサムネイル画像を取得するためのビュー
+     * 構成コンポーネント
+     * - WvvVideoPlayer
+     * - WvvTrimmingSlider（単なるスライダーとして利用）
+     * - WvvFrameListView
+     */
     public sealed partial class WvvFrameSelectorView : UserControl, INotifyPropertyChanged
     {
         #region Privates

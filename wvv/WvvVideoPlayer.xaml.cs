@@ -11,6 +11,13 @@ using Windows.UI.Xaml.Controls;
 
 namespace wvv
 {
+    /**
+     * 動画プレーヤー
+     * - MediaPlayerElement/MediaPlayer のカプセル化
+     * - WvvVideoCotrolPanel との接続
+     * - 動画読み込み時のグルグル表示
+     * - 動画ソースとして、StorageFile / Uri / IWvvCache をサポート
+     */
     public sealed partial class WvvVideoPlayer : UserControl, INotifyPropertyChanged, IWvvVideoPlayer, IDisposable
     {
         /**
@@ -128,9 +135,9 @@ namespace wvv
                 {
                     SetSource((StorageFile)value);
                 }
-                else if (value is IWvvCache)
+                else if (value is Uri)
                 {
-                    SetSource((IWvvCache)value);
+                    SetSource((Uri)value);
                 }
                 else
                 {
@@ -326,6 +333,7 @@ namespace wvv
             }
         }
 
+        public bool AutoStart { get; set; } = true;
 
         #endregion
 
@@ -348,12 +356,15 @@ namespace wvv
             get { return mInternalPlayer?.PlaybackSession; }
         }
 
-
+        /**
+         * 初期化時の処理
+         */
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             if(null==mInternalPlayer)
             {
                 mInternalPlayer = new MediaPlayer();
+                mInternalPlayer.AutoPlay = AutoStart;
             }
             mPlayerElement.SetMediaPlayer(mInternalPlayer);
             Player.IsVideoFrameServerEnabled = false;
@@ -366,6 +377,9 @@ namespace wvv
             }
         }
 
+        /**
+         * 終了時の処理
+         */
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             Session.PlaybackStateChanged -= PBS_PlaybackStateChanged;
@@ -374,6 +388,9 @@ namespace wvv
             Reset();
         }
 
+        /**
+         * リソース解放
+         */
         public void Dispose()
         {
             if(null!=mInternalPlayer)
@@ -383,14 +400,18 @@ namespace wvv
                 mPlayerElement.SetMediaPlayer(null);
                 mInternalPlayer.Dispose();
                 mInternalPlayer = null;
+            }
                 if (null != mCache)
                 {
                     mCache.Release();
                     mCache = null;
                 }
             }
-        }
 
+
+        /**
+         * 最大化する・元に戻す を検知するためのイベントハンドラ
+         */
         private void MPE_FullWindowChanged(DependencyObject sender, DependencyProperty dp)
         {
             var mpe = sender as MediaPlayerElement;
@@ -407,6 +428,9 @@ namespace wvv
             }
         }
 
+        /**
+         * MediaPlayerの状態監視
+         */
         private async void PBS_PlaybackStateChanged(MediaPlaybackSession sender, object args)
         {
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
@@ -430,17 +454,48 @@ namespace wvv
             });
         }
 
+        /**
+         * プレーヤー上のタップ（再生・停止のトグル）
+         */
         private void OnPlayerTapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
             IsPlaying = !IsPlaying;
             e.Handled = true;
         }
 
+
         #endregion
 
         #region Public APIs
 
         IWvvCache mCache = null;
+
+        /**
+         * URIをキャッシュしないでソースにセット
+         * 
+         * キャッシュは使わず、URLを直接読み込む。キャッシュを使う場合は、呼び出し元でIWvvCacheインスタンスを用意して、SetCache(IWvvCache)を呼ぶ。
+         */
+        public void SetSource(Uri uri)
+        {
+            Reset();
+            if (null != uri)
+            {
+                SetSourceInternal(MediaSource.CreateFromUri(uri));
+            }
+        }
+
+        /**
+         * StorageFileをソースにセット
+         */
+        public void SetSource(StorageFile file)
+        {
+            Reset();
+            if (null != file)
+            {
+                SetSourceInternal(MediaSource.CreateFromStorageFile(file));
+            }
+        }
+
         /**
          * キャッシュオブジェクトをソースとしてセット
          */
@@ -467,29 +522,6 @@ namespace wvv
             }
         }
 
-        /**
-         * URIをキャッシュしないでソースにセット
-         */
-        public void SetSource(Uri uri)
-        {
-            Reset();
-            if (null != uri)
-            {
-                SetSourceInternal(MediaSource.CreateFromUri(uri));
-            }
-        }
-
-        /**
-         * StorageFileをソースにセット
-         */
-        public void SetSource(StorageFile file)
-        {
-            Reset();
-            if (null != file)
-            {
-                SetSourceInternal(MediaSource.CreateFromStorageFile(file));
-            }
-        }
 
         /**
          * Playerの状態を再初期化する

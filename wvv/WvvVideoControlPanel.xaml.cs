@@ -17,6 +17,29 @@ using wvv.utils;
 namespace wvv
 {
     /**
+     * PinP Player のオーナーが実装すべき i/f
+     */
+    public interface IPinPPlayerOwner
+    {
+        /**
+         * PinP Player を開いてよいか？
+         * @return key (PinP_Openedに渡す識別子）... nullならPinP Playerは開かない
+         */
+        object PinP_QueryOpenKey();
+        /**
+         * PinP Player を開いた。
+         * PinPOwner側で閉じたいときは、player.Close()を呼び出す。
+         */
+        void PinP_Opened(object key, IPinPPlayer player);
+        /**
+         * PinP Playerを閉じた
+         */
+        void PinP_Closed(object key, IPinPPlayer player);
+    }
+
+
+
+    /**
      * VideoControlPanelクラス
      */
     public sealed partial class WvvVideoControlPanel : UserControl, INotifyPropertyChanged, IWvvMarkerEditor, IDisposable
@@ -154,7 +177,7 @@ namespace wvv
         /**
          * フレーム一覧を表示する(true)か、しない(false)か
          */
-        public bool mShowingFrames = true;
+        public bool mShowingFrames = false;
         public bool ShowingFrames
         {
             get { return mShowingFrames; }
@@ -402,12 +425,12 @@ namespace wvv
                 mCache = null;
             }
 
-            if(null!= mPinPPlayer)
-            {
-                mPinPNow = false;
-                mPinPPlayer.Closed -= OnPinPPlayerClosed;
-                mPinPPlayer.Close();
-            }
+            //if (null != mPinPPlayer)
+            //{
+            //    mPinPNow = false;
+            //    mPinPPlayer.Closed -= OnPinPPlayerClosed;
+            //    mPinPPlayer.Close();
+            //}
         }
 
         #endregion
@@ -439,6 +462,11 @@ namespace wvv
 
             mExtractor.ThumbnailHeight = ThumbnailHeight;
             mExtractor.FrameCount = ThumbnailCount;
+            mFrameListView.Frames.Clear();
+            if(!ShowingFrames)
+            {
+                return;
+            }
 
             try
             {
@@ -677,54 +705,115 @@ namespace wvv
             e.Handled = true;
         }
 
-        private bool mPinPNow = false;
-        private IPinPPlayer mPinPPlayer = null;
+        private WeakReference<IPinPPlayerOwner> mPinPOwner;
+        public IPinPPlayerOwner PinPOwner
+        {
+            get
+            {
+                return mPinPOwner?.GetTarget();
+            }
+            set
+            {
+                if (null == value)
+                {
+                    mPinPOwner = null;
+                }
+                else
+                {
+                    mPinPOwner = new WeakReference<IPinPPlayerOwner>(value);
+                }
+            }
+
+        }
+
+        //private bool mPinPNow = false;
+        //private IPinPPlayer mPinPPlayer = null;
+        
+        private class OwnerKey
+        {
+            public IPinPPlayerOwner Owner { get; private set; }
+            public object Key { get; private set; }
+
+            public OwnerKey(IPinPPlayerOwner owner, object key)
+            {
+                Owner = owner;
+                Key = key;
+            }
+        }
+
         /**
          * PinPモード切替ボタン
          */
         private async void OnPInP(object sender, TappedRoutedEventArgs e)
         {
-            if(mPinPNow || null==mSource)
+            if(null==mSource)
             {
                 return;
             }
-
-            mPinPNow = true;
-            if (!await WvvPinPPage.OpenPinP(MediaSource.CreateFromStorageFile(mSource), mSlider.Value, null, (pinp) =>
+            object key = null;
+            var owner = PinPOwner;
+            if(null!=owner)
             {
-                mPinPPlayer = pinp;
-                pinp.Closed += OnPinPPlayerClosed;
-            }))
-            { 
-                mPinPNow = false;
+
+                key = owner.PinP_QueryOpenKey();
+                if (null == key)
+                {
+                    return;
+                }
             }
+            await WvvPinPPage.OpenPinP(MediaSource.CreateFromStorageFile(mSource), mSlider.Value, null, (pinp, clientData) =>
+            {
+                pinp.Closed += OnPinPPlayerClosed;
+                var ok = clientData as OwnerKey;
+                if (null!=ok && null!=ok.Owner)
+            { 
+                    ok.Owner.PinP_Opened(ok.Key, pinp);
+            }
+            }, new OwnerKey(owner, key));
         }
 
         private void OnPinPPlayerClosed(IPinPPlayer player, object clientData)
         {
             player.Closed -= OnPinPPlayerClosed;
-            mPinPNow = false;
-            mPinPPlayer = null;
+            var ok = clientData as OwnerKey;
+            if (null != ok && null!=ok.Owner)
+            {
+                ok.Owner.PinP_Closed(ok.Key, player);
+            }
         }
 
-        private void OnShowHideFrameList(object sender, TappedRoutedEventArgs e)
+        private async void OnShowHideFrameList(object sender, TappedRoutedEventArgs e)
         {
             if (!ShowingFrames)
             {
                 ShowingFrames = true;
+                mFrameListView.EnsureInitScrollViewer();
+                if(mFrameListView.Frames.Count==0)
+                {
+                    makeThumbnails();
+                }
             }
             else
             {
-                if (LargeThumbnail)
-                {
-                    LargeThumbnail = false;
-                    ShowingFrames = false;
-                }
-                else
-                {
-                    LargeThumbnail = true;
-                }
+                ShowingFrames = false;
             }
+
+            //if (!ShowingFrames)
+            //{
+            //    ShowingFrames = true;
+            //}
+            //else
+            //{
+            //    if (LargeThumbnail)
+            //    {
+            //        LargeThumbnail = false;
+            //        ShowingFrames = false;
+            //    }
+            //    else
+            //    {
+            //        LargeThumbnail = true;
+            //    }
+            //}
             e.Handled = true;
         }
 
@@ -733,7 +822,7 @@ namespace wvv
          */
         private void OnSliderChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
-            if(Player.IsPlaying)
+            if(null==Player || Player.IsPlaying)
             {
                 return;
             }

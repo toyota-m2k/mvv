@@ -16,6 +16,13 @@ using wvv.utils;
 
 namespace wvv
 {
+    /**
+     * MediaPlayerからフレームサムネイルを取得するためのヘルパークラス
+     * - 動作が不安定・・・サムネイルの欠落（黒い画像）が頻発
+     * - シークに失敗するケース（Uriから読み込み中など）の動作が未考慮（確実にやるには、いったんDLが必要）
+     * などの理由で、このクラスは不採用とし、WvvFrameExtractor2(MediaClipを使用する方法)へ移行。
+     */
+    [Obsolete("use WvvFrameExtractor2", false)]
     public class WvvFrameExtractor
     {
         /**

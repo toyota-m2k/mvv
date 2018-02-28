@@ -27,16 +27,26 @@ namespace wvv
      */
     public interface IPinPPlayer
     {
+        void BringUp();
         void Close();
         event ClosedEventHandler Closed;
     }
 
-    public delegate void NotifyPinPOpened(IPinPPlayer pinp);
+    public delegate void NotifyPinPOpened(IPinPPlayer pinp, object clientData);
 
-
-    /// <summary>
-    /// それ自体で使用できる空白ページまたはフレーム内に移動できる空白ページ。
-    /// </summary>
+    /**
+     * PinP風のポップアップ動画再生画面
+     * 
+     * Usage
+     * 
+     * if(WvvPinPPage.IsSupported) {
+     *      await WvvPinPPage.OpenPinP(source, -1, null, (pinp)=>{
+     *          pinp.Closed += {
+     *              // PinP画面が閉じられた時の処理
+     *          }
+     *      }, null);
+     * }
+     */
     public sealed partial class WvvPinPPage : Page, IPinPPlayer
     {
         #region Public Methods
@@ -99,6 +109,15 @@ namespace wvv
         //{
         //    Dispose();
         //}
+        private int mCurrentViewId = 0;
+        public async void BringUp()
+        {
+            if (null != mInfo )
+            {
+                await ApplicationViewSwitcher.TryShowAsStandaloneAsync(mCurrentViewId);
+            }
+        }
+
 
         /**
          * PinP Playerを閉じる (IPinPPlayerの唯一のメソッド）
@@ -209,6 +228,7 @@ namespace wvv
 
             if (null!=mInfo && null!=mInfo.Source)
             {
+                mCurrentViewId = ApplicationView.GetForCurrentView().Id;
                 ApplicationView.GetForCurrentView().Consolidated += OnConsolidated;
 
                 mPlayer.SetMediaPlayer(new MediaPlayer());
@@ -243,7 +263,7 @@ namespace wvv
                     {
                         if (null != notify)
                         {
-                            notify(this);
+                            notify(this, mInfo.ClientData);
                         }
                         sNotifyHanders.Remove(mInfo.ID);
                     }

@@ -7,6 +7,9 @@ using Windows.Storage;
 
 namespace wvv
 {
+    /**
+     * 動画ファイルのトランスコード
+     */
     public class WvvTranscoder
     {
         public enum Format

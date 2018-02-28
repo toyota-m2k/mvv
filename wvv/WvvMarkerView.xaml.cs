@@ -30,6 +30,9 @@ namespace wvv
         bool CanAddMarker(double position);
     }
 
+    /**
+     * マーカー表示/設定ビュー
+     */
     public sealed partial class WvvMarkerView : UserControl, IAddMarkerChecker
     {
         #region Constants

@@ -11,6 +11,9 @@ using Windows.UI.Xaml.Media.Animation;
 
 namespace wvv
 {
+    /**
+     * フレームサムネイルを横に並べて表示するリストビュー
+     */
     public sealed partial class WvvFrameListView : UserControl, INotifyPropertyChanged
     {
         #region Public Interface
@@ -149,8 +152,15 @@ namespace wvv
          */
         public ObservableCollection<ImageSource> Frames
         {
-            get;
-        } = new ObservableCollection<ImageSource>();
+            get { return mFrames; }
+            set
+            {
+                mFrames = value;
+                notify("Frames");
+            }
+        }
+        private ObservableCollection<ImageSource> mFrames = new ObservableCollection<ImageSource>();
+
 
         /**
          * スクロールコンテントの幅
@@ -285,6 +295,9 @@ namespace wvv
          * スクロールビューアのExtentWidth, ActualHeightの変化を監視するためのリスナー登録トークン
          */
         private long mScrollViewerExtentWidthChangedToken = 0;
+        private DispatcherTimer mUpdateScrollViewerTimer = null;    // イベントリスナーが登録できないときのリトライ用タイマー
+
+        //private long mVisibilityChangedToken = 0;
         //private long mListViewActualHeifhtChangedToken = 0;
         //private long mScrollViewerActualHeightChangedToken = 0;
 
@@ -367,18 +380,72 @@ namespace wvv
             this.DataContext = this;
         }
 
+
+        /**
+         * ScrollViewerのイベントハンドラをセットする
+         * 
+         * @return true: 初期化した|すでに初期化済み / false: ScrollViewer == null のため初期化できなかった
+         */
+        private bool InitScrollViewer()
+        {
+            if (null != ScrollViewer)
+            {
+                if (0 == mScrollViewerExtentWidthChangedToken)
+                {
+                    mScrollViewerExtentWidthChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, ScrollViewer_ExtentWidthChanged);
+                    if (Frames.Count > 0)
+                    {
+                        ScrollViewer_ExtentWidthChanged(null, null);
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * ScrollViewerのExtentWidthプロパティに対してリスナーを登録する。
+         * 
+         * Visibility.Collapsedの状態で OnLoadedが呼ばれると、ListView内部のScrollViewerが実体化されていないため、初期化がスキップされてしまう。
+         * しかもVisibilityが変化したタイミング（Visibility変更イベント）では、まだScrollViewerがnullなので、これが有効になる、うまいタイミングが見つからない。
+         * 仕方がないから、Visibilityを変更する側（親ビュー側）で、非表示-->表示に変わるタイミングを見つけて、そこから更新用メソッド（EnsureInitScrollViewer）を
+         * 呼び出してもらい、EnsureInitScrollViewer内で、ScrollViewerがnullでなくなるまでリトライすることとする。
+         *
+         * いまさらながら、ListViewを使ったことを後悔。Collectionにバインド可能なコンテナの仕掛けを自分で作るより楽だと思ったのだけれども。。。
+         */
+        public void EnsureInitScrollViewer()
+        {
+            if (0 == mScrollViewerExtentWidthChangedToken && null== mUpdateScrollViewerTimer)
+            {
+                if(!InitScrollViewer())
+                {
+                    mUpdateScrollViewerTimer = new DispatcherTimer();
+                    mUpdateScrollViewerTimer.Interval = TimeSpan.FromMilliseconds(100);
+                    mUpdateScrollViewerTimer.Tick += (s, e) =>
+                    {
+                        if(null==ScrollViewer)
+                        {
+                            return;
+                        }
+                        mUpdateScrollViewerTimer.Stop();
+                        InitScrollViewer();
+                        mUpdateScrollViewerTimer = null;
+                    };
+                    mUpdateScrollViewerTimer.Start();
+                }
+            }
+        }
+
         /**
          * 初期化
          */
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            if(null!=ScrollViewer)
+            if (null != ScrollViewer)
             {
-            mScrollViewerExtentWidthChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, ScrollViewer_ExtentWidthChanged);
-            //mListViewActualHeifhtChangedToken = mListView.RegisterPropertyChangedCallback(ListView.ActualHeightProperty, ListView_ActualHeightChanged);
-            //mScrollViewerActualHeightChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ActualHeightProperty, ScrollViewer_ActualHeightChanged);
+                mScrollViewerExtentWidthChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, ScrollViewer_ExtentWidthChanged);
+            }
             initAnimation();
-        	}
         }
 
         /**
@@ -386,7 +453,15 @@ namespace wvv
          */
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, mScrollViewerExtentWidthChangedToken);
+            if (0 != mScrollViewerExtentWidthChangedToken)
+            {
+            	ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ExtentWidthProperty, mScrollViewerExtentWidthChangedToken);
+            }
+            if(null!= mUpdateScrollViewerTimer)
+            {
+                mUpdateScrollViewerTimer.Stop();
+                mUpdateScrollViewerTimer = null;
+            }
             //mListView.UnregisterPropertyChangedCallback(ListView.ActualHeightProperty, mListViewActualHeifhtChangedToken);
             //ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ActualHeightProperty, mScrollViewerActualHeightChangedToken);
             Reset();

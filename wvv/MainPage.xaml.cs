@@ -374,7 +374,7 @@ namespace wvv
                 return;
             }
 
-            await WvvPinPPage.OpenPinP(MediaSource.CreateFromStorageFile(mVideoFile), 0, new Size(150, 300), (player) =>
+            await WvvPinPPage.OpenPinP(MediaSource.CreateFromStorageFile(mVideoFile), 0, new Size(150, 300), (player, clientData) =>
             {
                 //var timer = new DispatcherTimer();
                 //timer.Interval = TimeSpan.FromSeconds(3);

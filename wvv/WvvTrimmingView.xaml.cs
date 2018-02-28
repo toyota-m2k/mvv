@@ -28,6 +28,15 @@ namespace wvv
         IAsyncOperationWithProgress<TranscodeFailureReason, double> SaveToFile(StorageFile toFile);
     }
 
+    /**
+     * 動画ファイルのトリミング（前後を切り取る）用のビュー
+     * 
+     * 構成コンポーネント
+     * - MediaPlayerElement
+     * - WvvTrimmingSlider
+     * - WvvFrameListView
+     * - 再生ボタン
+     */
     public sealed partial class WvvTrimmingView : UserControl, INotifyPropertyChanged, IWvvSaveAs
     {
         #region INotifyPropertyChanged i/f
