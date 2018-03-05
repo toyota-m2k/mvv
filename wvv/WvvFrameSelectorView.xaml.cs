@@ -42,10 +42,12 @@ namespace wvv
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            mPlayer.Error.PropertyChanged += Error_PropertyChanged;
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
+            mPlayer.Error.PropertyChanged -= Error_PropertyChanged;
             mExtractor.Cancel();
             Reset();
         }
@@ -90,6 +92,15 @@ namespace wvv
             mFrameListView.TickPosition = v;
         }
 
+        /**
+         * WvvVideoPlayer のエラー情報（WvvFrameSelectorViewと共有）が変化した場合の通知
+         * （こちらのReady状態が変化する）
+         */
+        private void Error_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            notify("Ready");
+        }
+
         #endregion
 
         #region Public APIs
@@ -98,7 +109,7 @@ namespace wvv
         public void Reset()
         {
             Ready = false;
-            Error = null;
+            Error.Reset();
 
             mFrameListView.Reset();
             mTrimmingSlider.Reset();
@@ -150,7 +161,7 @@ namespace wvv
             catch ( Exception e)
             {
                 CmLog.error("WvvFrameSelectorView.SetSource", e);
-                Error = e;
+                Error.SetError(e);
             }
         }
 
@@ -171,7 +182,7 @@ namespace wvv
             }
             catch (Exception e)
             {
-                Error = e;
+                Error.SetError(e);
                 CmLog.error("WvvFrameSelectorView.GetResultImage", e);
                 return null;
             }
@@ -186,7 +197,7 @@ namespace wvv
             }
             catch (Exception e)
             {
-                Error = e;
+                Error.SetError(e);
                 CmLog.error("WvvFrameSelectorView.GetResultImageStream", e);
                 return null;
             }
@@ -195,21 +206,26 @@ namespace wvv
 
         #region Properties
 
-        public Exception Error
-        {
-            get { return mError; }
-            set
+        //public Exception Error
+        //{
+        //    get { return mError; }
+        //    set
+        //    {
+        //        mError = value;
+        //        notify("Ready");   
+        //    } 
+        //}
+        //private Exception mError = null;
+
+        public WvvError Error
             {
-                mError = value;
-                notify("Ready");   
-            } 
+            get => mPlayer.Error;
         }
-        private Exception mError = null;
 
 
         public bool Ready
         {
-            get { return mReady && null==Error; }
+            get { return mReady && !Error.HasError; }
             set
             {
                 if (value != mReady)

@@ -38,7 +38,8 @@
                 AreTransportControlsEnabled="False"
                 HorizontalAlignment="Left"
                 Width="{Binding PlayerSize.Width}"
-                Height="{Binding PlayerSize.Height}"/>
+                Height="{Binding PlayerSize.Height}"
+                />
         </Grid>
         <Grid
             Visibility="{Binding Error.HasError, Converter={StaticResource BoolVisibilityConverter}}"

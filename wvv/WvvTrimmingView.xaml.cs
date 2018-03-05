@@ -269,7 +269,9 @@ namespace wvv
         }
         private int mEncodingProgress = 0;
 
-
+        /**
+         * エラー情報
+         */
         public WvvError Error { get; private set; } = new WvvError();
 
         #endregion
@@ -390,7 +392,7 @@ namespace wvv
 
             mPlayer = new MediaPlayer();
             mPlayer.PlaybackSession.PlaybackStateChanged += PBS_StateChanged;
-            mPlayer.MediaFailed += MB_Failed;
+            mPlayer.MediaFailed += MP_Failed;
             mPlayerElement.SetMediaPlayer(mPlayer);
 
             if (null!=mSource)
@@ -412,7 +414,7 @@ namespace wvv
             mPlayerElement.SetMediaPlayer(null);
             mPlayer.Pause();
             mPlayer.PlaybackSession.PlaybackStateChanged -= PBS_StateChanged;
-            mPlayer.MediaFailed -= MB_Failed;
+            mPlayer.MediaFailed -= MP_Failed;
             mPlayer.Dispose();
             mPlayer = null;
         }
@@ -442,11 +444,14 @@ namespace wvv
             });
         }
 
-        private async void MB_Failed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
+        /**
+         * MediaPlayerでエラーが発生したときの処理
+         */
+        private async void MP_Failed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
         {
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
-                CmLog.debug("WvvTrimmingView.MB_Failed: MediaFailed");
+                CmLog.debug("WvvTrimmingView.MP_Failed: MediaFailed");
                 if (null != args.ErrorMessage && args.ErrorMessage.Length > 0)
                 {
                     CmLog.debug(args.ErrorMessage);

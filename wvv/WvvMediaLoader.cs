@@ -15,7 +15,7 @@ namespace wvv
      * 
      * 基本的な使い方
      * 
-     * var loader = await WvvMediaLoader(player, source, view);
+     * var loader = await WvvMediaLoader.LoadAsync(player, source, view);
      * if(loader.Opened) {
      *    // 動画がオープンされた --> 次の処理
      * } else {
@@ -49,6 +49,13 @@ namespace wvv
             get; private set;
         }
 
+        /**
+         * エラー情報
+         * 
+         * このErrorオブジェクトのプロパティ（Message/HasError)を直接ビューにバインドすると、OnFailed 時に、例外（他のスレッドにマーシャリングされた。。。）が出る。
+         * もし、そのような使い方をするなら、OnFailed の処理をOwnerView.Dispatcher.RunAsync()を使うようにする必要があるが、現時点(2018.03.05）では、
+         * そういう箇所がないので、そのままにしている。
+         */
         public WvvError Error { get; } = new WvvError();
 
         #endregion
@@ -228,6 +235,8 @@ namespace wvv
 
         /**
          * MediaFailedイベントのハンドラ
+         * 
+         * --> Errorプロパティのコメント参照
          */
         private async void OnFailed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
         {

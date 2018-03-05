@@ -324,7 +324,29 @@ namespace wvv
          */
         public WvvError Error { get; } = new WvvError();
 
+        /**
+         * 動画の読み込みが完了したら、自動的に再生を開始する場合は true にする。
+         * Loaded前にセットしておかないと有効にならない。
+         */
         public bool AutoStart { get; set; } = false;
+
+        /**
+         * ミュート
+         */
+        private bool mIsMuted = false;
+        public bool IsMuted
+        {
+            get => mIsMuted;
+            set
+            {
+                mIsMuted = value;
+                if(null!=mInternalPlayer)
+                {
+                    mInternalPlayer.IsMuted = mIsMuted;
+                }
+            }
+        }
+        
 
         #endregion
 
@@ -356,6 +378,7 @@ namespace wvv
             {
                 mInternalPlayer = new MediaPlayer();
                 mInternalPlayer.AutoPlay = AutoStart;
+                mInternalPlayer.IsMuted = IsMuted;
             }
             mPlayerElement.SetMediaPlayer(mInternalPlayer);
             Player.IsVideoFrameServerEnabled = false;
@@ -447,6 +470,9 @@ namespace wvv
             });
         }
 
+        /**
+         * MediaPlayerでエラーが発生したときの処理
+         */
         private async void MB_Failed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
         {
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
