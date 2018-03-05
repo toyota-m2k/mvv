@@ -33,7 +33,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Background="{StaticResource ButtonFaceColor}">
+        <Grid Grid.Row="0" Background="{StaticResource PanelLightColor}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -75,7 +75,8 @@
                 </Button>
             </StackPanel>
             <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnShowHideFrameList">
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnShowHideFrameList"
+                        IsEnabled="{Binding MoviePrepared}">
                     <Image x:Name="frameButtonImage" Source="{StaticResource ThumbnailOffIcon}" Width="40" Height="40">
                         <Interactivity:Interaction.Behaviors>
                             <Core:DataTriggerBehavior Binding="{Binding ShowingFrames}" Value="True">

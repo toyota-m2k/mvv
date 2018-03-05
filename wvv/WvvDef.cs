@@ -121,7 +121,7 @@ namespace wvv
     /**
      * 進捗通知用デリゲート型 （Transcoderで試用）
      */
-    public delegate bool IWvvProgress<SenderType>(SenderType sender, double percent);
+    public delegate void IWvvProgress<SenderType>(SenderType sender, double percent);
 
     #endregion
 

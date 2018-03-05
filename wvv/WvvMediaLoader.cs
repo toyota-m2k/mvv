@@ -48,6 +48,9 @@ namespace wvv
             //}
             get; private set;
         }
+
+        public WvvError Error { get; } = new WvvError();
+
         #endregion
 
         #region Private Fields & Properties
@@ -131,6 +134,7 @@ namespace wvv
          */
         public void Load(MediaSource source, DependencyObject ownerView, OnLoadedHandler onLoaded)
         {
+            Error.Reset();
             Opened = false;
             Loading = true;
             Loaded = onLoaded;
@@ -187,11 +191,16 @@ namespace wvv
                             CmLog.error(e, "WvvMediaLoader.terminate (inner): Error");
                             Opened = false;
                             mediaPlayer.Source = null;
+                            Error.SetError(e);
                         }
                     }
                     else
                     {
                         mediaPlayer.Source = null;
+                        if(!Error.HasError)
+                        {
+                            Error.SetError("MediaLoader error");
+                        }
                     }
                     Loaded?.Invoke(this);
                     Loaded = null;
@@ -226,10 +235,12 @@ namespace wvv
             if (null != args.ErrorMessage && args.ErrorMessage.Length > 0)
             {
                 CmLog.debug(args.ErrorMessage);
+                Error.SetError(args.ErrorMessage);
             }
             if (null != args.ExtendedErrorCode)
             {
                 CmLog.error(args.ExtendedErrorCode.Message);
+                Error.SetError(args.ExtendedErrorCode);
             }
 
             Opened = false;

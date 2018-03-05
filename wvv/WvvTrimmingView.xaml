@@ -17,71 +17,81 @@
     </UserControl.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <Grid Grid.Row="0" x:Name="mPlayerContainer">
-            <MediaPlayerElement
-                x:Name="mPlayerElement" 
-                AutoPlay="False"
-                HorizontalAlignment="Stretch" 
-                VerticalAlignment="Stretch"
-                Stretch="UniformToFill"
-                AreTransportControlsEnabled="False" 
-                Width="{Binding PlayerSize.Width}"
-                Height="{Binding PlayerSize.Height}"
-                />
-        </Grid>
-        <Grid Grid.Row="1" Margin="0,0">
-            <local:WvvTrimmingSlider
-                x:Name="mTrimmingSlider"
-                TrimStartChanged="OnTrimStartChanged"
-                TrimEndChanged="OnTrimEndChanged"
-                CurrentPositionChanged="OnCurrentPositionChanged"
-                IsEnabled="{Binding Path=IsEnabled, ElementName=mPlayButton}"
-                />
-        </Grid>
-        <Grid Grid.Row="2" Padding="25,0">
-            <local:WvvFrameListView
-                x:Name="mFrameListView"
-                AnimationEnabled="False"
-                ShowCurrentTick="True"
-                IsEnabled="{Binding Path=IsEnabled, ElementName=mPlayButton}"
-                />
-        </Grid>
-        <Grid Grid.Row="3">
-            <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnPlay"
-                    x:Name="mPlayButton"
-                    IsEnabled="{Binding Ready}" HorizontalAlignment="Center">
-                <Image x:Name="playButtonImage" Source="{StaticResource PlayIcon}" Width="40" Height="40">
-                    <Interactivity:Interaction.Behaviors>
-                        <Core:DataTriggerBehavior Binding="{Binding IsPlaying}" Value="True">
-                            <Core:ChangePropertyAction TargetObject="{Binding ElementName=playButtonImage}" PropertyName="Source" Value="{StaticResource StopIcon}" />
-                        </Core:DataTriggerBehavior>
-                        <Core:DataTriggerBehavior Binding="{Binding IsPlaying}" Value="False">
-                            <Core:ChangePropertyAction TargetObject="{Binding ElementName=playButtonImage}" PropertyName="Source" Value="{StaticResource PlayIcon}" />
-                        </Core:DataTriggerBehavior>
-                    </Interactivity:Interaction.Behaviors>
-                </Image>
-            </Button>
-        </Grid>
-        <Grid Grid.RowSpan="4"
-              Background="#80000000"
-              Visibility="{Binding Encoding, Converter={StaticResource BoolVisibilityConverter}}">
-            <StackPanel Orientation="Vertical"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Stretch">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <!-- Player -->
+            <Grid Grid.Row="0" x:Name="mPlayerContainer">
+                <MediaPlayerElement
+                    x:Name="mPlayerElement" 
+                    AutoPlay="False"
+                    HorizontalAlignment="Stretch" 
+                    VerticalAlignment="Stretch"
+                    Stretch="UniformToFill"
+                    AreTransportControlsEnabled="False" 
+                    Width="{Binding PlayerSize.Width}"
+                    Height="{Binding PlayerSize.Height}"
+                    />
+            </Grid>
+            <!-- Slider -->
+            <Grid Grid.Row="1" Margin="0,0">
+                <local:WvvTrimmingSlider
+                    x:Name="mTrimmingSlider"
+                    TrimStartChanged="OnTrimStartChanged"
+                    TrimEndChanged="OnTrimEndChanged"
+                    CurrentPositionChanged="OnCurrentPositionChanged"
+                    IsEnabled="{Binding Path=IsEnabled, ElementName=mPlayButton}"
+                    />
+            </Grid>
+            <!-- Frame List View -->
+            <Grid Grid.Row="2" Padding="25,0">
+                <local:WvvFrameListView
+                    x:Name="mFrameListView"
+                    AnimationEnabled="False"
+                    ShowCurrentTick="True"
+                    IsEnabled="{Binding Path=IsEnabled, ElementName=mPlayButton}"
+                    />
+            </Grid>
+            <!-- Play Button -->
+            <Grid Grid.Row="3">
+                <Button Style="{StaticResource CtrlButtonStyle}" Tapped="OnPlay"
+                        x:Name="mPlayButton"
+                        IsEnabled="{Binding Ready}" HorizontalAlignment="Center">
+                    <Image x:Name="playButtonImage" Source="{StaticResource PlayIcon}" Width="40" Height="40">
+                        <Interactivity:Interaction.Behaviors>
+                            <Core:DataTriggerBehavior Binding="{Binding IsPlaying}" Value="True">
+                                <Core:ChangePropertyAction TargetObject="{Binding ElementName=playButtonImage}" PropertyName="Source" Value="{StaticResource StopIcon}" />
+                            </Core:DataTriggerBehavior>
+                            <Core:DataTriggerBehavior Binding="{Binding IsPlaying}" Value="False">
+                                <Core:ChangePropertyAction TargetObject="{Binding ElementName=playButtonImage}" PropertyName="Source" Value="{StaticResource PlayIcon}" />
+                            </Core:DataTriggerBehavior>
+                        </Interactivity:Interaction.Behaviors>
+                    </Image>
+                </Button>
+            </Grid>
+            <!-- Position Counter -->
+            <Grid Grid.RowSpan="4"
+                  Background="#80000000"
+                  Visibility="{Binding Encoding, Converter={StaticResource BoolVisibilityConverter}}">
+                <StackPanel Orientation="Vertical"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Stretch">
 
-                <ProgressBar VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="20"
-                             Maximum="100" Minimum="0" Value="{Binding EncodingProgress}"/>
-                <StackPanel Orientation="Horizontal" Margin="20, 10" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding EncodingProgress}" Foreground="White"/>
-                    <TextBlock Text="%" Foreground="White" Margin="5,0,0,0"/>
+                    <ProgressBar VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="20"
+                                 Maximum="100" Minimum="0" Value="{Binding EncodingProgress}"/>
+                    <StackPanel Orientation="Horizontal" Margin="20, 10" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding EncodingProgress}" Foreground="White"/>
+                        <TextBlock Text="%" Foreground="White" Margin="5,0,0,0"/>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
+            </Grid>
+        </Grid>
+        <Grid Visibility="{Binding Error.HasError, Converter={StaticResource BoolVisibilityConverter}}" Background="#A0FFFFFF">
+            <TextBlock FontSize="8" Text="{Binding Error.Message}" Margin="20" HorizontalAlignment="Stretch" TextWrapping="Wrap"/>
         </Grid>
     </Grid>
 </UserControl>

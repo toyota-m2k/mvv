@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.Graphics.Imaging;
 using Windows.Media.Core;
 using Windows.Media.Editing;
 using Windows.Media.MediaProperties;
@@ -108,10 +109,10 @@ namespace wvv
         /**
          * 動画のサイズ
          */
-        private Size VideoSize
+        public Size VideoSize
         {
             get { return mVideoSize; }
-            set
+            private set
             {
                 if (mVideoSize != value)
                 {
@@ -268,6 +269,9 @@ namespace wvv
         }
         private int mEncodingProgress = 0;
 
+
+        public WvvError Error { get; private set; } = new WvvError();
+
         #endregion
 
         #region Public Properties
@@ -312,6 +316,7 @@ namespace wvv
             Ready = false;
 
             //
+            Error.Reset();
             mPlayer.Source = null;
             mPreviewing = false;
             mTrimmingSlider.Reset();
@@ -328,18 +333,7 @@ namespace wvv
                 {
                     TotalRange = loader.TotalRange;
                     VideoSize = loader.VideoSize;
-#if false
-                    if (await WvvFrameExtractor.ExtractAsync(40, 30, mPlayer, this, (s, index, image) =>
-                     {
-                         Debug.WriteLine("Frame Extracted : {0}", index);
-                         Frames.Add(image);
-                     })) {
-                        Debug.WriteLine("Frame Extracted : Finalized.");
-                        Ready = true;
-                        var clip = await MediaClip.CreateFromFileAsync(source);
-                        mComposition.Clips.Add(clip);
-                    }
-#else
+
                     try
                     {
                         var clip = await MediaClip.CreateFromFileAsync(source);
@@ -363,26 +357,14 @@ namespace wvv
                     catch (Exception e)
                     {
                         CmLog.error(e, "WvvTrimmingView.LoadMediaSource: Error");
+                        Error.SetError(e);
+                        
                     }
-
-                        //if (await WvvFrameExtractor2.ExtractAsync(40, 30, clip, (s, index, image) =>
-                        //   {
-                        //       Debug.WriteLine("Frame Extracted : {0}", index);
-                        //       Frames.Add(image);
-                        //   }))
-                        //{
-                        //    Ready = true;
-                        //    mComposition.Clips.Add(clip);
-                        //    mFrameListView.ShowCurrentTick = showTick;
-                        //}
-                        //else
-                        //{
-                        //    // Error!
-                        //    // what can i do?
-                        //}
-#endif
-
-                    }
+                }
+                else // not opened.
+                {
+                    Error.CopyFrom(loader.Error);
+                }
             }
         }
 
@@ -408,6 +390,7 @@ namespace wvv
 
             mPlayer = new MediaPlayer();
             mPlayer.PlaybackSession.PlaybackStateChanged += PBS_StateChanged;
+            mPlayer.MediaFailed += MB_Failed;
             mPlayerElement.SetMediaPlayer(mPlayer);
 
             if (null!=mSource)
@@ -429,6 +412,7 @@ namespace wvv
             mPlayerElement.SetMediaPlayer(null);
             mPlayer.Pause();
             mPlayer.PlaybackSession.PlaybackStateChanged -= PBS_StateChanged;
+            mPlayer.MediaFailed -= MB_Failed;
             mPlayer.Dispose();
             mPlayer = null;
         }
@@ -441,6 +425,7 @@ namespace wvv
         {
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
             {
+                CmLog.debug("WvvTrimmingView:PlaybackState = {0}", session.PlaybackState.ToString());
                 switch (session.PlaybackState)
                 {
                     case MediaPlaybackState.None:
@@ -457,7 +442,27 @@ namespace wvv
             });
         }
 
-#endregion
+        private async void MB_Failed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
+        {
+            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            {
+                CmLog.debug("WvvTrimmingView.MB_Failed: MediaFailed");
+                if (null != args.ErrorMessage && args.ErrorMessage.Length > 0)
+                {
+                    CmLog.debug(args.ErrorMessage);
+                    Error.SetError(args.ErrorMessage);
+                }
+                if (null != args.ExtendedErrorCode)
+                {
+                    CmLog.error(args.ExtendedErrorCode.Message);
+                    Error.SetError(args.ExtendedErrorCode);
+                }
+            });
+        }
+
+
+
+        #endregion
 
         #region Public Methods
 
@@ -482,42 +487,11 @@ namespace wvv
         private IAsyncOperationWithProgress<TranscodeFailureReason, double> mTrimmingTask;
 
         /**
-         * トリミング結果をファイルに保存（コールバック版）
-         */
-        public void SaveAs(StorageFile toFile, TrimmingCompleted completed)
-        {
-            if(mComposition.Clips.Count==0)
-            {
-                completed(this, false);
-                return;
-            }
-
-            IsPlaying = false;
-            Encoding = true;
-            mTrimmingTask = mComposition.RenderToFileAsync(toFile, MediaTrimmingPreference.Precise, MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD720p));
-            mTrimmingTask.Progress = async (ai, pi) =>
-            {
-                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-                {
-                    EncodingProgress = (int)Math.Ceiling(pi);
-                });
-            };
-            mTrimmingTask.Completed = async (info, status) =>
-            {
-                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-                {
-                    completed(this, status== AsyncStatus.Completed);
-                    Encoding = false;
-                });
-            };
-        }
-
-        /**
          * トリミング結果をファイルに保存（Async版）
          */
         public async Task<bool> SaveAsAsync(StorageFile toFile)
         {
-            if (mComposition.Clips.Count == 0)
+            if (mComposition.Clips.Count == 0 || Error.HasError)
             {
                 return false;
             }
@@ -527,7 +501,11 @@ namespace wvv
             Encoding = true;
             try
             {
-                mTrimmingTask = mComposition.RenderToFileAsync(toFile, MediaTrimmingPreference.Precise, MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD720p));
+                mComposition.Clips[0].TrimTimeFromStart = TimeSpan.FromMilliseconds(mTrimmingSlider.TrimStart);
+                mComposition.Clips[0].TrimTimeFromEnd = TimeSpan.FromMilliseconds(mTrimmingSlider.TrimEnd);
+
+                var props = getFeelSoGoodEncodingProperty();
+                mTrimmingTask = mComposition.RenderToFileAsync(toFile, MediaTrimmingPreference.Precise, props);
                 mTrimmingTask.Progress = async (ai, pi) =>
                 {
                     await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
@@ -536,21 +514,14 @@ namespace wvv
                     });
                 };
 
-                //mTrimmingTask.Completed = async (info, status) =>
-                //{
-                //    result = status == AsyncStatus.Completed;
-                //    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-                //    {
-                //        Encoding = false;
-                //    });
-                //};
-                //await mTrimmingTask;                  // これだとInvalidOperationExceptionが出る（Completedハンドラを指定しているとawaitできないようだ。
-                //await Task.Run(() => mTrimmingTask);  // これだとちゃんと待たない
-
                 var err = await mTrimmingTask;
                 if(err == TranscodeFailureReason.None)
                 {
                     result = true;
+                }
+                else
+                {
+                    Error.SetError(err.ToString());
                 }
                 mTrimmingTask = null;
                 Encoding = false;
@@ -559,9 +530,31 @@ namespace wvv
             }
             catch (Exception e)
             {
+                Error.SetError(e);
                 Debug.WriteLine(e);
                 return false;
             }
+        }
+
+        /**
+         * トリミング後のビデオファイルのサムネイルを取得する
+         * トリミング用に作ったMediaClip を流用するので、トリミングとサムネイル作成を別々にやるより少しお得。
+         */
+        public IAsyncOperation<ImageStream> GetThumbnailOfTrimmedVideo()
+        {
+            mComposition.Clips[0].TrimTimeFromStart = TimeSpan.FromMilliseconds(mTrimmingSlider.TrimStart);
+            mComposition.Clips[0].TrimTimeFromEnd = TimeSpan.FromMilliseconds(mTrimmingSlider.TrimEnd);
+
+            var props = getFeelSoGoodEncodingProperty();
+            return mComposition.GetThumbnailAsync(TimeSpan.FromMilliseconds(0), 0, (int)props.Video.Height, VideoFramePrecision.NearestFrame);
+        }
+
+        /**
+         * 現在のClipに対して、いい感じのEncodingPropertyを取得する。
+         */
+        private MediaEncodingProfile getFeelSoGoodEncodingProperty()
+        {
+            return WvvTranscoder.SetFeelGoodSizeToEncodingProfileForHD720(mComposition.Clips[0], MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD720p));
         }
 
         #endregion
@@ -628,6 +621,7 @@ namespace wvv
                 CmLog.error(e, "WvvTrimmingView.startPreview: Error");
                 mPlayer.Pause();
                 mPreviewing = false;
+                Error.SetError(e);
             }
 
         }

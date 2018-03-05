@@ -6,6 +6,7 @@ using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using wvv.utils;
 
 // ユーザー コントロールの項目テンプレートについては、https://go.microsoft.com/fwlink/?LinkId=234236 を参照してください
 
@@ -141,7 +142,9 @@ namespace wvv
                 }
                 else
                 {
-                    throw new ArgumentException("invalid source type.");
+                    var err = new ArgumentException("invalid source type.");
+                    Error.SetError(err);
+                    throw err;
                 }
             }
         }
@@ -317,23 +320,11 @@ namespace wvv
         }
 
         /**
-         * 動画ロード中フラグ（ぐるぐる表示用）
+         * エラー
          */
-        private bool mMovieError = false;
-        public bool MovieError
-        {
-            get { return mMovieError; }
-            set
-            {
-                if (value != mMovieError)
-                {
-                    mMovieError= value;
-                    notify("MovieError");
-                }
-            }
-        }
+        public WvvError Error { get; } = new WvvError();
 
-        public bool AutoStart { get; set; } = true;
+        public bool AutoStart { get; set; } = false;
 
         #endregion
 
@@ -370,6 +361,7 @@ namespace wvv
             Player.IsVideoFrameServerEnabled = false;
             Session.PlaybackStateChanged += PBS_PlaybackStateChanged;
             mFullWindowListenerToken = mPlayerElement.RegisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, MPE_FullWindowChanged);
+            mInternalPlayer.MediaFailed += MB_Failed;
 
             if (null != mTempSource)
             {
@@ -384,6 +376,7 @@ namespace wvv
         {
             Session.PlaybackStateChanged -= PBS_PlaybackStateChanged;
             mPlayerElement.UnregisterPropertyChangedCallback(MediaPlayerElement.IsFullWindowProperty, mFullWindowListenerToken);
+            mInternalPlayer.MediaFailed -= MB_Failed;
             mPlayerElement.SetMediaPlayer(null);
             Reset();
         }
@@ -453,6 +446,25 @@ namespace wvv
                 }
             });
         }
+
+        private async void MB_Failed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
+        {
+            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            {
+                CmLog.debug("WvvVideoPlayer.MB_Failed: MediaFailed");
+                if (null != args.ErrorMessage && args.ErrorMessage.Length > 0)
+                {
+                    CmLog.debug(args.ErrorMessage);
+                    Error.SetError(args.ErrorMessage);
+                }
+                if (null != args.ExtendedErrorCode)
+                {
+                    CmLog.error(args.ExtendedErrorCode.Message);
+                    Error.SetError(args.ExtendedErrorCode);
+                }
+            });
+        }
+
 
         /**
          * プレーヤー上のタップ（再生・停止のトグル）
@@ -539,7 +551,7 @@ namespace wvv
                 mInternalPlayer.Pause();
                 mInternalPlayer.Source = null;
             }
-            MovieError = false;
+            Error.Reset();
             PlayerState = PlayerState.NONE;
         }
 
@@ -567,7 +579,7 @@ namespace wvv
             }
             else
             {
-                MovieError = true;
+                Error.CopyFrom(loader.Error);
             }
             MovieLoading = false;
         }

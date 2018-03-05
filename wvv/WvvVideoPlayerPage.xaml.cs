@@ -76,17 +76,10 @@ namespace wvv
             {
                 mTempFolder = await WvvTempFolder.Create("trimming");
             }
-            mTrimmingView.SaveAs((await mTempFolder.CreateTempFile("m", ".mp4")).File, (trimmer, succeeded) =>
+            if(!await mTrimmingView.SaveAsAsync((await mTempFolder.CreateTempFile("m", ".mp4")).File))
             {
-                if(succeeded)
-                {
-                    Debug.WriteLine("Encoded successfully.");
-                }
-                else
-                {
-                    Debug.WriteLine("Encoding error.");
-                }
-            });
+                Debug.WriteLine("Encoding error.");
+            }
         }
 
         private void Open_URL(object sender, RoutedEventArgs e)

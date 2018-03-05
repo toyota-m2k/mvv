@@ -28,12 +28,15 @@
     <BitmapImage x:Key="TrimRightIcon" UriSource="Assets/rsel.png"/>
 
     <!-- Color -->
-    <SolidColorBrush x:Key="ButtonFaceColor" Color="LightGray"/>
+    <SolidColorBrush x:Key="ButtonFaceColor" Color="#00000000"/>
     <SolidColorBrush x:Key="ButtonTextColor" Color="Black"/>
-    <SolidColorBrush x:Key="ButtonBorderColor" Color="LightGray"/>
+    <SolidColorBrush x:Key="ButtonBorderColor" Color="#00000000"/>
     <SolidColorBrush x:Key="PanelColor" Color="#FF343434"/>
     <SolidColorBrush x:Key="PanelTextColor" Color="#FFFFFFFF"/>
     <SolidColorBrush x:Key="ProgresBgColor" Color="#90000000"/>
+    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="LightGray"/>
+    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="DarkGray"/>
+    <SolidColorBrush x:Key="PanelLightColor" Color="LightGray"/>
 
     <!-- Icon Button Style -->
     <Style x:Key="CtrlButtonStyle" TargetType="Button">
@@ -63,10 +66,10 @@
                                 <VisualState x:Name="PointerOver">
                                     <Storyboard>
                                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="Background">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonBackgroundPointerOver}"/>
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource ButtonBackgroundPointerOver}"/>
                                         </ObjectAnimationUsingKeyFrames>
                                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="BorderBrush">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource ButtonBorderBrushPointerOver}"/>
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource ButtonBorderBrushPointerOver}"/>
                                         </ObjectAnimationUsingKeyFrames>
                                         <PointerUpThemeAnimation Storyboard.TargetName="RootGrid"/>
                                     </Storyboard>

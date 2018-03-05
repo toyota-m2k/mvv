@@ -40,5 +40,11 @@
                 Width="{Binding PlayerSize.Width}"
                 Height="{Binding PlayerSize.Height}"/>
         </Grid>
+        <Grid
+            Visibility="{Binding Error.HasError, Converter={StaticResource BoolVisibilityConverter}}"
+            Background="#A0FFFFFF"
+            Width="{Binding PlayerSize.Width}">
+            <TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" Margin="20" TextWrapping="Wrap" Text="{Binding Error.Message}"/>
+        </Grid>
     </Grid>
 </UserControl>

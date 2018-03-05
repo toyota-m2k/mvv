@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.Graphics.Imaging;
+using Windows.Media.Editing;
 using Windows.Media.MediaProperties;
 using Windows.Media.Transcoding;
 using Windows.Storage;
@@ -20,9 +22,62 @@ namespace wvv
             WMV
         }
 
+        /**
+         * ソース動画ファイルのサイズにあわせて、EncodingProfileに、いい感じのサイズを設定する(HD720用）
+         */
+        public static MediaEncodingProfile SetFeelGoodSizeToEncodingProfileForHD720(MediaClip clip, MediaEncodingProfile profile)
+        {
+            // 動画のサイズ情報取得
+            var prop = clip.GetVideoEncodingProperties();
+            double width = prop.Width, height = prop.Height;
+            double numerator = prop.PixelAspectRatio.Numerator, denominator = prop.PixelAspectRatio.Denominator;
+
+            // PixelAspectRatio の考慮
+            if ((numerator != 1 || denominator != 1) && numerator != 0 && denominator != 0)
+            {
+                width = width * numerator / denominator;
+            }
+
+            // - 短いほうの辺の長さが、720以下となり、かつ、
+            // - 長いほうの辺の長さが、1280以下となるように、縮小。（拡大はしない）
+            double r;
+            if (width > height)
+            {
+                // 横長
+                r = Math.Min(1280.0 / width, 720.0 / height);
+            }
+            else
+            {
+                // 縦長
+                r = Math.Min(720.0 / width, 1280.0 / height);
+            }
+            if (r > 1)
+            {
+                r = 1;  // 拡大はしない
+            }
+            profile.Video.Width = (uint)Math.Round(width * r);
+            profile.Video.Height = (uint)Math.Round(height * r);
+            return profile;
+        }
+
+        /**
+         * HD720用に、EncodingProfileのサイズをいい感じにする。
+         */
+        public async Task MakeFeelGoodProfileForHD720(StorageFile inputFile)
+        {
+            var clip = await MediaClip.CreateFromFileAsync(inputFile);
+            SetFeelGoodSizeToEncodingProfileForHD720(clip, mProfile);
+        }
+
+
         public object ClientData { get; set; }
 
         private MediaEncodingProfile mProfile;
+
+        public Size VideoSize
+        {
+            get => new Size(mProfile.Video.Width, mProfile.Video.Height);
+        }
 
         public Format OutputFormat { get; private set; }
 
