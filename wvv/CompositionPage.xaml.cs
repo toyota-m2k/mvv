@@ -60,6 +60,10 @@ namespace wvv
             Frame.Navigate(typeof(FrameSelectionPage));
         }
 
+        private void GridView_Click(object sender, RoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(GridViewPage));
+        }
 
         private async void OnAddClip(object sender, TappedRoutedEventArgs e)
         {

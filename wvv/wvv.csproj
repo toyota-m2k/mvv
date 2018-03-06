@@ -92,6 +92,15 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="GridViewPage.xaml.cs">
+      <DependentUpon>GridViewPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="work\MfFileListModeView.xaml.cs">
+      <DependentUpon>MfFileListModeView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="work\MfFileListView.xaml.cs">
+      <DependentUpon>MfFileListView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WvvError.cs" />
     <Compile Include="CompositionPage.xaml.cs">
       <DependentUpon>CompositionPage.xaml</DependentUpon>
@@ -205,6 +214,18 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="FrameSelectionPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="GridViewPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="work\MfFileListModeView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="work\MfFileListView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

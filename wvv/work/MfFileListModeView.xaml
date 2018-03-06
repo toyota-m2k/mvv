@@ -1,0 +1,40 @@
+﻿<UserControl
+    x:Class="wvv.work.MfFileListModeView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:wvv.work"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="500"
+    d:DesignWidth="400">
+    <UserControl.Resources>
+        <ResourceDictionary Source="../WvvResources.xaml"/>
+    </UserControl.Resources>
+
+    <StackPanel Orientation="Vertical">
+        <TextBlock Text="表示順" Margin="10,0"/>
+        <Border Background="White" BorderBrush="LightGray" BorderThickness="1" Padding="10,5" Margin="10,2,10,0" CornerRadius="3">
+            <StackPanel Orientation="Vertical">
+                <StackPanel.Resources>
+                    <local:MfOrderByConverter x:Key="MfOrderByConverter"/>
+
+                </StackPanel.Resources>
+                <RadioButton Content="作成日時" HorizontalAlignment="Stretch" IsChecked="{Binding OrderBy, Converter={StaticResource MfOrderByConverter}, ConverterParameter=CreationDate, Mode=TwoWay}" GroupName="OrderByGroup"/>
+                <RadioButton Content="登録日時" HorizontalAlignment="Stretch" IsChecked="{Binding OrderBy, Converter={StaticResource MfOrderByConverter}, ConverterParameter=RegistrationDate, Mode=TwoWay}" GroupName="OrderByGroup"/>
+                <RadioButton Content="再生時間" HorizontalAlignment="Stretch" IsChecked="{Binding OrderBy, Converter={StaticResource MfOrderByConverter}, ConverterParameter=Duration, Mode=TwoWay}" GroupName="OrderByGroup"/>
+                <RadioButton Content="サイズ" HorizontalAlignment="Stretch" IsChecked="{Binding OrderBy, Converter={StaticResource MfOrderByConverter}, ConverterParameter=Size, Mode=TwoWay}" GroupName="OrderByGroup"/>
+            </StackPanel>
+        </Border>
+        <Border Background="White"  BorderBrush="LightGray" BorderThickness="1" Padding="10,5" Margin="10,5,10,0" CornerRadius="3">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                <RadioButton Grid.Column="0" Content="降順" HorizontalAlignment="Stretch" Margin="0,0,10,0" IsChecked="{Binding Ascendant, Converter={StaticResource NegBoolConverter}, Mode=TwoWay}" GroupName="AscDscGroup"/>
+                <RadioButton Grid.Column="1" Content="昇順" HorizontalAlignment="Stretch" IsChecked="{Binding Ascendant, Mode=TwoWay}" GroupName="AscDscGroup"/>
+            </Grid>
+        </Border>
+    </StackPanel>
+</UserControl>

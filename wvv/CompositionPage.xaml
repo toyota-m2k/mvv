@@ -25,6 +25,7 @@
             <Button Margin="4" Content="Player Page" Tapped="OnPlayerPage"/>
             <Button Margin="4" Content="VideoPlayer Page" Tapped="OnVideoPlayer"/>
             <Button Margin="4" Content="Frame Selector" Click="FrameSelector_Click"/>
+            <Button Margin="4" Content="GridView Test" Click="GridView_Click"/>
         </StackPanel>
 
         <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">

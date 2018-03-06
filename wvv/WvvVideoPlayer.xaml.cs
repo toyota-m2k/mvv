@@ -409,7 +409,7 @@ namespace wvv
          */
         public void Dispose()
         {
-            if(null!=mInternalPlayer)
+            if (null != mInternalPlayer)
             {
                 mInternalPlayer.Pause();
                 mInternalPlayer.Source = null;
@@ -417,12 +417,12 @@ namespace wvv
                 mInternalPlayer.Dispose();
                 mInternalPlayer = null;
             }
-                if (null != mCache)
-                {
-                    mCache.Release();
-                    mCache = null;
-                }
+            if (null != mCache)
+            {
+                mCache.Release();
+                mCache = null;
             }
+        }
 
 
         /**
