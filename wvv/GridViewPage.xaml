@@ -19,7 +19,10 @@
 
 
             <work:MfFileListView/>
+            
             <work:MfFileListModeView/>
+
+            <work:MfPlayerView/>
         </StackPanel>
     </Grid>
 </Page>

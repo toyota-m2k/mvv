@@ -6,6 +6,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
+    Loaded="OnLoaded"
+    Unloaded="OnUnloaded"
     d:DesignHeight="500"
     d:DesignWidth="400">
     <UserControl.Resources>
@@ -32,8 +34,10 @@
                     <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
-                <RadioButton Grid.Column="0" Content="降順" HorizontalAlignment="Stretch" Margin="0,0,10,0" IsChecked="{Binding Ascendant, Converter={StaticResource NegBoolConverter}, Mode=TwoWay}" GroupName="AscDscGroup"/>
-                <RadioButton Grid.Column="1" Content="昇順" HorizontalAlignment="Stretch" IsChecked="{Binding Ascendant, Mode=TwoWay}" GroupName="AscDscGroup"/>
+                <RadioButton Grid.Column="0" Content="新しい順" HorizontalAlignment="Stretch" Margin="0,0,10,0" IsChecked="{Binding Ascendant, Converter={StaticResource NegBoolConverter}, Mode=TwoWay}" GroupName="AscDscGroup" Visibility="{Binding IsOrderByDate, Converter={StaticResource BoolVisibilityConverter}}"/>
+                <RadioButton Grid.Column="1" Content="古い順" HorizontalAlignment="Stretch" IsChecked="{Binding Ascendant, Mode=TwoWay}" GroupName="AscDscGroup" Visibility="{Binding IsOrderByDate, Converter={StaticResource BoolVisibilityConverter}}"/>
+                <RadioButton Grid.Column="0" Content="大きい順" HorizontalAlignment="Stretch" Margin="0,0,10,0" IsChecked="{Binding Ascendant, Converter={StaticResource NegBoolConverter}, Mode=TwoWay}" GroupName="AscDscGroup2" Visibility="{Binding IsOrderByDate, Converter={StaticResource NegBoolVisibilityConverter}}"/>
+                <RadioButton Grid.Column="1" Content="小さい順" HorizontalAlignment="Stretch" IsChecked="{Binding Ascendant, Mode=TwoWay}" GroupName="AscDscGroup2" Visibility="{Binding IsOrderByDate, Converter={StaticResource NegBoolVisibilityConverter}}"/>
             </Grid>
         </Border>
     </StackPanel>

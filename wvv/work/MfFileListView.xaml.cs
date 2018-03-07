@@ -102,7 +102,7 @@ namespace wvv.work
             set => setProp(mPersonalConsumedPropNames, ref mPersonalConsumed, value);
         }
 
-        private string formatComsumedString(int consumedInMB)
+        public static string formatComsumedString(int consumedInMB)
         {
             if (consumedInMB < 1024 * 10)
             {
@@ -253,6 +253,7 @@ namespace wvv.work
         public ImageSource Thumbnail => null;
 
         public bool Ready { get => false; }
+
     }
 
     #endregion
@@ -262,7 +263,7 @@ namespace wvv.work
     /**
      * グリッドビューのアイテム
      */
-    class MfFileInfo : IMfFileInfo
+    public class MfFileInfo : IMfFileInfo
     {
         public string Label { get; private set; }
 
@@ -271,6 +272,21 @@ namespace wvv.work
         public ImageSource Thumbnail { get; private set; }
 
         public bool Ready { get => true; }
+
+        public int Size { get; private set; }   // file size in MB
+
+
+        public DateTimeOffset RegistrationDate;
+        public DateTimeOffset CreationDate;
+
+        private string formatDate(DateTimeOffset date)
+        {
+            return date.ToLocalTime().ToString();
+        }
+
+        public string SizeText => MfFileListView.formatComsumedString(Size);
+        public string RegistrationDateText => formatDate(RegistrationDate);
+        public string CreationDateText => formatDate(CreationDate);
 
         public static int sCount = 0;
         public MfFileInfo()

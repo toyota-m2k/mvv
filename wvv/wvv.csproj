@@ -101,6 +101,9 @@
     <Compile Include="work\MfFileListView.xaml.cs">
       <DependentUpon>MfFileListView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="work\MfPlayerView.xaml.cs">
+      <DependentUpon>MfPlayerView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WvvError.cs" />
     <Compile Include="CompositionPage.xaml.cs">
       <DependentUpon>CompositionPage.xaml</DependentUpon>
@@ -226,6 +229,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="work\MfFileListView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="work\MfPlayerView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

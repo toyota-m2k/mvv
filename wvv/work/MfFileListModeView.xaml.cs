@@ -137,5 +137,15 @@ namespace wvv.work
         {
             get => OrderBy == MfOrderBy.CreationDate || OrderBy == MfOrderBy.RegistrationDate;
         }
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
