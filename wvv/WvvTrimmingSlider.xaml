@@ -29,7 +29,7 @@
             Visibility="{Binding ShowTrimmingKnob, Converter={StaticResource BoolVisibilityConverter}}">
             <Grid x:Name="mLKnob" 
                     Canvas.Left="-21"
-                    Canvas.Top="20"
+                    Canvas.Top="23"
                     Background="Transparent" 
                     PointerPressed="OnLKnobPressed"
                     PointerMoved="OnKnobMoved"
@@ -47,7 +47,7 @@
             Visibility="{Binding ShowTrimmingKnob, Converter={StaticResource BoolVisibilityConverter}}">
 
             <Grid x:Name="mRKnob" 
-                    Canvas.Top="20"
+                    Canvas.Top="23"
                     Background="Transparent"
                     PointerPressed="OnRKnobPressed"
                     PointerMoved="OnKnobMoved"
@@ -66,11 +66,11 @@
                 <ColumnDefinition Width="{Binding MWidth, Converter={StaticResource GridLengthConverter}}"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Rectangle Grid.ColumnSpan="2" Margin="0,0" Fill="#FF00A5F1" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Center"/>
-            <Rectangle Grid.Column="0" Margin="0,0" Fill="Gray" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Center"/>
+            <Rectangle Grid.ColumnSpan="2" Margin="0,0" Fill="#FF00A5F1" HorizontalAlignment="Stretch" Height="4" VerticalAlignment="Center"/>
+            <Rectangle Grid.Column="0" Margin="0,0" Fill="Gray" HorizontalAlignment="Stretch" Height="4" VerticalAlignment="Center"/>
 
             <Canvas Grid.Column="1" Width="0" HorizontalAlignment="Left">
-                <Grid x:Name="mThumb" Canvas.Left="-7" HorizontalAlignment="Center" 
+                <Grid x:Name="mThumb" Canvas.Left="-7" Canvas.Top="3" HorizontalAlignment="Center" 
                       Background="Transparent"
                       PointerPressed="OnThumbPressed"
                       PointerMoved="OnKnobMoved"
