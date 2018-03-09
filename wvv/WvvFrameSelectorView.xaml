@@ -5,15 +5,19 @@
     xmlns:local="using:wvv"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Interactivity="using:Microsoft.Xaml.Interactivity" 
+    xmlns:Core="using:Microsoft.Xaml.Interactions.Core" 
     mc:Ignorable="d"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded"
     d:DesignHeight="300"
     d:DesignWidth="400">
+    <UserControl.Resources>
+        <Color x:Key="FocusBorderColor">Gray</Color>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -28,25 +32,74 @@
                 />
         </Grid>
 
-        <Grid Grid.Row="1" Margin="-25,10,-25,0">
-            <local:WvvTrimmingSlider
-                x:Name="mTrimmingSlider"
-                ShowTrimmingKnob="False"
-                CurrentPositionChanged="OnCurrentPositionChanged"
-                TappedOnSlider="OnSliderTapped"
-                IsEnabled="{Binding Path=IsEnabled, ElementName=mReadyDummy}"
-                />
-        </Grid>
-        <Grid Grid.Row="2"
-              Tapped="OnFrameListTapped"
-              Margin="0,-16,0,0">
-            <local:WvvFrameListView
-                x:Name="mFrameListView"
-                ShowCurrentTick="True"
-                IsEnabled="{Binding Path=IsEnabled, ElementName=mReadyDummy}"
-                />
-        </Grid>
+        <UserControl
+            Margin="0,4,0,0"
+            x:Name="mSliderPanel"
+            Grid.Row="1"
+            IsTabStop="True"
+            GotFocus="OnSliderGotFocus"
+            LostFocus="OnSliderLostFoucus"
+            KeyDown="OnSliderKeyDown"
+            Tapped="OnSliderTapped"
+            Opacity="0.4"
+            IsEnabled="{Binding Ready}"
+            >
+            <Interactivity:Interaction.Behaviors>
+                <Core:DataTriggerBehavior Binding="{Binding Path=IsEnabled, ElementName=mSliderPanel}" Value="True">
+                    <Core:ChangePropertyAction PropertyName="Opacity" Value="1"/>
+                </Core:DataTriggerBehavior>
+                <Core:DataTriggerBehavior Binding="{Binding Path=IsEnabled, ElementName=mSliderPanel}" Value="False">
+                    <Core:ChangePropertyAction PropertyName="Opacity" Value="0.4"/>
+                </Core:DataTriggerBehavior>
+            </Interactivity:Interaction.Behaviors>
 
-        <Button Visibility="Collapsed" IsEnabled="{Binding Ready}" x:Name="mReadyDummy"/>
+            <Grid>
+                <StackPanel>
+                    <local:WvvTrimmingSlider
+                        Margin="-25,0"
+                        x:Name="mTrimmingSlider"
+                        ShowTrimmingKnob="False"
+                        CurrentPositionChanged="OnCurrentPositionChanged"
+                        TappedOnSlider="OnSliderTapped"
+                        IsEnabled="{Binding Path=IsEnabled, ElementName=mReadyDummy}"
+                        />
+                    <Grid
+                        Tapped="OnFrameListTapped"
+                        >
+                        <local:WvvFrameListView
+                            x:Name="mFrameListView"
+                            ShowCurrentTick="True"
+                            IsEnabled="{Binding Path=IsEnabled, ElementName=mReadyDummy}"
+                            />
+                    </Grid>
+                    <Button Visibility="Collapsed" IsEnabled="{Binding Ready}" x:Name="mReadyDummy"/>
+                </StackPanel>
+
+                <!-- Focus Border -->
+                <Rectangle x:Name="mFocusBorder" StrokeThickness="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="-10,-2" Opacity="0">
+                    <Rectangle.Stroke>
+                        <SolidColorBrush Color="{StaticResource FocusBorderColor}" Opacity="1" x:Name="mBorderBrush"/>
+                    </Rectangle.Stroke>
+                </Rectangle>
+
+
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="FocusStates" >
+                    <VisualState x:Name="Focused">
+                        <Storyboard>
+                            <DoubleAnimation 
+                                Storyboard.TargetName="mFocusBorder"
+                                Storyboard.TargetProperty="Opacity"
+                                Duration="0:0:0.2"
+                                To="1"/>
+                            <!--<ColorAnimation Storyboard.TargetName="mBorderBrush" Storyboard.TargetProperty="Color" To="Red" Duration="0"/>-->
+                        </Storyboard>
+                    </VisualState>
+                    <VisualState x:Name="Unfocused"/>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
+            </Grid>
+
+        </UserControl>
     </Grid>
 </UserControl>

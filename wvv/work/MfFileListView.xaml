@@ -20,63 +20,134 @@
             <x:Double x:Key="CellWidth">160</x:Double>
             <x:Double x:Key="CellHeight">160</x:Double>
             <x:Double x:Key="ThumbnailMaxHeight">140</x:Double> <!-- CellHeight - 20 -->
+            <SolidColorBrush x:Key="SelectColor" Color="#0D9FBE"/>
+            <SolidColorBrush x:Key="SelectHoverColor" Color="#800D9FBE"/>
+            <SolidColorBrush x:Key="SelectPressColor" Color="#b00D9FBE"/>
+            <SolidColorBrush x:Key="HoverColor" Color="#e0e0e0"/>
+            <SolidColorBrush x:Key="PressColor" Color="#c8c8c8"/>
+
+            <Color x:Key="GridBorderColor">#c8c8c8"</Color>
+            <Color x:Key="GridBorderFocusColor">#b0b0b0"</Color>
+
         </Grid.Resources>
         <StackPanel Orientation="Vertical">
-            <GridView
-                HorizontalAlignment="Stretch" Height="502" Width="500" Background="White"
-                ItemsSource="{Binding FileList}" 
-                ScrollViewer.HorizontalScrollMode="{Binding Settings.HorizScrollMode}"
-                ScrollViewer.VerticalScrollMode="{Binding Settings.VertScrollMode}"
-                ScrollViewer.HorizontalScrollBarVisibility="{Binding Settings.HorzScrollBarVisibility}"
-                ScrollViewer.VerticalScrollBarVisibility="{Binding Settings.VertScrollBarVisibility}"
-                ScrollViewer.IsHorizontalRailEnabled="True"
-                ScrollViewer.IsVerticalRailEnabled="True"
-                IsItemClickEnabled="True"
-                ItemClick="OnItemClicked"
-                >
-                <GridView.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <ItemsWrapGrid Orientation="{Binding Settings.Orientation}"/>
-                    </ItemsPanelTemplate>
-                </GridView.ItemsPanel>
+            <Border BorderThickness="1" Padding="5">
+                <Border.BorderBrush>
+                    <SolidColorBrush x:Name="GridBorderBrush" Color="Red"/>
+                </Border.BorderBrush>
+                <GridView
+                    HorizontalAlignment="Stretch" Height="502" Width="500" Background="White"
+                    ItemsSource="{Binding FileList}" 
+                    ScrollViewer.HorizontalScrollMode="{Binding Settings.HorizScrollMode}"
+                    ScrollViewer.VerticalScrollMode="{Binding Settings.VertScrollMode}"
+                    ScrollViewer.HorizontalScrollBarVisibility="{Binding Settings.HorzScrollBarVisibility}"
+                    ScrollViewer.VerticalScrollBarVisibility="{Binding Settings.VertScrollBarVisibility}"
+                    ScrollViewer.IsHorizontalRailEnabled="True"
+                    ScrollViewer.IsVerticalRailEnabled="True"
+                    IsItemClickEnabled="True"
+                    ItemClick="OnItemClicked"
+                    IsTabStop="True"
+                    >
+                    <VisualStateManager.VisualStateGroups>
+                        <VisualStateGroup x:Name="FocusStates" >
+                            <VisualState x:Name="Focused">
+                                <Storyboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="GridBorderBrush" Storyboard.TargetProperty="Color" To="Green" Duration="0:0:0.5"/>
+                                    </Storyboard>
+                                </Storyboard>
+                            </VisualState>
+                            <VisualState x:Name="Unfocused"/>
+                        </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
 
-                <GridView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Width="{StaticResource CellWidth}" Height="{StaticResource CellHeight}">
-                            <Grid VerticalAlignment="Center" Visibility="{Binding Ready, Converter={StaticResource BoolVisibilityConverter}}">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <Grid Grid.Row="1">
-                                    <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Background="Blue">
-                                        <!-- Movie Thumbnail -->
-                                        <Image Source="{Binding Thumbnail}" Stretch="Uniform" MaxWidth="{StaticResource CellWidth}" MaxHeight="{StaticResource ThumbnailMaxHeight}"/>
-                                        <!--<Grid Width="90" Height="140"/>-->
+                    <GridView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <ItemsWrapGrid Orientation="{Binding Settings.Orientation}"/>
+                        </ItemsPanelTemplate>
+                    </GridView.ItemsPanel>
 
-                                        <!-- Movie Duration -->
-                                        <Grid HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="#a0606060" Padding="4,0">
-                                            <TextBlock Grid.Row="1" Text="{Binding DurationText}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Foreground="White"/>
+                    <GridView.ItemContainerStyle>
+                        <Style TargetType="GridViewItem">
+                            <Setter Property="FontFamily" Value="{ThemeResource ContentControlThemeFontFamily}" />
+                            <Setter Property="FontSize" Value="{ThemeResource ControlContentThemeFontSize}" />
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                            <Setter Property="TabNavigation" Value="Local"/>
+                            <Setter Property="IsHoldingEnabled" Value="True"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="0,0,4,4"/>
+                            <Setter Property="MinWidth" Value="{ThemeResource GridViewItemMinWidth}"/>
+                            <Setter Property="MinHeight" Value="{ThemeResource GridViewItemMinHeight}"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="GridViewItem">
+                                        <ListViewItemPresenter
+                                            CheckBrush="{ThemeResource SystemControlForegroundBaseMediumHighBrush}"
+                                            CheckBoxBrush="{ThemeResource SystemControlBackgroundChromeMediumBrush}"
+                                            DragBackground="{ThemeResource ListViewItemDragBackgroundThemeBrush}"
+                                            DragForeground="{ThemeResource ListViewItemDragForegroundThemeBrush}"
+                                            FocusBorderBrush="Red"
+                                            FocusSecondaryBorderBrush="Blue"
+                                            PlaceholderBackground="{ThemeResource ListViewItemPlaceholderBackgroundThemeBrush}"
+                                            PointerOverBackground="{StaticResource HoverColor}"
+                                            PointerOverForeground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                            SelectedBackground="{StaticResource SelectColor}"
+                                            SelectedForeground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                            SelectedPointerOverBackground="{StaticResource SelectHoverColor}"
+                                            PressedBackground="{StaticResource PressColor}"
+                                            SelectedPressedBackground="{StaticResource SelectPressColor}"
+                                            DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}"
+                                            DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}"
+                                            ReorderHintOffset="{ThemeResource GridViewItemReorderHintThemeOffset}"
+                                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                            ContentMargin="{TemplateBinding Padding}"
+                                            CheckMode="Overlay"/>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GridView.ItemContainerStyle>
+                    <GridView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Width="{StaticResource CellWidth}" Height="{StaticResource CellHeight}">
+                                <Grid VerticalAlignment="Center" Visibility="{Binding Ready, Converter={StaticResource BoolVisibilityConverter}}">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="1">
+                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Background="Blue">
+                                            <!-- Movie Thumbnail -->
+                                            <Image Source="{Binding Thumbnail}" Stretch="Uniform" MaxWidth="{StaticResource CellWidth}" MaxHeight="{StaticResource ThumbnailMaxHeight}"/>
+                                            <!--<Grid Width="90" Height="140"/>-->
+
+                                            <!-- Movie Duration -->
+                                            <Grid HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="#a0606060" Padding="4,0">
+                                                <TextBlock Grid.Row="1" Text="{Binding DurationText}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Foreground="White"/>
+                                            </Grid>
                                         </Grid>
                                     </Grid>
+                                    <!-- Label ... Timestamp of Movie file -->
+                                    <Grid Grid.Row="0" Background="#FFFFFFFF" HorizontalAlignment="Center" Padding="4,0">
+                                        <TextBlock Text="{Binding Label}" Foreground="Black"/>
+                                    </Grid>
                                 </Grid>
-                                <!-- Label ... Timestamp of Movie file -->
-                                <Grid Grid.Row="0" Background="#FFFFFFFF" HorizontalAlignment="Center" Padding="4,0">
-                                    <TextBlock Text="{Binding Label}" Foreground="Black"/>
-                                </Grid>
+                                <Border BorderThickness="1" BorderBrush="LightGray" 
+                                        CornerRadius="5"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Width="80" Height="80"
+                                        Visibility="{Binding Ready, Converter={StaticResource NegBoolVisibilityConverter}}">
+                                <ProgressRing IsActive="{Binding Ready, Converter={StaticResource NegBoolConverter}}" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
                             </Grid>
-                            <Border BorderThickness="1" BorderBrush="LightGray" 
-                                    CornerRadius="5"
-                                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Width="80" Height="80"
-                                    Visibility="{Binding Ready, Converter={StaticResource NegBoolVisibilityConverter}}">
-                            <ProgressRing IsActive="{Binding Ready, Converter={StaticResource NegBoolConverter}}" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </Grid>
-                    </DataTemplate>
-                </GridView.ItemTemplate>
+                        </DataTemplate>
+                    </GridView.ItemTemplate>
 
-            </GridView>
+                </GridView>
+            </Border>
             <Button Content="表示設定" Margin="0,4,0,0"/>
 
             <TextBlock Text="使用容量"/>

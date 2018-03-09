@@ -248,5 +248,83 @@ namespace wvv
         }
 
         #endregion
+
+        #region Slider operation by Keyboard
+
+        /**
+         * スライダー上でのキー押下イベント
+         */
+        private void OnSliderKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            CmLog.debug("KeyDown");
+            bool forward = true;
+            switch (e.Key)
+            {
+                case Windows.System.VirtualKey.Left:
+                case Windows.System.VirtualKey.Down:
+                    forward = false;
+                    break;
+                case Windows.System.VirtualKey.Right:
+                case Windows.System.VirtualKey.Up:
+                    break;
+                default:
+                    return; // これら以外のキーは無視
+            }
+            var t = mTrimmingSlider.TotalRange;
+            var d =  t / 100;
+            if(!forward)
+            {
+                d *= -1;
+            }
+            var pos = mTrimmingSlider.CurrentPosition + d;
+            pos = Math.Max(0, Math.Min(t, pos));
+
+            // Slider/Player/FrameList すべてにセット
+            mTrimmingSlider.CurrentPosition = pos;
+            mPlayer.SeekPosition = pos;
+            mFrameListView.TickPosition = pos/t;
+
+            // マウスでフォーカスをセットされたときは、このタイミングでフォーカス枠が表示される。
+            VisualStateManager.GoToState(mSliderPanel, "Focused", false);
+            e.Handled = true;
+
+        }
+
+        /**
+         * スライダー上のタップ
+         * タップされただけではフォーカスはセットされないので、自分でフォーカスをセットしなければならない。
+         */
+        private void OnSliderTapped(object sender, TappedRoutedEventArgs e)
+        {
+            mSliderPanel.Focus(FocusState.Pointer);
+        }
+
+        /**
+         * スライダーがフォーカスを得た
+         * 
+         * キーボード操作でフォーカスを受け取った場合は、VisualStateをFocusedにする。
+         * これも、自分でやらなければならないらしい。
+         */
+        private void OnSliderGotFocus(object sender, RoutedEventArgs e)
+        {
+            //CmLog.debug("GotFocus");
+            if(((Control)sender).FocusState==FocusState.Keyboard)
+            {
+                VisualStateManager.GoToState(mSliderPanel, "Focused", false);
+            }
+        }
+
+        /**
+         * スライダーがフォーカスを失った
+         * 
+         * VisualStateをUnfocusedにする。
+         */
+        private void OnSliderLostFoucus(object sender, RoutedEventArgs e)
+        {
+            //CmLog.debug("LostFocus");
+            VisualStateManager.GoToState(mSliderPanel, "Unfocused", false);
+        }
+
+        #endregion
     }
 }

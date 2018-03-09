@@ -44,6 +44,7 @@
                             <Setter Property="Padding" Value="0,0,1,0"/>
                             <Setter Property="BorderThickness" Value="0"/>
                             <Setter Property="MinWidth" Value="0"/>
+                            <Setter Property="IsTabStop" Value="False"/>
                         </Style>
                     </ListView.ItemContainerStyle>
                     <ListView.ItemsPanel>
@@ -70,7 +71,7 @@
                 VerticalAlignment="Center"
                 Height="{Binding FrameListHeight}"
                 Width="4"
-                Fill="#FFB0FFFF"
+                Fill="#FF0D9FBE"
                 />
                 <Rectangle
                 Grid.Column="1"
@@ -91,7 +92,7 @@
                 HorizontalAlignment="Left"
                 Width="4"
                 Height="{Binding FrameListHeight}"
-                Fill="#FFB0FFFF"
+                Fill="#FF0D9FBE"
                 />
 
                 <Grid Grid.ColumnSpan="3" 

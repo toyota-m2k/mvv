@@ -14,7 +14,7 @@
         <ResourceDictionary Source="WvvResources.xaml"/>
     </UserControl.Resources>
 
-    <Grid x:Name="mTrimmerBase" Margin="25,0" Height="50" SizeChanged="OnTrimmerSizeChanged"
+    <Grid x:Name="mTrimmerBase" Margin="25,0" MinHeight="28" SizeChanged="OnTrimmerSizeChanged"
           Background="#00000000"
           Tapped="OnSliderTapped">
         <Grid.ColumnDefinitions>
@@ -22,7 +22,7 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="{Binding RWidth, Converter={StaticResource GridLengthConverter}}"/>
         </Grid.ColumnDefinitions>
-        <Rectangle Grid.ColumnSpan="3" Margin="0" Fill="DarkGray" HorizontalAlignment="Stretch" Height="2" VerticalAlignment="Center"/>
+        <Rectangle Grid.ColumnSpan="3" Margin="0,24,0,0" Fill="DarkGray" HorizontalAlignment="Stretch" Height="2" VerticalAlignment="Top"/>
         <Canvas 
             Grid.Column="0" 
             Width="0" HorizontalAlignment="Right"
@@ -66,10 +66,10 @@
                 <ColumnDefinition Width="{Binding MWidth, Converter={StaticResource GridLengthConverter}}"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Rectangle Grid.ColumnSpan="2" Margin="0,0" Fill="#FF00A5F1" HorizontalAlignment="Stretch" Height="4" VerticalAlignment="Center"/>
-            <Rectangle Grid.Column="0" Margin="0,0" Fill="Gray" HorizontalAlignment="Stretch" Height="4" VerticalAlignment="Center"/>
+            <Rectangle Grid.ColumnSpan="2" Margin="0,23,0,0" Fill="#FF00A5F1" HorizontalAlignment="Stretch" Height="4" VerticalAlignment="Top"/>
+            <Rectangle Grid.Column="0" Margin="0,23,0,0" Fill="Gray" HorizontalAlignment="Stretch" Height="4" VerticalAlignment="Top"/>
 
-            <Canvas Grid.Column="1" Width="0" HorizontalAlignment="Left">
+            <Canvas Grid.Column="1" Width="0" Height="0" HorizontalAlignment="Left" VerticalAlignment="Top">
                 <Grid x:Name="mThumb" Canvas.Left="-7" Canvas.Top="3" HorizontalAlignment="Center" 
                       Background="Transparent"
                       PointerPressed="OnThumbPressed"
