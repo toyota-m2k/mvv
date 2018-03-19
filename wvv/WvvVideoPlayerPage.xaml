@@ -33,8 +33,9 @@
 
         <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
             <StackPanel Orientation="Horizontal">
-                <Button Tapped="OnTrimming">Trimming</Button>
-                <Button Tapped="DoTrim">Do it now!</Button>
+                <Button Margin="5" Tapped="OnTrimming">Trimming</Button>
+                <Button Margin="5" Tapped="DoTrim">Save As</Button>
+                <Button Margin="5" Tapped="DoTranscode">Transcode</Button>
             </StackPanel>
             <Grid Height="30"/>
             <local:WvvTrimmingView x:Name="mTrimmingView" LayoutSize="400,400"/>

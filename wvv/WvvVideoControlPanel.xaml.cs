@@ -519,7 +519,7 @@ namespace wvv
             }
             else
             {
-                v = String.Format("{0:00}:{1:000} / {2:00}:{3:000}", current.Seconds, current.Milliseconds, total.Seconds, total.Milliseconds);
+                v = String.Format("{0:00}:{1:00} / {2:00}:{3:00}", current.Seconds, (int)Math.Round((double)current.Milliseconds / 10), total.Seconds, (int)Math.Round((double)total.Milliseconds / 10));
             }
 
             if (v != mPositionString)

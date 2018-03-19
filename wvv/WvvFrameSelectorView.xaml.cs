@@ -218,7 +218,7 @@ namespace wvv
         //private Exception mError = null;
 
         public WvvError Error
-            {
+        {
             get => mPlayer.Error;
         }
 

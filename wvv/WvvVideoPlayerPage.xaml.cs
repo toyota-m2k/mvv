@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -72,13 +73,32 @@ namespace wvv
 
         private async void DoTrim(object sender, TappedRoutedEventArgs e)
         {
-            if(null==mTempFolder)
-            {
-                mTempFolder = await WvvTempFolder.Create("trimming");
+            var picker = new FileSavePicker();
+            picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
+            picker.FileTypeChoices.Add("mp4", new List<string> { ".mp4" });
+            var dist = await picker.PickSaveFileAsync();
+            if (dist != null) {
+                if (!await mTrimmingView.SaveAsAsync(dist))
+                {
+                    Debug.WriteLine("Encoding error.");
+                }
             }
-            if(!await mTrimmingView.SaveAsAsync((await mTempFolder.CreateTempFile("m", ".mp4")).File))
+        }
+
+        private async void DoTranscode(object sender, TappedRoutedEventArgs e)
+        {
+            var picker = new FileSavePicker();
+            picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
+            picker.FileTypeChoices.Add("mp4", new List<string> { ".mp4" });
+            var dist = await picker.PickSaveFileAsync();
+            if (dist != null)
             {
-                Debug.WriteLine("Encoding error.");
+                var transcoder = new WvvTranscoder();
+                await transcoder.MakeFeelGoodProfileForHD720(mSource);
+                if (!await transcoder.Transcode(mSource, dist))
+                {
+                    Debug.WriteLine("Transcoding error.");
+                }
             }
         }
 

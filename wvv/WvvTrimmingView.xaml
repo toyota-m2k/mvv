@@ -47,7 +47,7 @@
                     />
             </Grid>
             <!-- Slider -->
-            <Grid Grid.Row="1" Margin="0,0">
+            <Grid Grid.Row="1" Margin="0,0" Opacity="0.4">
                 <local:WvvTrimmingSlider
                     Height="28"
                     x:Name="mTrimmingSlider"
@@ -56,6 +56,14 @@
                     CurrentPositionChanged="OnCurrentPositionChanged"
                     IsEnabled="{Binding Path=IsEnabled, ElementName=mPlayButton}"
                     />
+                <Interactivity:Interaction.Behaviors>
+                    <Core:DataTriggerBehavior Binding="{Binding Path=IsEnabled, ElementName=mTrimmingSlider}" Value="True">
+                        <Core:ChangePropertyAction PropertyName="Opacity" Value="1"/>
+                    </Core:DataTriggerBehavior>
+                    <Core:DataTriggerBehavior Binding="{Binding Path=IsEnabled, ElementName=mTrimmingSlider}" Value="False">
+                        <Core:ChangePropertyAction PropertyName="Opacity" Value="0.4"/>
+                    </Core:DataTriggerBehavior>
+                </Interactivity:Interaction.Behaviors>
             </Grid>
 
             <!-- Play Button -->
