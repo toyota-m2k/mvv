@@ -42,7 +42,7 @@ namespace wvv
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            mPlayer.SetUri(new Uri("https://video.twimg.com/ext_tw_video/965217837219381248/pu/vid/640x360/2iECofDRubgGIAcg.mp4"));
+            //mPlayer.SetUri(new Uri("https://video.twimg.com/ext_tw_video/965217837219381248/pu/vid/640x360/2iECofDRubgGIAcg.mp4"));
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
